@@ -91,7 +91,7 @@ class Handler(asyncore.dispatcher):
             if not json_data:
                 self.error()
             else:
-                self.server.dispatch(json_data)
+                self.server.dispatch.from_data(json_data)
         except ValueError:
             self.error()
     
