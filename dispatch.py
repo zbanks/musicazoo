@@ -6,6 +6,7 @@ import threading
 import os
 import collections
 import hashlib
+import time
 
 # Address of dispatcher on network. (Address, Port)
 ADDRESS = ('', 6785)
@@ -15,13 +16,6 @@ RESOURCES = ("audio", "screen")
 MODULES_DIR = "/etc/musicazoo/modules/"
 
 class Activity:
-    def __init__(self,module,json):
-        self.module = module
-        self.id = hashlib.sha1(module+"".join(json)).hexdigest()
-        self.resources = self.module.resources
-        self.consumed = self.module.consumed
-        self.persists = self.module.persists
-        
     @classmethod
     def from_json(cls,json):
         try:
@@ -32,15 +26,33 @@ class Activity:
             raise
         return Activity(module,json)
 
-    def start():
-        #FIXME: make it actually start
+    def __init__(self,module,json,callback):
+        self.module = module
+        self.instance = self.module.MusicazooLoader(json)
+        self.id = hashlib.sha1(module+str(time.time())+str(time.clock())).hexdigest()
+        self.resources = self.instance.resources
+        self.persists = self.instance.persists
+
+    def start(self):
+        def kill_activity():
+            return self.__kill()
+        
+        self.instance.start(kill_activity)
+
+    def __kill(self):
+        #FIXME: make it actually kill stuff
         pass
+        
+    def rm(self):
+        self.instance.rm()
+
+    def pause(self):
+        self.instance.pause()
 
 class PlaybackState:
     def __init__(self, resources):
         self.state = dict(zip(resources,(True for n in len(resources)))))
-        self.current_activities = dict(zip(resources,(None for n in len(resources))))) 
-        
+        self.current_activities = dict(zip(resources,(None for n in len(resources)))))
     def __getitem__(self, resource):
         return self.available(resource)
 
@@ -65,11 +77,14 @@ class PlaybackState:
         else:
             raise KeyError(resource)
 
-    def idle(self, *resources):
+    def resources_are_idle(self, *resources):
         value = True
         for r in resources:
             value &= self.state[resources]
         return value
+
+    def remove(self,activity):
+        for 
 
 class PlaybackInterface:
     resources = RESOURCES[:]
@@ -79,21 +94,14 @@ class PlaybackInterface:
         
     def enque(self, json):
         try:
-            activity = Activity.from_json(json)
+            activity = Activity.from_json(json,)
         except:
-            print >> sys.stderr, "Error tiestoenqueuing Activity from json '%s'." % json
+            print >> sys.stderr, "Error enqueuing Activity from json '%s'." % json
             return
         
         queue.append(activity)
-        if self.state.idle(activity.resources):
-            self.start(activity)
-
-    def start(self, activity):
-        #FIXME: Do something
-        pass
         
-    
-
+   
 class Dispatch:
     """
     Dispatch
