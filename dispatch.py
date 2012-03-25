@@ -49,6 +49,15 @@ class Activity:
     def pause(self):
         self.instance.pause()
 
+
+def optional_list(f):
+    def _f(_self, arg):
+        if isinstance(arg, collections.Iterables):
+            return f(_self, arg)
+        else:
+            return f(_self, [arg])
+    return _f
+
 class PlaybackState:
     def __init__(self, resources):
         self.state = dict(zip(resources,(True for n in len(resources)))))
@@ -56,35 +65,47 @@ class PlaybackState:
     def __getitem__(self, resource):
         return self.available(resource)
 
-    def available(self,resource):
-        return self.state.get(resource,False)
-
-    def free(self, resource):
-        if resource in self.state:
-            if self.state[resource] == True:
-                print >> sys.stderr, "Warning: freeing resource (%s) that is already free." % resource
-            return self.state[resource] = True
-        else:
-            raise KeyError(resource)
-
-    def use(self, resource):
-        if resource in self.state:
-            if self.state[resource] == False:
-                print >> sys.stderr, "Warning! Resource %s already in use!" % resource
-                #FIXME: Do something more sane
-                raise Exception("Attempted to use resource that is already consumed")
-            return self.state[resource] = False
-        else:
-            raise KeyError(resource)
-
-    def resources_are_idle(self, *resources):
+    @optional_list
+    def available(self,resources):
         value = True
         for r in resources:
-            value &= self.state[resources]
+            value &= self.state.get(resource, True)
         return value
 
-    def remove(self,activity):
-        for 
+    @optional_list
+    def free(self, resources):
+        for resource in resources:  
+            if resource in self.state:
+                if self.state[resource] == True:
+                    print >> sys.stderr, "Warning: freeing resource (%s) that is already free." % resource
+                    return self.state[resource] = True
+            else:
+                raise KeyError(resource)
+        return True
+
+    @optional_list
+    def use(self, resources):
+        for resource in resources:
+            if resource in self.state:
+                if self.state[resource] == False:
+                    print >> sys.stderr, "Warning! Resource %s already in use!" % resource
+                    #FIXME: Do something more sane
+                    raise Exception("Attempted to use resource that is already consumed")
+                self.state[resource] = False
+            else:
+                raise KeyError(resource)
+        return True
+"""
+    def resources_are_idle(self, resources):
+        value = True
+        for r in resources:
+            value &= self.available(r)
+        return value
+
+    def remove(self, resources):
+        for r in resources:
+            self.free(r)
+"""
 
 class PlaybackInterface:
     resources = RESOURCES[:]
