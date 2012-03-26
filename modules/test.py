@@ -25,5 +25,6 @@ class AudioTest:
         output = {}
         output["id"] = self.id
         output["resources"] = self.resources
+        output["persistent"] = False
         output["title"] = "Audio Test"
         return output

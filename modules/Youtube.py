@@ -48,7 +48,7 @@ class Youtube:
 
     def __run(self,cb):
         # Compose the command and
-        command = ["playyoutube", '"%s"' % self.url]
+        command = ["playyoutube", self.url]
         self.subprocess = Popen(command,stderr=PIPE, stdout=PIPE, stdin=PIPE)
         
         # Loop until the process has returned
