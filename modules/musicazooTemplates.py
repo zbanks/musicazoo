@@ -55,6 +55,9 @@ class MusicazooShellCommandModule:
         output["persistent"] = self.persistent  # We do not want to be persistent
         return output
     
+    def messafe(self,json):
+	pass
+
     def __run(self,cb):
         # Compose the command and
         command = self.command
