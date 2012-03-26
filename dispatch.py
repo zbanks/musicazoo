@@ -112,7 +112,8 @@ class PlaybackInterface:
         self.state = state or PlaybackState(PlaybackInterface.resources)
         self.running = {} 
         self.queue_cmds = {"rm": self.rm_cmd,
-                           "mv": self.mv_cmd }
+                           "mv": self.mv_cmd,
+                           "status": self.status_cmd }
 
     def enque(self, activity):
         try:
@@ -120,13 +121,17 @@ class PlaybackInterface:
 #activity = Activity.from_json(json,)
         except:
             print >> sys.stderr, "Error enqueuing Activity from json '%s'." % json
-            return
+            return False
         
         self.queue.append(activity)
         self.refresh()
+        return True
         
     def playing(self):
         return map(lambda act: act.status(), self.running)
+
+    def queued(self):
+        return map(lambda act: act.status(), self.queue)
     
     def refresh(self):
         if 0 == len(self.queue):
@@ -172,8 +177,15 @@ class PlaybackInterface:
                 activity.kill()
             except:
                 print >> sys.stderr, "Error killing activitiy"
-        self.running.pop(status["id"])
-        self.state.free(status["resources"])
+        if activity in self.running:
+            self.running.pop(status["id"])
+            self.state.free(status["resources"])
+        else:
+            try:
+                self.remove(activity)
+            except ValueError:
+                print >> sys.stderr, "Activity not in queue or running"
+
 
     def send_message(self, for_id, json):
         if for_id in self.running:
@@ -186,13 +198,25 @@ class PlaybackInterface:
         if "all" in json and json["all"]:
             for act in self.running.values():
                 self.stop(act)
-        elif "id" in json and json["id"] in self.running:
-            self.stop(self.running[json["id"]])
+            for act in self.queue:
+                self.stop(act)
+        elif "id" in json 
+            if json["id"] in self.running:
+                self.stop(self.running[json["id"]])
+            else:
+                for act in self.queue:
+                    # Gahh, so inefficient :-(
+                    if act.status()["id"] == json["id"]:
+                        self.stop(act)
         self.refresh()
+        return {"success": True, "error": ""}
 
     def mv_cmd(self, json):
         #TODO: Move things around
-        pass
+        return {"success": False, "error": "Not implemented"}
+
+    def status_cmd(self, json):
+        return {"success": True, "error": "", "playing": self.playing(), "queue": self.queued()}  
  
 class Dispatch:
     """
@@ -207,27 +231,38 @@ class Dispatch:
         self.interface = interface or PlaybackInterface()
 
     def from_data(self, json_data):
-        #FIXME: Makde this add things to the queue
         print "Received data:", json_data
         if "for_id" in json_data:
             for_id = json_data["for_id"]
-            self.interface.send_message(for_id, json_data)
+            output = self.interface.send_message(for_id, json_data)
+            if output:
+                return {"success": True, "error": ""}
+            else:
+                return {"success": False, "error": "Unable to send message"}
         elif "queue_cmd" in json_data:
             queue_cmd = json_data["queue_cmd"]
             if queue_cmd in self.interface.queue_cmds:
-                self.interface.queue_cmds[queue_cmd](json_data)
+                output = self.interface.queue_cmds[queue_cmd](json_data)
+                return output
         elif "module" in json_data:
             if json_data["module"] in self.modules:
                 json_data["id"] = hashlib.sha1(json_data["module"]+str(time.time())+str(time.clock())).hexdigest()
                 try:
                     activity = self.modules[json_data["module"]](json_data)
                 except:
-                    print >> sys.stderr, "Error initializing module %s" % json_data["module"]
-                self.interface.enque(activity)
+                    print >> sys.stderr, "Error initializing module %s" % json_data["module"
+                else:
+                    self.interface.enque(activity)
+                    if output:
+                        return {"success": True, "error": ""}
+                    else:
+                        return {"success": False, "error": "Unable to queue activitiy"}
             else:
                 print >> sys.stderr, "JSON tried to load module '%s' which does not exist" % json_data["module"]
+                return {"success": False, "error": "Unable to load module"}
         else:
             print >> sys.stderr, "JSON does not contain a 'module' field"
+            return {"success": False, "error": "Malformed json, no module specified"}
 
     def load_modules(self):
         for filename in os.listdir(MODULES_DIR):
