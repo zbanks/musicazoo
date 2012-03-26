@@ -117,7 +117,7 @@ class Server(asyncore.dispatcher):
         self.handlerClass        = Handler
 
         self.address            = address
-        self.dispatch        = dispatch
+        self.dispatch        = dispatcher
 
         asyncore.dispatcher.__init__(self)
         self.create_socket(self.address_family,
