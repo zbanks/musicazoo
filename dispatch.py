@@ -54,11 +54,11 @@ class Activity:
 """
 
 def optional_list(f):
-    def _f(_self, arg):
+    def _f(_self, arg, *args, **kwargs):
         if isinstance(arg, collections.Iterable) and not isinstance(arg, str):
-            return f(_self, arg)
+            return f(_self, arg, *args, **kwargs)
         else:
-            return f(_self, [arg])
+            return f(_self, [arg], *args, **kwargs)
     return _f
 
 class PlaybackState:
@@ -147,6 +147,8 @@ class PlaybackInterface:
         self.queue = queue or collections.deque()
         self.state = state or PlaybackState(PlaybackInterface.resources)
         self.running = {} 
+        self.queue_cmds = {"rm": self.rm_cmd,
+                           "mv": self.mv_cmd }
 
     def enque(self, activity):
         try:
@@ -173,21 +175,60 @@ class PlaybackInterface:
             self.run(act)
             self.refresh()
         elif self.state.available_over_persistent(status["resources"]):
-            self.state.use_over_persistent(status["resources"], status["id"], status["persistent"]) 
-
-    def run(self, activity):
-        status = activity.status()
-        def cb():
-            print "Callback from run"
-            self.running.pop(status["id"])
-            self.state.free(status["resources"])
+            pause_ids = self.state.use_over_persistent(status["resources"], status["id"], status["persistent"]) 
+            for id in pause_ids:
+                if id in self.running:
+                    try:
+                        self.running[id].pause()
+                    except:
+                        print >> sys.stdrr, "Error pausing Activity"
+                else:
+                    print >> sys.stderr, "Attempted to pause activity which is not running."
+            self.queue.pop()
+            self.run(act)
             self.refresh()
 
-        if not self.state.available(status["resources"]):
-            print >> sys.stderr, "Error running Activity, resources taken."
-            return
+    def run(self, activity):
+        def cb():
+            print "Callback from run"
+            self.stop(activity, killed=True)
+            self.refresh()
+
+        status = activity.status()
         self.running[status["id"]] = activity
-        activity.run(cb)
+        try:
+            activity.run(cb)
+        except:
+            print >> sys.stderr, "Error running activity"
+
+    def stop(self, activity, killed=False):
+        status = activity.status()
+        if not killed:
+            try:
+                activity.kill()
+            except:
+                print >> sys.stderr, "Error killing activitiy"
+        self.running.pop(status["id"])
+        self.state.free(status["resources"])
+
+    def send_message(self, for_id, json):
+        if for_id in self.running:
+            try:
+                self.running[for_id].message(json)
+            except:
+                print >> sys.stderr, "Error sending message"
+    
+    def rm_cmd(self, json):
+        if "all" in json and json["all"]:
+            for act in self.running.values():
+                self.stop(act)
+        elif "id" in json and json["id"] in self.running:
+            self.stop(self.running[json["id"]])
+        self.refresh()
+
+    def mv_cmd(self, json):
+        #TODO: Move things around
+        pass
  
 class Dispatch:
     """
@@ -204,7 +245,14 @@ class Dispatch:
     def from_data(self, json_data):
         #FIXME: Makde this add things to the queue
         print "Received data:", json_data
-        if "module" in json_data:
+        if "for_id" in json_data:
+            for_id = json_data["for_id"]
+            self.interface.send_message(for_id, json_data)
+        elif "queue_cmd" in json_data:
+            queue_cmd = json_data["queue_cmd"]
+            if queue_cmd in self.interface.queue_cmds:
+                self.interface.queue_cmds[queue_cmd](json_data)
+        elif "module" in json_data:
             if json_data["module"] in self.modules:
                 json_data["id"] = hashlib.sha1(json_data["module"]+str(time.time())+str(time.clock())).hexdigest()
                 activity = self.modules[json_data["module"]](json_data)
