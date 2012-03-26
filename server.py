@@ -92,15 +92,16 @@ class Handler(asyncore.dispatcher):
             if not json_data:
                 self.error()
             else:
-                self.server.dispatch.from_data(json_data)
+                response = self.server.dispatch.from_data(json_data)
+                self.socketprint(json.dumps(response))
         except ValueError:
             self.error()
     
     def error(self):
-        self.socketprint("{ error: \"Unable to parse JSON\" }")
+        self.socketprint("{ 'success': false, 'error': \"Unable to parse JSON\" }")
 
     def ok(self):
-        self.socketprint("{ error: null }")
+        self.socketprint("{ 'success': true,  error: null }")
 
     def socketprint(self,message):
         self.send_buffer+=message+"\n"
