@@ -219,7 +219,10 @@ class Dispatch:
         elif "module" in json_data:
             if json_data["module"] in self.modules:
                 json_data["id"] = hashlib.sha1(json_data["module"]+str(time.time())+str(time.clock())).hexdigest()
-                activity = self.modules[json_data["module"]](json_data)
+                try:
+                    activity = self.modules[json_data["module"]](json_data)
+                except:
+                    print >> sys.stderr, "Error initializing module %s" % json_data["module"]
                 self.interface.enque(activity)
             else:
                 print >> sys.stderr, "JSON tried to load module '%s' which does not exist" % json_data["module"]

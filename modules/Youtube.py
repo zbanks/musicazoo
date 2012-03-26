@@ -12,10 +12,17 @@ def getYouTubeIdFromUrl(url):
         return "C_S5cXbXe-4" 
 
 class Youtube:
+    resources = ("audio", "screen")
+    persistent = False
+    keywords = ("youtube", "yt")
+    
+    def match(input_str):
+        return False
+
     def __init__(self, json):
         self.json = json
         self.id = self.json["id"]
-        self.url = self.json["url"]
+        self.url = self.json["arg"]
         self.resources = ("audio", "screen")
         self.__gettitle()
         self.thread = None
@@ -44,7 +51,7 @@ class Youtube:
         output["id"] = self.id
         output["resources"] = self.resources
         output["title"] = self.title
-        output["persistent"] = False # We do not want to be persistent
+        output["persistent"] = self.persistent # We do not want to be persistent
         return output
     
     def __gettitle(self):

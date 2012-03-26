@@ -14,25 +14,23 @@ def getUrlFromKeyword(keyword):
          return ""
 
 class YoutubeKeyword(Youtube.Youtube):
+    keywords = ("keyword",)
+
+    def match(input_str):
+        return input_str
+
     def __init__(self, json):
-        keyword = json["keyword"]
+        keyword = json["arg"]
         
         # Get top related youtube video
         json["url"] = getUrlFromKeyword(keyword)
 
         # Call superclass constructor
-        Youtube.Youtube.__init__(self,json)
+        return Youtube.Youtube.__init__(self,json)
 
-
-    def run(self, cb)        
+    def run(self, cb):
         if self.url != "":
             Youtube.Youtube.run(self,cb)
         else:
             cb()
 
-
-    def kill(self, cb):
-        if self.url != "":
-            Youtube.Youtube.kill()
-        
-        
