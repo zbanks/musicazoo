@@ -17,42 +17,6 @@ RESOURCES = ("audio", "screen")
 # Location of modules
 MODULES_DIR = "/etc/musicazoo/modules/"
 
-"""
-class Activity:
-    @classmethod
-    def from_json(cls,json):
-        try:
-            module = Dispatch.modules(json["module"])
-        except:
-            print >> sys.stderr, "Module %s doesn't exist in local namespace!" % json["module"]
-            #FIXME: Do something more sane
-            raise
-        return Activity(module,json)
-
-    def __init__(self,module,json,callback):
-        self.module = module
-        self.instance = self.module.MusicazooLoader(json)
-        self.id = hashlib.sha1(module+str(time.time())+str(time.clock())).hexdigest()
-        self.resources = self.instance.resources
-        self.persists = self.instance.persists
-
-    def start(self):
-        def kill_activity():
-            return self.__kill()
-        
-        self.instance.start(kill_activity)
-
-    def __kill(self):
-        #FIXME: make it actually kill stuff
-        pass
-        
-    def rm(self):
-        self.instance.rm()
-
-    def pause(self):
-        self.instance.pause()
-"""
-
 def optional_list(f):
     def _f(_self, arg, *args, **kwargs):
         if isinstance(arg, collections.Iterable) and not isinstance(arg, str):
