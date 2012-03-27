@@ -55,11 +55,11 @@ class MusicazooShellCommandModule:
         output["persistent"] = self.persistent  # We do not want to be persistent
         return output
     
-    def messafe(self,json):
+    def message(self,json):
 	pass
 
     def __run(self,cb):
-        # Compose the command and
+        # Compose the command and start the subprocess
         command = self.command
         self.subprocess = Popen(command,stderr=PIPE, stdout=PIPE, stdin=PIPE)
         
