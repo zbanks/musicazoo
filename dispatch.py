@@ -11,7 +11,7 @@ import copy
 import sys
 
 # Address of dispatcher on network. (Address, Port)
-ADDRESS = ('', 6785)
+ADDRESS = ('', int(open("/tmp/portnum").readline().strip()))
 # Resources available to be used by queue items
 RESOURCES = ("audio", "screen")
 # Location of modules
@@ -128,7 +128,7 @@ class PlaybackInterface:
         return True
         
     def playing(self):
-        return map(lambda act: act.status(), self.running)
+        return map(lambda act: act.status(), self.running.values())
 
     def queued(self):
         return map(lambda act: act.status(), self.queue)
@@ -177,12 +177,12 @@ class PlaybackInterface:
                 activity.kill()
             except:
                 print >> sys.stderr, "Error killing activitiy"
-        if activity in self.running:
+        if status["id"] in self.running:
             self.running.pop(status["id"])
             self.state.free(status["resources"])
         else:
             try:
-                self.remove(activity)
+                self.queue.remove(activity)
             except ValueError:
                 print >> sys.stderr, "Activity not in queue or running"
 
@@ -200,7 +200,7 @@ class PlaybackInterface:
                 self.stop(act)
             for act in self.queue:
                 self.stop(act)
-        elif "id" in json 
+        elif "id" in json: 
             if json["id"] in self.running:
                 self.stop(self.running[json["id"]])
             else:
@@ -244,15 +244,18 @@ class Dispatch:
             if queue_cmd in self.interface.queue_cmds:
                 output = self.interface.queue_cmds[queue_cmd](json_data)
                 return output
+            if queue_cmd == "reload":
+                self.load_modules()
+                return {"success": True, "error": ""}
         elif "module" in json_data:
             if json_data["module"] in self.modules:
                 json_data["id"] = hashlib.sha1(json_data["module"]+str(time.time())+str(time.clock())).hexdigest()
                 try:
                     activity = self.modules[json_data["module"]](json_data)
                 except:
-                    print >> sys.stderr, "Error initializing module %s" % json_data["module"
+                    print >> sys.stderr, "Error initializing module %s" % json_data["module"]
                 else:
-                    self.interface.enque(activity)
+                    output = self.interface.enque(activity)
                     if output:
                         return {"success": True, "error": ""}
                     else:
@@ -274,7 +277,7 @@ class Dispatch:
                     if "modules" in dir(module):
                         for mname in module.modules:
                             if mname in dir(module):
-                                Dispatch.modules[mname] = module.__dict__[mname]
+                                self.modules[mname] = module.__dict__[mname]
                                 print >> sys.stderr, "Imported module %s from %s" % (mname, filename)
                             else:
                                 print >> sys.stderr, "No class named %s in module %s.py" % (mname, mname)
