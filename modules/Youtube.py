@@ -2,10 +2,12 @@ from musicazooTemplates import MusicazooShellCommandModule
 
 import gdata.youtube.service as yt
 import re
+import urlparse
 
 def getYouTubeIdFromUrl(url):
     try:
-        return re.search(r"&v=(.*)$",url).group(1)
+        params = urlparse.urlparse(url).params
+        return urlparse.parse_qs(params)["v"][0]
     except:
         #FIXME: I think this is funny. You may not.
         return "C_S5cXbXe-4" 
@@ -18,16 +20,16 @@ class Youtube(MusicazooShellCommandModule):
 
     def __init__(self, json):
         # Call musicazoo shell command initializer 
-        self.__initialize(json)
+        self._initialize(json)
 
         # Initialize module parameters
         self.url = json["arg"]
         self.command += (self.url,)
 
         # Get title of youtube video
-        self.__gettitle()
+        self._gettitle()
 
-    def __gettitle(self):
+    def _gettitle(self):
         yt_service = yt.YouTubeService()
         entry = yt_service.GetYouTubeVideoEntry(video_id=getYouTubeIdFromUrl(self.url))
         self.title = entry.media.title.text

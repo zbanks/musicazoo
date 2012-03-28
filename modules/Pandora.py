@@ -13,7 +13,7 @@ class Pandora(MusicazooShellCommandModule):
     password = "musicazoo"
     
     def __init__(self,json):
-        self.__initialize(json)
+        self._initialize(json)
         
     def pause(self, cb):
         self.message({"command":"p"})
@@ -27,7 +27,7 @@ class Pandora(MusicazooShellCommandModule):
         if self.subprocess:
             self.subprocess.stdin.write(json["command"])
 
-    def __run(self,cb):
+    def _run(self,cb):
         command = self.command
         self.subprocess = Popen(command, stderr=PIPE, stdout=PIPE, stdin=PIPE)
         

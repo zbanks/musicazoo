@@ -69,15 +69,15 @@ class PlaybackState:
                     print >> sys.stderr, "Warning! Resource %s already in use!" % resource
                     #FIXME: Do something more sane
                     raise Exception("Attempted to use resource that is already consumed")
-                if self.state[resource]:
-                    pause_ids.push(self.current_activies[resource])
+                if not self.state[resource]:
+                    print self.current_activities, "CURRR"
+                    pause_ids.append(self.current_activities[resource])
                 self.state[resource] = False
                 self.persistence[resource] = persistence
                 self.current_activities[resource] = id
             else:
                 raise KeyError(resource)
         return pause_ids
-
 
     @optional_list
     def use(self, resources, id="", persistence=False):
@@ -116,13 +116,6 @@ class PlaybackInterface:
                            "status": self.status_cmd }
 
     def enque(self, activity):
-        try:
-            pass
-#activity = Activity.from_json(json,)
-        except:
-            print >> sys.stderr, "Error enqueuing Activity from json '%s'." % json
-            return False
-        
         self.queue.append(activity)
         self.refresh()
         return True
@@ -144,18 +137,32 @@ class PlaybackInterface:
             self.run(act)
             self.refresh()
         elif self.state.available_over_persistent(status["resources"]):
+            print status
             pause_ids = self.state.use_over_persistent(status["resources"], status["id"], status["persistent"]) 
+            print pause_ids
+            print self.playing()
+            have_paused = dict([(i, False) for i in pause_ids])
+
+            def _cb(pid):
+                def cb():
+                    have_paused[pid] = True
+                    if reduce(lambda x, y: x and y, have_paused.values()):
+                        self.queue.pop()
+                        self.run(act)
+                        self.refresh() 
+
             for id in pause_ids:
                 if id in self.running:
                     try:
-                        self.running[id].pause()
-                    except:
-                        print >> sys.stdrr, "Error pausing Activity"
+                        self.running[id].pause(_cb(id))
+#self.queue.appendleft(running[id])
+                        self.running.remove(id)
+                    except Exception as err:
+                        print >> sys.stderr, "Error pausing Activity"
+                        print >> sys.stderr, err.message
+                        self.stop(self.running[id])
                 else:
                     print >> sys.stderr, "Attempted to pause activity which is not running."
-            self.queue.pop()
-            self.run(act)
-            self.refresh()
 
     def run(self, activity):
         def cb():
@@ -167,32 +174,37 @@ class PlaybackInterface:
         self.running[status["id"]] = activity
         try:
             activity.run(cb)
-        except:
+        except Exception as err:
             print >> sys.stderr, "Error running activity"
+            print >> sys.stderr, err.message
+            self.stop(activity)
 
     def stop(self, activity, killed=False):
         status = activity.status()
         if not killed:
             try:
                 activity.kill()
-            except:
+            except Exception as err:
                 print >> sys.stderr, "Error killing activitiy"
+                print >> sys.stderr, err.message
         if status["id"] in self.running:
             self.running.pop(status["id"])
             self.state.free(status["resources"])
         else:
             try:
                 self.queue.remove(activity)
-            except ValueError:
+            except ValueError as err:
                 print >> sys.stderr, "Activity not in queue or running"
+                print >> sys.stderr, err.message
 
 
     def send_message(self, for_id, json):
         if for_id in self.running:
             try:
                 self.running[for_id].message(json)
-            except:
+            except Exception as err:
                 print >> sys.stderr, "Error sending message"
+                print >> sys.stderr, err.message
     
     def rm_cmd(self, json):
         if "all" in json and json["all"]:
@@ -252,8 +264,9 @@ class Dispatch:
                 json_data["id"] = hashlib.sha1(json_data["module"]+str(time.time())+str(time.clock())).hexdigest()
                 try:
                     activity = self.modules[json_data["module"]](json_data)
-                except:
+                except Exception as err:
                     print >> sys.stderr, "Error initializing module %s" % json_data["module"]
+                    print >> sys.stderr, err.message
                 else:
                     output = self.interface.enque(activity)
                     if output:
@@ -289,6 +302,7 @@ class Dispatch:
                             print >> sys.stderr, "No class named %s in module %s.py" % (name, name)
                 except Exception, e:
                     print >> sys.stderr, "Error loading module %s: %s" % (name, e)
+                    print >> sys.stderr, e.message()
 
 if __name__ == "__main__":
     dispatch = Dispatch()

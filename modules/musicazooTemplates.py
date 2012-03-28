@@ -4,6 +4,8 @@ from subprocess import Popen, PIPE
 import gdata.youtube.service as yt
 import re
 
+null_f = open("/dev/null", "rw")
+
 class MusicazooShellCommandModule:
     resources = ()
     persistent = False
@@ -19,18 +21,18 @@ class MusicazooShellCommandModule:
         if self.command == ():
             raise Exception("All shell command modules must define a command to run")
 
-        self.__initialize(json)
+        self._initialize(json)
         self.arg = json["arg"]
         self.command += (self.arg,)
 
-    def __initialize(self, json):
+    def _initialize(self, json):
         self.json = json
         self.id = json["id"]
         self.thread = None
 
     def run(self, cb):
         # Setup a thread to run the shell command
-        self.thread = Thread(target=self.__run, 
+        self.thread = Thread(target=self._run, 
                              name="Musicazoo-%s"%self.id,
                              args=(cb,))
         self.thread.daemon = True
@@ -56,12 +58,12 @@ class MusicazooShellCommandModule:
         return output
     
     def message(self,json):
-	pass
+        pass
 
-    def __run(self,cb):
+    def _run(self,cb):
         # Compose the command and start the subprocess
         command = self.command
-        self.subprocess = Popen(command,stderr=PIPE, stdout=PIPE, stdin=PIPE)
+        self.subprocess = Popen(command,stderr=null_f, stdout=null_f, stdin=PIPE)
         
         # Loop until the process has returned
         while self.subprocess.poll() == None:
