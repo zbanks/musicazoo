@@ -14,6 +14,10 @@ class Pandora(MusicazooShellCommandModule):
     
     def __init__(self,json):
         self.__initialize(json)
+
+    def run(self,cb,newsongf=None):
+        self.newsongf = newsongf # Function to run every time a song changes
+        super(Pandora,self).run(cb)
         
     def pause(self, cb):
         self.message({"command":"p"})
@@ -35,7 +39,9 @@ class Pandora(MusicazooShellCommandModule):
         while self.subprocess.poll() == None:
             out = self.subprocess.stdout.readline();
             match = re.search(r'[|]>\s(".*)$', out)
-            if match: self.title = "Pandora: %s" % match.group(1)
+            if match: 
+                self.title = "Pandora: %s" % match.group(1)
+                if self.newsongf: newsongf()
 
         cb()
         
