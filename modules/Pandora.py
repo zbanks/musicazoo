@@ -31,7 +31,6 @@ class Pandora(MusicazooShellCommandModule):
         if self.subprocess:
             self.subprocess.stdin.write(json["command"])
 
-
     def _run(self,cb):
         command = self.command
         self.subprocess = Popen(command, stderr=PIPE, stdout=PIPE, stdin=PIPE)

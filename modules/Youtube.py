@@ -17,6 +17,7 @@ class Youtube(MusicazooShellCommandModule):
     persistent = False
     keywords = ("youtube", "yt")
     command = ("playyoutube",)
+    duration = 0
 
     def __init__(self, json):
         # Call musicazoo shell command initializer 
@@ -34,4 +35,6 @@ class Youtube(MusicazooShellCommandModule):
     def _gettitle(self):
         yt_service = yt.YouTubeService()
         entry = yt_service.GetYouTubeVideoEntry(video_id=getYouTubeIdFromUrl(self.url))
-        self.title = entry.media.title.text
+        seconds = int(entry.media.duration.seconds)
+        self.duration = "%d:%d" % (seconds / 60, seconds % 60)
+        self.title = "%s [%s]" % (entry.media.title.text, self.duration)
