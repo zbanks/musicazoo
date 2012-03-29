@@ -6,12 +6,13 @@ import re
 
 null_f = open("/dev/null", "rw")
 
-class MusicazooShellCommandModule:
+class MusicazooShellCommandModule(object):
     resources = ()
     persistent = False
     keywords = ()
     command = ()
     title = 'Musicazoo Module'
+    status_dict = {}
     
     def match(input_str):
         return False
@@ -50,7 +51,7 @@ class MusicazooShellCommandModule:
         if self.subprocess: self.subprocess.kill()
 
     def status(self):
-        output = {}
+        output = self.status_dict
         output["id"] = self.id
         output["resources"] = self.resources
         output["title"] = self.title

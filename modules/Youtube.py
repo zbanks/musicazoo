@@ -6,9 +6,9 @@ import urlparse
 
 def getYouTubeIdFromUrl(url):
     try:
-        params = urlparse.urlparse(url).params
+        params = urlparse.urlparse(url).query
         return urlparse.parse_qs(params)["v"][0]
-    except:
+    except Exception as err:
         #FIXME: I think this is funny. You may not.
         return "C_S5cXbXe-4" 
 
@@ -25,6 +25,8 @@ class Youtube(MusicazooShellCommandModule):
         # Initialize module parameters
         self.url = json["arg"]
         self.command += (self.url,)
+
+        self.status_dict = {"url": self.url}
 
         # Get title of youtube video
         self._gettitle()

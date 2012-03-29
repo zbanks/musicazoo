@@ -121,16 +121,33 @@ class PlaybackInterface:
         return True
         
     def playing(self):
-        return map(lambda act: act.status(), self.running.values())
+        output = []
+        for act in self.running.values():
+            try:
+                output.append(act.status())
+            except Exception as err:
+                print >> sys.stderr, err
+        return output
+#return map(lambda act: act.status(), self.running.values())
 
     def queued(self):
-        return map(lambda act: act.status(), self.queue)
+        output = []
+        for act in self.queue:
+            try:
+                output.append(act.status())
+            except Exception as err:
+                print >> sys.stderr, err
+        return output
+#return map(lambda act: act.status(), self.queue)
     
     def refresh(self):
         if 0 == len(self.queue):
             return
         act = self.queue[0]
-        status = act.status()
+        try:
+            status = act.status()
+        except Exception as err:
+            print >> sys.stderr, err
         if self.state.available(status["resources"]):
             self.state.use(status["resources"], status["id"], status["persistent"])
             self.queue.pop()
@@ -150,13 +167,14 @@ class PlaybackInterface:
                         self.queue.pop()
                         self.run(act)
                         self.refresh() 
+                return cb
 
             for id in pause_ids:
                 if id in self.running:
                     try:
                         self.running[id].pause(_cb(id))
 #self.queue.appendleft(running[id])
-                        self.running.remove(id)
+                        self.running.pop(id)
                     except Exception as err:
                         print >> sys.stderr, "Error pausing Activity"
                         print >> sys.stderr, err.message
@@ -170,9 +188,9 @@ class PlaybackInterface:
             self.stop(activity, killed=True)
             self.refresh()
 
-        status = activity.status()
-        self.running[status["id"]] = activity
         try:
+            status = activity.status()
+            self.running[status["id"]] = activity
             activity.run(cb)
         except Exception as err:
             print >> sys.stderr, "Error running activity"
@@ -180,7 +198,14 @@ class PlaybackInterface:
             self.stop(activity)
 
     def stop(self, activity, killed=False):
-        status = activity.status()
+        try:
+            status = activity.status()
+            if not "id" in status:
+                raise Exception("No id")
+        except Exception as err:
+            print >> sys.stderr, "Error getting status from activity"
+            print >> sys.stderr, err
+
         if not killed:
             try:
                 activity.kill()
@@ -218,8 +243,12 @@ class PlaybackInterface:
             else:
                 for act in self.queue:
                     # Gahh, so inefficient :-(
-                    if act.status()["id"] == json["id"]:
-                        self.stop(act)
+                    try:
+                        if act.status()["id"] == json["id"]:
+                            self.stop(act)
+                    except Exception, err:
+                        print >> sys.stderr, "Error getting status"
+                        print >> sys.stderr, err
         self.refresh()
         return {"success": True, "error": ""}
 
