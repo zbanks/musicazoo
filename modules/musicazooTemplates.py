@@ -13,6 +13,8 @@ class MusicazooShellCommandModule(object):
     command = ()
     title = 'Musicazoo Module'
     status_dict = {}
+    queue_html = "(Module)"
+    playing_html = "(Module Playing)"
     
     def match(input_str):
         return False
@@ -25,6 +27,8 @@ class MusicazooShellCommandModule(object):
         self._initialize(json)
         self.arg = json["arg"]
         self.command += (self.arg,)
+        self.queue_html = "(%s)" % self.__class__.__name__
+        self.playing_html = self.queue_html
 
     def _initialize(self, json):
         self.json = json
@@ -56,6 +60,8 @@ class MusicazooShellCommandModule(object):
         output["resources"] = self.resources
         output["title"] = self.title
         output["persistent"] = self.persistent  # We do not want to be persistent
+        output["queue_html"] = self.queue_html
+        output["playing_html"] = self.playing_html
         return output
     
     def message(self,json):

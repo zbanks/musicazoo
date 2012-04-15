@@ -265,6 +265,7 @@ class Dispatch:
 
     Reads in JSON objects over socket and dispatches commands,
     manages queue, and switches between program modules.
+
     """
     modules = {}
     def __init__(self,interface=None):

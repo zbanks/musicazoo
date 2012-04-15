@@ -35,3 +35,5 @@ class Youtube(MusicazooShellCommandModule):
         yt_service = yt.YouTubeService()
         entry = yt_service.GetYouTubeVideoEntry(video_id=getYouTubeIdFromUrl(self.url))
         self.title = entry.media.title.text
+        self.queue_html = "<a href='%s'>%s</a>" % (self.url, self.title)
+        self.playing_html = "<a href='%s'>%s</a>" % (self.url, self.title) 
