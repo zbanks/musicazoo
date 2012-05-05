@@ -17,6 +17,7 @@ class Youtube(MusicazooShellCommandModule):
     persistent = False
     keywords = ("youtube", "yt")
     command = ("/usr/local/bin/playyoutube",)
+    duration = 0
 
     @staticmethod
     def match(input_str):
@@ -38,6 +39,8 @@ class Youtube(MusicazooShellCommandModule):
     def _gettitle(self):
         yt_service = yt.YouTubeService()
         entry = yt_service.GetYouTubeVideoEntry(video_id=getYouTubeIdFromUrl(self.url))
-        self.title = entry.media.title.text
+        seconds = int(entry.media.duration.seconds)
+        self.duration = "%d:%d" % (seconds / 60, seconds % 60)
+        self.title = "%s [%s]" % (entry.media.title.text, self.duration)
         self.queue_html = "<a href='%s'>%s</a>" % (self.url, self.title)
         self.playing_html = "<a href='%s'>%s</a>" % (self.url, self.title) 
