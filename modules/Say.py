@@ -13,8 +13,12 @@ class Say(MusicazooShellCommandModule):
     presistent = False
     keywords = ("say",)
     command = ("say",)
-    title = ""
+    title = "Say"
+    queue_html = "Say"
+    playing_html = "Say"
 
     def __init__(self,json):
         super(Say,self).__init__(json)
-        self.title += 'Say "%s"' % trimToLength(self.arg, 20)
+        self.title = 'Say "%s"' % trimToLength(self.arg, 20)
+        self.queue_html = self.title
+        self.playing_html = self.title

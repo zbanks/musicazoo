@@ -13,10 +13,10 @@ class MusicazooShellCommandModule(object):
     keywords = ()
     catchall = False 
     command = ()
-    title = 'Musicazoo Module'
+    title = '(Module)'
     status_dict = {}
-    queue_html = "(Module)"
-    playing_html = "(Module Playing)"
+    queue_html = None
+    playing_html = None
     subprocess = None
     
     @staticmethod
@@ -31,8 +31,7 @@ class MusicazooShellCommandModule(object):
         self._initialize(json)
         self.arg = json["arg"]
         self.command += (self.arg,)
-        self.queue_html = "(%s)" % self.__class__.__name__
-        self.playing_html = self.queue_html
+        self.title = "(%s)" % self.__class__.__name__
 
     def _initialize(self, json):
         self.json = json
@@ -66,10 +65,12 @@ class MusicazooShellCommandModule(object):
         output = self.status_dict
         output["id"] = self.id
         output["resources"] = self.resources
-        output["title"] = self.title
         output["persistent"] = self.persistent  # We do not want to be persistent
-        output["queue_html"] = self.queue_html
-        output["playing_html"] = self.playing_html
+        output["title"] = self.title
+        if not queue_html:
+            output["queue_html"] = self.queue_html
+        if not playing_html:
+            output["playing_html"] = self.playing_html
         return output
     
     def message(self,json):

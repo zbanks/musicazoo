@@ -5,7 +5,7 @@ import re
 class Volume(MusicazooShellCommandModule):
     resources = ()
     persistent = False
-    keywords = ("vol")
+    keywords = ("vol",)
     command = ("/usr/bin/amixer","-q","set","PCM")
 
     def __init__(self, json):

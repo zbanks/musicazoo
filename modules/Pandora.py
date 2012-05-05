@@ -9,8 +9,9 @@ class Pandora(MusicazooShellCommandModule):
     keywords = ("pandora","pd")
     command = ("pianobar",)
     title = "Pandora"
-    queue_html = "Pandora - Queue"
-    playing_html = "Pandora - Playing"
+    queue_html = "Pandora"
+    playing_html = "Pandora"
+
     email = "musicazoo@mit.edu"
     password = "musicazoo"
     newsongf = None
@@ -35,12 +36,21 @@ class Pandora(MusicazooShellCommandModule):
         if self.subprocess:
             self.subprocess.stdin.write(json["command"])
 
+
     def _run(self,cb):
         command = self.command
         self.subprocess = Popen(command, stderr=PIPE, stdout=PIPE, stdin=PIPE)
         self.subprocess.stdin.write("%s\n" % self.email)
         self.subprocess.stdin.write("%s\n" % self.password)
         self.subprocess.stdin.write("0\n")
+
+        button_template = "<a class='rm button' href='/msg?for_id=%s&command=%%s'>%%s</a>" % self.id
+        button_list = {"p" : "p",
+                       "skip" : "s",
+                       "+" : "+"
+#"-" : "-" 
+                      }
+        buttons = "\n".join(map(lambda x: button_template % x, button_list.items()))
 
         # Loop continuously, getting output and setting titles
         while self.subprocess.poll() == None:
@@ -49,7 +59,7 @@ class Pandora(MusicazooShellCommandModule):
             match = re.search(r'[|]>\s*(".*)\s*@[^@]*$', out)
             if match: 
                 self.title = "Pandora: %s" % match.group(1)
-                self.playing_html = "%s" % (self.title)
+                self.playing_html = "%s %s" % (self.title, buttons)
                 if self.newsongf:
                     newsongf()
 
