@@ -3,6 +3,7 @@ from time import sleep
 from subprocess import Popen, PIPE
 import gdata.youtube.service as yt
 import re
+import os
 
 null_f = open("/dev/null", "rw")
 
@@ -10,12 +11,15 @@ class MusicazooShellCommandModule(object):
     resources = ()
     persistent = False
     keywords = ()
+    catchall = False 
     command = ()
     title = 'Musicazoo Module'
     status_dict = {}
     queue_html = "(Module)"
     playing_html = "(Module Playing)"
+    subprocess = None
     
+    @staticmethod
     def match(input_str):
         return False
 
@@ -37,12 +41,15 @@ class MusicazooShellCommandModule(object):
 
     def run(self, cb):
         # Setup a thread to run the shell command
+#command = self.command
+#self.subprocess = Popen(command, shell=False, stderr=null_f, stdout=null_f, stdin=PIPE)
         self.thread = Thread(target=self._run, 
                              name="Musicazoo-%s"%self.id,
                              args=(cb,))
         self.thread.daemon = True
         self.thread.start();
             
+
 
     def pause(self, cb):
         self.kill()
@@ -52,7 +59,8 @@ class MusicazooShellCommandModule(object):
         self.run(cb)
 
     def kill(self):
-        if self.subprocess: self.subprocess.kill()
+        if self.subprocess:
+            os.system("killtree %d" % self.subprocess.pid)
 
     def status(self):
         output = self.status_dict
@@ -75,6 +83,7 @@ class MusicazooShellCommandModule(object):
         # Loop until the process has returned
         while self.subprocess.poll() == None:
             sleep(0.2)
+#self.subprocess.wait()
             
         # We're done, let's call our callback and skidaddle
         cb()

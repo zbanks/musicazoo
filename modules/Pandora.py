@@ -9,14 +9,18 @@ class Pandora(MusicazooShellCommandModule):
     keywords = ("pandora","pd")
     command = ("pianobar",)
     title = "Pandora"
+    queue_html = "Pandora - Queue"
+    playing_html = "Pandora - Playing"
     email = "musicazoo@mit.edu"
     password = "musicazoo"
+    newsongf = None
     
     def __init__(self,json):
         self._initialize(json)
 
     def run(self,cb,newsongf=None):
         self.newsongf = newsongf # Function to run every time a song changes
+#self._run(cb)
         super(Pandora, self).run(cb)
         
     def pause(self, cb):
@@ -43,10 +47,12 @@ class Pandora(MusicazooShellCommandModule):
         while self.subprocess.poll() == None:
             out = self.subprocess.stdout.readline();
             print out
-            match = re.search(r'[|]>\s(".*)$', out)
+            match = re.search(r'[|]>\s*(".*)\s*@[^@]*$', out)
             if match: 
                 self.title = "Pandora: %s" % match.group(1)
-                if self.newsongf: newsongf()
+                self.playing_html = "%s" % (self.title)
+                if self.newsongf:
+                    newsongf()
 
         cb()
         

@@ -150,7 +150,7 @@ class PlaybackInterface:
             print >> sys.stderr, err
         if self.state.available(status["resources"]):
             self.state.use(status["resources"], status["id"], status["persistent"])
-            self.queue.pop()
+            self.queue.popleft()
             self.run(act)
             self.refresh()
         elif self.state.available_over_persistent(status["resources"]):
@@ -164,7 +164,7 @@ class PlaybackInterface:
                 def cb():
                     have_paused[pid] = True
                     if reduce(lambda x, y: x and y, have_paused.values()):
-                        self.queue.pop()
+                        self.queue.popleft()
                         self.run(act)
                         self.refresh() 
                 return cb
@@ -212,6 +212,8 @@ class PlaybackInterface:
             except Exception as err:
                 print >> sys.stderr, "Error killing activitiy"
                 print >> sys.stderr, err.message
+        print status["id"]
+        print self.running.keys()
         if status["id"] in self.running:
             self.running.pop(status["id"])
             self.state.free(status["resources"])
@@ -240,15 +242,17 @@ class PlaybackInterface:
         elif "id" in json: 
             if json["id"] in self.running:
                 self.stop(self.running[json["id"]])
-            else:
-                for act in self.queue:
-                    # Gahh, so inefficient :-(
-                    try:
-                        if act.status()["id"] == json["id"]:
-                            self.stop(act)
-                    except Exception, err:
-                        print >> sys.stderr, "Error getting status"
-                        print >> sys.stderr, err
+            #else:
+#qus = list(self.queue)
+            for act in self.queue:
+                # Gahh, so inefficient :-(
+                try:
+                    if act.status()["id"] == json["id"]:
+                        self.stop(act)
+                        break
+                except Exception, err:
+                    print >> sys.stderr, "Error getting status"
+                    print >> sys.stderr, err
         self.refresh()
         return {"success": True, "error": ""}
 
@@ -258,6 +262,14 @@ class PlaybackInterface:
 
     def status_cmd(self, json):
         return {"success": True, "error": "", "playing": self.playing(), "queue": self.queued()}  
+
+    def reload_cmd(self, json):
+        print "Reload"
+        try:
+            load_modules()
+            return {"success": True, "error": ""}
+        except:
+            return {"success": False, "error": "Unable to reload modules"}
  
 class Dispatch:
     """
@@ -290,6 +302,7 @@ class Dispatch:
                 self.load_modules()
                 return {"success": True, "error": ""}
         elif "module" in json_data:
+            json_data["module"] = json_data["module"].lower()
             if json_data["module"] in self.modules:
                 json_data["id"] = hashlib.sha1(json_data["module"]+str(time.time())+str(time.clock())).hexdigest()
                 try:
@@ -320,14 +333,14 @@ class Dispatch:
                     if "modules" in dir(module):
                         for mname in module.modules:
                             if mname in dir(module):
-                                self.modules[mname] = module.__dict__[mname]
-                                print >> sys.stderr, "Imported module %s from %s" % (mname, filename)
+                                self.modules[mname.lower()] = module.__dict__[mname]
+                                print >> sys.stderr, "Imported module %s from %s" % (mname.lower(), filename)
                             else:
                                 print >> sys.stderr, "No class named %s in module %s.py" % (mname, mname)
                     else:
                         if name in dir(module):
-                            self.modules[name] = module.__dict__[name]
-                            print >> sys.stderr, "Imported module %s from %s" % (name, filename)
+                            self.modules[name.lower()] = module.__dict__[name]
+                            print >> sys.stderr, "Imported module %s from %s" % (name.lower(), filename)
                         else:
                             print >> sys.stderr, "No class named %s in module %s.py" % (name, name)
                 except Exception, e:

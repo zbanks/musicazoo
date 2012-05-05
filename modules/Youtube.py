@@ -16,14 +16,18 @@ class Youtube(MusicazooShellCommandModule):
     resources = ("audio", "screen")
     persistent = False
     keywords = ("youtube", "yt")
-    command = ("playyoutube",)
+    command = ("/usr/local/bin/playyoutube",)
+
+    @staticmethod
+    def match(input_str):
+        return not not re.search("http.+www\.youtube\.com/watch.+v", input_str.strip())
 
     def __init__(self, json):
         # Call musicazoo shell command initializer 
         self._initialize(json)
 
         # Initialize module parameters
-        self.url = json["arg"]
+        self.url = json["arg"].strip().split(" ")[-1]
         self.command += (self.url,)
 
         self.status_dict = {"url": self.url}
