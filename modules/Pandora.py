@@ -30,7 +30,7 @@ class Pandora(MusicazooShellCommandModule):
     
     def unpause(self, cb):
         self.message({"comand":"p"})
-        cb();
+        cb()
 
     def message(self,json):
         if self.subprocess:
@@ -46,11 +46,13 @@ class Pandora(MusicazooShellCommandModule):
 
         button_template = "<a class='rm button' href='/msg?for_id=%s&command=%%s'>%%s</a>" % self.id
         button_list = {"p" : "p",
-                       "skip" : "s",
+                       "n" : "skip",
                        "+" : "+"
 #"-" : "-" 
                       }
         buttons = "\n".join(map(lambda x: button_template % x, button_list.items()))
+        self.song_title = ""
+        self.song_time = ""
 
         # Loop continuously, getting output and setting titles
         while self.subprocess.poll() == None:
@@ -58,10 +60,14 @@ class Pandora(MusicazooShellCommandModule):
             print out
             match = re.search(r'[|]>\s*(".*)\s*@[^@]*$', out)
             if match: 
-                self.title = "Pandora: %s" % match.group(1)
-                self.playing_html = "%s %s" % (self.title, buttons)
+                self.song_title = match.group(1)
                 if self.newsongf:
                     newsongf()
+            match_time = re.search(r'#\s*Time:(-?\d+:\d+/\d+:\d+)', out)
+            if match_time:
+                self.song_time = match_time.group(1)
 
+            self.title = "Pandora: %s [%s]" % (self.song_title, self.song_time)
+            self.playing_html = "%s %s" % (self.title, buttons)
         cb()
         
