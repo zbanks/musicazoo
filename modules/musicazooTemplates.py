@@ -67,10 +67,13 @@ class MusicazooShellCommandModule(object):
         output["resources"] = self.resources
         output["persistent"] = self.persistent  # We do not want to be persistent
         output["title"] = self.title
-        if not queue_html:
-            output["queue_html"] = self.queue_html
-        if not playing_html:
-            output["playing_html"] = self.playing_html
+        output["queue_html"] = self.queue_html
+        output["playing_html"] = self.playing_html
+
+        if not self.queue_html:
+            output["queue_html"] = self.title
+        if not self.playing_html:
+            output["playing_html"] = self.title
         return output
     
     def message(self,json):
