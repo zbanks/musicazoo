@@ -3,6 +3,8 @@ from subprocess import Popen, PIPE
 import time
 import re
 
+null_f = open("/dev/null", "rw")
+
 class Pandora(MusicazooShellCommandModule):
     resources = ("audio",)
     presistent = True
@@ -34,12 +36,13 @@ class Pandora(MusicazooShellCommandModule):
 
     def message(self,json):
         if self.subprocess:
-            self.subprocess.stdin.write(json["command"])
+            if "command" in json:
+                self.subprocess.stdin.write(json["command"])
 
 
     def _run(self,cb):
         command = self.command
-        self.subprocess = Popen(command, stderr=PIPE, stdout=PIPE, stdin=PIPE)
+        self.subprocess = Popen(command, stderr=null_f, stdout=PIPE, stdin=PIPE)
         self.subprocess.stdin.write("%s\n" % self.email)
         self.subprocess.stdin.write("%s\n" % self.password)
         self.subprocess.stdin.write("0\n")

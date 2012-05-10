@@ -1,8 +1,11 @@
 from musicazooTemplates import MusicazooShellCommandModule
 
+from subprocess import Popen, PIPE
 import gdata.youtube.service as yt
 import re
 import urlparse
+
+null_f = open("/dev/null", "rw")
 
 def getYouTubeIdFromUrl(url):
     try:
@@ -41,6 +44,36 @@ class Youtube(MusicazooShellCommandModule):
         entry = yt_service.GetYouTubeVideoEntry(video_id=getYouTubeIdFromUrl(self.url))
         seconds = int(entry.media.duration.seconds)
         self.duration = "%d:%02d" % (seconds / 60, seconds % 60)
-        self.title = "%s [%s]" % (entry.media.title.text, self.duration)
-        self.queue_html = "<a href='%s'>%s</a>" % (self.url, self.title)
-        self.playing_html = "<a href='%s'>%s</a>" % (self.url, self.title) 
+    
+        self.title = "%s" % (entry.media.title.text)
+        self.queue_html = "<a href='%s'>%s</a> [%s]" % (self.url, self.title, self.duration)
+        self.playing_html = "<a href='%s'>%s</a> [%s]" % (self.url, self.title, self.duration) 
+
+    def message(self, json):
+        if self.subprocess:
+            if "command" in json:
+                self.subprocess.stdin.write(json["command"]+"\n")
+
+    def _run(self,cb):
+        command = self.command
+        self.subprocess = Popen(command, stderr=null_f, stdout=PIPE, stdin=PIPE)
+        print "Running youtube"
+
+
+        button_template = "<a class='rm button' href='/msg?for_id=%s&command=%%s'>%%s</a>" % self.id
+        button_list = {"pause" : "pause",
+                      }
+        buttons = "\n".join(map(lambda x: button_template % x, button_list.items()))
+        self.timein = "0:00"
+        self.seconds = 0
+
+        # Loop continuously, getting output and setting titles
+        while self.subprocess.poll() == None:
+            out = self.subprocess.stdout.readline(100)
+            print out
+            match = re.search(r'V:\s*(\d+)[.]\d+', out)
+            if match:
+                self.seconds = int(match.group(1))
+                self.timein = "%d:%02d" % (self.seconds / 60, self.seconds % 60)
+            self.playing_html = "<a href='%s'>%s</a> [%s/%s] %s" % (self.url, self.title, self.timein, self.duration, buttons) 
+        cb()
