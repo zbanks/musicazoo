@@ -36,11 +36,11 @@ class Handler(asyncore.dispatcher):
                                 # anything to send all the time
 
     def handle_read(self):
-        log.debug("handle_read")
+#log.debug("handle_read")
         data = self.recv(SIZE)
-        log.debug("after recv")
+#log.debug("after recv")
         if data:
-            log.debug("got data")
+#log.debug("got data")
             self.recv_buffer += data
             line=self.readline()
             if line!=None:
@@ -49,10 +49,10 @@ class Handler(asyncore.dispatcher):
             log.debug("got null data")
 
     def handle_write(self):
-        log.debug("handle_write")
+#log.debug("handle_write")
         if self.send_buffer:
             sent = self.send(self.send_buffer)
-            log.debug("sent data")
+#log.debug("sent data")
             self.send_buffer = self.send_buffer[sent:]
         else:
             log.debug("nothing to send")
@@ -62,7 +62,7 @@ class Handler(asyncore.dispatcher):
     # Will this ever get called?  Does loop() call
     # handle_close() if we called close, to start with?
     def handle_close(self):
-        log.debug("handle_close")
+#       log.debug("handle_close")
         log.info("conn_closed: client_address=%s:%s" % \
                      (self.client_address[0],
                       self.client_address[1]))
@@ -92,15 +92,16 @@ class Handler(asyncore.dispatcher):
             if not json_data:
                 self.error()
             else:
-                self.server.dispatch.from_data(json_data)
+                response = self.server.dispatch.from_data(json_data)
+                self.socketprint(json.dumps(response))
         except ValueError:
             self.error()
     
     def error(self):
-        self.socketprint("{ error: \"Unable to parse JSON\" }")
+        self.socketprint("{ 'success': false, 'error': \"Unable to parse JSON\" }")
 
     def ok(self):
-        self.socketprint("{ error: null }")
+        self.socketprint("{ 'success': true,  error: null }")
 
     def socketprint(self,message):
         self.send_buffer+=message+"\n"
@@ -117,7 +118,7 @@ class Server(asyncore.dispatcher):
         self.handlerClass        = Handler
 
         self.address            = address
-        self.dispatch        = dispatch
+        self.dispatch        = dispatcher
 
         asyncore.dispatcher.__init__(self)
         self.create_socket(self.address_family,

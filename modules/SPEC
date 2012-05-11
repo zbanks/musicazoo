@@ -1,0 +1,37 @@
+Musicazoo modules are python files (specifically ending in .py), each containing at least 1 class.
+
+The class name should either match the name of the file (ex. `class Youtube` in Youtube.py), or alternatively be in the list `modules` at the top level of the .py file. (ex. `modules = ["Youtube"]`).
+
+The class is imported by both the dispatcher and the web interface; however, only the dispatcher creates instances of the class. 
+
+The class must expose the following *static* methods/properties for the web interface:
+
+    keywords = ("mycmd", "mc") # Tuple of keywords recognized by command, ex "say" in "say I love cats!"
+    def match(data): ... # More complicated cmd matching. Return False if no match, or truthy result to become the arg, ie Youtube
+    catchall = False # Should be False: only 1 module can be a 'catchall', used when no other commands match, ie YoutubeKeyword
+
+Matching a cmd string to a module goes in 3 phases: first a keyword match is attempted across all modules, then .match() is compared on every module, finally it is deferred to the catchall module (YoutubeKeyword).
+
+Once a command is matched, it is serialized into json and sent to the dispatcher, where the dispatcher loads the appropriate module. The module is passed a dict to __init__ containing `arg`, the rest of the cmd string and `id`, the assigned id of the queue item.
+
+The module needs to expose the following methods to the dispatcher:
+
+
+    def run(self, cb): ... # Called to start running cmd. Call cb() when finished. Should be threaded or something
+    def kill(self): ... # Called to kill/remove cmd. Shouldn't take too long; blocking!
+    def pause(self, cb): ... # Called to pause a persistent process. Call cb() when finished
+    def unpause(self): ... # Called to unpause a persistent process. Call cb() when finished
+    def msg(self, json): ... # Called when the instance recieves a message via /msg?for_id=... from the web interface. json is dict of GET params
+    def status(self): ... # Return a dict which contains at least the following keys:
+
+    id : self.id # The id of the queue item, as assigned on __init__
+    persistent : False # If the module is 'persistent' and will never exit; instead paused/unpaused when new item is on queue
+    resources : ("audio", "screen") # Tuple containing the list of resources that are used. Current resources: "audio", "screen"
+    # Depreciated #title : "My Command" # Title of cmd in queue. *OR* specify `queue_html` and `playing_html`
+    queue_html : "My Command" # HTML of cmd in queue.## *OR* specify `title`
+    playing_html : "My Command" # HTML of cmd in queue.## *OR* specify `title`
+
+
+Although future modules should be python-based, musicazooTemplates.py has a template for writing a module based on a shell cmd.
+Subclassing `MusicazooShellCommandModule` requires you to only write define: keywords, resoureces, title, command. ex. Image. (command is a tuple)
+Alternatively, some of its functions can be overriden to give a base. ._run(self, cb) is a threaded function that can run things while blocking. 
