@@ -58,7 +58,7 @@ class Youtube(MusicazooShellCommandModule):
     def _run(self,cb):
         youtube_dl = Popen(("youtube-dl","-g","--max-quality=18","--cookies", cookie_file, self.url),
                            stderr=null_f, stdin=null_f, stdout=PIPE)
-        dl_cmd = self.command + (youtube_dl.stdout.readline(),)
+        dl_cmd = self.command + (youtube_dl.stdout.readline().strip(),)
         
         mplayer_env = os.environ.copy()
         mplayer_env["DISPLAY"]=":0"
