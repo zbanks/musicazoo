@@ -11,5 +11,6 @@ class YoutubeAudio(Youtube):
     command = ("mplayer","-slave","-framedrop","-cache","8192","-vo","null",
                "-fs","-cookies","-cookies-file",cookie_file)
    
+    @staticmethod
     def match(input_str):
         return False
