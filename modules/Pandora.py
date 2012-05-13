@@ -7,7 +7,7 @@ null_f = open("/dev/null", "rw")
 
 class Pandora(MusicazooShellCommandModule):
     resources = ("audio",)
-    presistent = True
+    persistent = True
     keywords = ("pandora","pd")
     command = ("pianobar",)
     title = "Pandora"
@@ -31,7 +31,7 @@ class Pandora(MusicazooShellCommandModule):
         cb()
     
     def unpause(self, cb):
-        self.message({"comand":"p"})
+        self.message({"command":"p"})
         cb()
 
     def message(self,json):

@@ -18,6 +18,7 @@ class MusicazooShellCommandModule(object):
     queue_html = None
     playing_html = None
     subprocess = None
+    running = False
     
     @staticmethod
     def match(input_str):
@@ -42,6 +43,7 @@ class MusicazooShellCommandModule(object):
         # Setup a thread to run the shell command
 #command = self.command
 #self.subprocess = Popen(command, shell=False, stderr=null_f, stdout=null_f, stdin=PIPE)
+        self.running = True
         self.thread = Thread(target=self._run, 
                              name="Musicazoo-%s"%self.id,
                              args=(cb,))
@@ -60,9 +62,11 @@ class MusicazooShellCommandModule(object):
     def kill(self):
         if self.subprocess:
             os.system("killtree %d" % self.subprocess.pid)
+        self.running = False
 
     def status(self):
         output = self.status_dict
+        output["running"] = self.running
         output["id"] = self.id
         output["resources"] = self.resources
         output["persistent"] = self.persistent  # We do not want to be persistent

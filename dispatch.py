@@ -148,6 +148,8 @@ class PlaybackInterface:
             status = act.status()
         except Exception as err:
             print >> sys.stderr, err
+            return False
+        print "***", status, self.state.state, self.state.persistence, self.state.available(status["resources"]), self.state.available_over_persistent(status["resources"])
         if self.state.available(status["resources"]):
             self.state.use(status["resources"], status["id"], status["persistent"])
             self.queue.popleft()
@@ -163,7 +165,7 @@ class PlaybackInterface:
             def _cb(pid):
                 def cb():
                     have_paused[pid] = True
-                    if reduce(lambda x, y: x and y, have_paused.values()):
+                    if all(have_paused.values()):
                         self.queue.popleft()
                         self.run(act)
                         self.refresh() 
@@ -173,7 +175,7 @@ class PlaybackInterface:
                 if id in self.running:
                     try:
                         self.running[id].pause(_cb(id))
-#self.queue.appendleft(running[id])
+                        self.queue.appendleft(self.running[id])
                         self.running.pop(id)
                     except Exception as err:
                         print >> sys.stderr, "Error pausing Activity"
@@ -188,10 +190,17 @@ class PlaybackInterface:
             self.stop(activity, killed=True)
             self.refresh()
 
+        def unpause_cb():
+            print "Callback from run"
+            self.refresh()
+
         try:
             status = activity.status()
             self.running[status["id"]] = activity
-            activity.run(cb)
+            if status["running"]:
+                activity.unpause(unpause_cb)
+            else:
+                activity.run(cb)
         except Exception as err:
             print >> sys.stderr, "Error running activity"
             print >> sys.stderr, err.message
