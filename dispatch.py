@@ -9,6 +9,7 @@ import hashlib
 import time
 import copy 
 import sys
+import subprocess
 
 # Address of dispatcher on network. (Address, Port)
 ADDRESS = ('', int(open("/tmp/portnum").readline().strip()))
@@ -152,7 +153,7 @@ class PlaybackInterface:
         print "***", status, self.state.state, self.state.persistence, self.state.available(status["resources"]), self.state.available_over_persistent(status["resources"])
         if self.state.available(status["resources"]):
             self.state.use(status["resources"], status["id"], status["persistent"])
-            self.queue.popleft()
+            self.queue.remove(act)
             self.run(act)
             self.refresh()
         elif self.state.available_over_persistent(status["resources"]):
@@ -166,7 +167,7 @@ class PlaybackInterface:
                 def cb():
                     have_paused[pid] = True
                     if all(have_paused.values()):
-                        self.queue.popleft()
+                        self.queue.remove(act)
                         self.run(act)
                         self.refresh() 
                 return cb
@@ -174,9 +175,9 @@ class PlaybackInterface:
             for id in pause_ids:
                 if id in self.running:
                     try:
-                        self.running[id].pause(_cb(id))
-                        self.queue.appendleft(self.running[id])
-                        self.running.pop(id)
+                        to_pause = self.running.pop(id)
+                        self.queue.appendleft(to_pause)
+                        to_pause.pause(_cb(id))
                     except Exception as err:
                         print >> sys.stderr, "Error pausing Activity"
                         print >> sys.stderr, err.message
@@ -197,6 +198,8 @@ class PlaybackInterface:
         try:
             status = activity.status()
             self.running[status["id"]] = activity
+            if "screen" in status["resources"]:
+                monitor_on()
             if status["running"]:
                 activity.unpause(unpause_cb)
             else:
@@ -355,6 +358,12 @@ class Dispatch:
                 except Exception, e:
                     print >> sys.stderr, "Error loading module %s: %s" % (name, e)
                     print >> sys.stderr, e.message()
+
+def monitor_on():
+    subprocess.Popen(("/etc/musicazoo/bin/monitor-on",))
+
+def monitor_off():
+    subprocess.Popen(("/etc/musicazoo/bin/monitor-off",))
 
 if __name__ == "__main__":
     dispatch = Dispatch()
