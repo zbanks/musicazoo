@@ -22,7 +22,7 @@ class Youtube(MusicazooShellCommandModule):
     persistent = False
     keywords = ("youtube", "yt")
     duration = 0
-    command = ("mplayer","-slave","-framedrop","-cache","8192","-vo","xv",
+    command = ("mplayer","-framedrop","-cache","8192","-vo","xv",
                "-fs","-cookies","-cookies-file",cookie_file)
 
     @staticmethod
