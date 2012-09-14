@@ -54,6 +54,7 @@ class MusicazooShellCommandModule(object):
 
     def pause(self, cb):
         self.kill()
+        self.running = True
         cb()
 
     def unpause(self, cb):

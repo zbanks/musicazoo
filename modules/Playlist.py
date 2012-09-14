@@ -1,5 +1,9 @@
 from musicazooTemplates import MusicazooShellCommandModule
 import re
+import os
+from subprocess import Popen, PIPE
+
+null_f = open("/dev/null", "rw")
 
 # This class is for playing music or video playlists on mplayer
 class Playlist(MusicazooShellCommandModule):
@@ -10,15 +14,20 @@ class Playlist(MusicazooShellCommandModule):
 
     @staticmethod
     def match(input_str):
-        return not not re.search(r"[.](pls|m3u|asx)", input_str.strip())
-
+        try:
+            return re.search(r"^\s*(.*[.](pls|m3u|asx))\s*$", input_str.strip()).group(1)
+        except Exception:
+            return False
+    """
     def pause(self, cb):
         self.message({"command":"pause"})
+        self.kill(cb)
         cb()
     
     def unpause(self, cb):
         self.message({"command":"pause"})
         cb()
+    """
 
     def message(self, json):
         if self.subprocess:
@@ -28,7 +37,7 @@ class Playlist(MusicazooShellCommandModule):
     def _run(self,cb):
         mplayer_env = os.environ.copy()
         mplayer_env["DISPLAY"]=":0"
-        self.subprocess = Popen(cmd, stderr=null_f, stdout=PIPE, stdin=PIPE, env=mplayer_env)
+        self.subprocess = Popen(self.command, stderr=null_f, stdout=PIPE, stdin=PIPE, env=mplayer_env)
         print "Running playlist"
 
         button_template = "<a class='rm button' href='/msg?for_id=%s&command=%%s'>%%s</a>" % self.id
@@ -41,10 +50,10 @@ class Playlist(MusicazooShellCommandModule):
         while self.subprocess.poll() == None:
             out = self.subprocess.stdout.readline(100)
             print out
-            match = re.search(r'V:\s*(\d+)[.]\d+', out)
+            match = re.search(r'A:\s*(\d+)[.]\d+', out)
             if match:
                 self.seconds = int(match.group(1))
                 self.timein = "%d:%02d" % (self.seconds / 60, self.seconds % 60)
-            self.playing_html = "<a href='%s'>%s</a> [%s/%s] %s" % (self.url, self.title, self.timein, self.duration, buttons) 
+            self.playing_html = "%s [%s] %s" % (self.title, self.timein, buttons) 
         cb()
 
