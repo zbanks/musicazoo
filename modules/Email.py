@@ -14,8 +14,8 @@ class Email(MusicazooShellCommandModule):
         self.from_address = json["address"]
         self.title = "Email from %s" % json["address"]
 
-        self.playing_html = self.title
-        self.queue_html = self.title
+        self.playing_html = self.title[:]
+        self.queue_html = self.title[:]
 
         print self.title
         print self.command

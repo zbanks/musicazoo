@@ -23,11 +23,25 @@ class Youtube(MusicazooShellCommandModule):
     keywords = ("youtube", "yt")
     duration = 0
     command = ("mplayer","-framedrop","-cache","8192","-vo","xv",
-               "-fs","-cookies","-cookies-file",cookie_file)
+               "-fs","-slave","-cookies","-cookies-file",cookie_file)
+    button_list = [("pause", "pause"),
+                   ("pausing_keep seek 0 1", "restart"),
+#("speed_set -1.0", "rev"),
+                   ("speed_set 0.72", "slow"),
+                   ("speed_set 1", "normal speed"),
+                   ("speed_set 1.22", "fast" ),
+#                   ("speed_set 2.5", "ffwd")
+                  ]
+    button_dict = dict(button_list)
+    button_regexes = [bi[0] for bi in button_list] + [
+                   r"speed_set -?[0-5](.[0-9]{1,3})?",
+                   r"seek [0-9]{1,5}( [012])?"
+                   ]
 
     @staticmethod
     def match(input_str):
-        return not not re.search("http.+www\.youtube\.com/watch.+v", input_str.strip())
+        if re.search("http.+www\.youtube\.com/watch.+v", input_str.strip()):
+            return input_str
 
     def __init__(self, json):
         # Call musicazoo shell command initializer 
@@ -53,13 +67,24 @@ class Youtube(MusicazooShellCommandModule):
     def message(self, json):
         if self.subprocess:
             if "command" in json:
+                if json["command"] not in self.button_dict:
+                    for bregex in self.button_regexes:
+                        if re.match(bregex, json["command"]):
+                            break
+                    else:
+                        return
                 self.subprocess.stdin.write(json["command"]+"\n")
 
     def _run(self,cb):
         youtube_dl = Popen(("youtube-dl","-g","--max-quality=18","--cookies", cookie_file, self.url),
                            stderr=null_f, stdin=null_f, stdout=PIPE)
+        self.subprocess = youtube_dl # Temporarily make subprocess youtube_dl
         dl_cmd = self.command + (youtube_dl.stdout.readline().strip(),)
         
+        if not self.running:
+            # Killed, stop!
+            cb()
+            return
         mplayer_env = os.environ.copy()
         mplayer_env["DISPLAY"]=":0"
         mplayer = Popen(dl_cmd, stderr=null_f, stdout=PIPE, stdin=PIPE, env=mplayer_env)
@@ -67,18 +92,17 @@ class Youtube(MusicazooShellCommandModule):
         print "Running youtube"
 
         button_template = "<a class='rm button' href='/msg?for_id=%s&command=%%s'>%%s</a>" % self.id
-        button_list = {"pause" : "pause",}
-        buttons = "\n".join(map(lambda x: button_template % x, button_list.items()))
+        buttons = "\n".join(map(lambda x: button_template % x, self.button_list))
         self.timein = "0:00"
         self.seconds = 0
 
         # Loop continuously, getting output and setting titles
-        while self.subprocess.poll() == None:
+        while self.subprocess.poll() == None and self.running:
             out = self.subprocess.stdout.readline(100)
             print out
             match = re.search(r'V:\s*(\d+)[.]\d+', out)
             if match:
                 self.seconds = int(match.group(1))
                 self.timein = "%d:%02d" % (self.seconds / 60, self.seconds % 60)
-            self.playing_html = "<a href='%s'>%s</a> [%s/%s] %s" % (self.url, self.title, self.timein, self.duration, buttons) 
+            self.playing_html = "<a href='%s'>%s</a> [%s/%s] %s <span class='ytprogress'></span>" % (self.url, self.title, self.timein, self.duration, buttons) 
         cb()

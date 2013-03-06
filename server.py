@@ -26,7 +26,7 @@ class Handler(asyncore.dispatcher):
 
         # Create ourselves, but with an already provided socket
         asyncore.dispatcher.__init__(self, conn_sock)
-        log.debug("created handler; waiting for loop")
+#log.debug("created handler; waiting for loop")
 
     def readable(self):
         return self.is_readable        # We are always happy to read
@@ -46,7 +46,8 @@ class Handler(asyncore.dispatcher):
             if line!=None:
                 self.got_data(line)
         else:
-            log.debug("got null data")
+#log.debug("got null data")
+            pass
 
     def handle_write(self):
 #log.debug("handle_write")
@@ -55,7 +56,8 @@ class Handler(asyncore.dispatcher):
 #log.debug("sent data")
             self.send_buffer = self.send_buffer[sent:]
         else:
-            log.debug("nothing to send")
+#log.debug("nothing to send")
+            pass
         if len(self.send_buffer) == 0:
             self.is_writable = False
 
@@ -63,9 +65,11 @@ class Handler(asyncore.dispatcher):
     # handle_close() if we called close, to start with?
     def handle_close(self):
 #       log.debug("handle_close")
+        """
         log.info("conn_closed: client_address=%s:%s" % \
                      (self.client_address[0],
                       self.client_address[1]))
+        """
         self.close()
         #pass
 
@@ -85,7 +89,7 @@ class Handler(asyncore.dispatcher):
         The line is attempted to be parsed as JSON,
         then passed to the dispatcher
         """
-        log.debug("got line: line=%s" % (line))
+#log.debug("got line: line=%s" % (line))
         line_len=len(line)
         try:
             json_data = json.loads(line)
@@ -156,9 +160,11 @@ class Server(asyncore.dispatcher):
         return True
 
     def process_request(self, conn_sock, client_address):
+        """
         log.info("conn_made: client_address=%s:%s" % \
                      (client_address[0],
                       client_address[1]))
+        """
         self.handlerClass(conn_sock, client_address, self)
 
     def handle_close(self):

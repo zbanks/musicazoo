@@ -10,6 +10,7 @@ import time
 import copy 
 import sys
 import subprocess
+import copy
 
 # Address of dispatcher on network. (Address, Port)
 ADDRESS = ('', int(open("/tmp/portnum").readline().strip()))
@@ -110,7 +111,7 @@ class PlaybackInterface:
     resources = RESOURCES[:]
     def __init__(self,queue=None,state=None):
         self.queue = queue or collections.deque()
-        self.state = state or PlaybackState(PlaybackInterface.resources)
+        self.state = state or PlaybackState(self.resources)
         self.running = {} 
         self.queue_cmds = {"rm": self.rm_cmd,
                            "mv": self.mv_cmd,
@@ -135,7 +136,7 @@ class PlaybackInterface:
         output = []
         for act in self.queue:
             try:
-                output.append(act.status())
+                output.append(copy.deepcopy(act.status()))
             except Exception as err:
                 print >> sys.stderr, err
         return output
@@ -188,7 +189,7 @@ class PlaybackInterface:
     def run(self, activity):
         def cb():
             print "Callback from run"
-            self.stop(activity, killed=True)
+            self.stop(activity, killed=False) #killed=True)
             self.refresh()
 
         def unpause_cb():
@@ -297,7 +298,7 @@ class Dispatch:
         self.interface = interface or PlaybackInterface()
 
     def from_data(self, json_data):
-        print "Received data:", json_data
+#print "Received data:", json_data
         if "for_id" in json_data:
             for_id = json_data["for_id"]
             output = self.interface.send_message(for_id, json_data)

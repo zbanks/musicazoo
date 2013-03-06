@@ -29,6 +29,7 @@ class MusicazooShellCommandModule(object):
         if self.command == ():
             raise Exception("All shell command modules must define a command to run")
 
+        self.status_dict = {} #possibly causing issues? 
         self._initialize(json)
         self.arg = json["arg"]
         self.command += (self.arg,)
