@@ -3,6 +3,10 @@
 # Class to load/reload/call musicazoo modules
 # TODO: better error handling, better logging
 
+import os
+import sys
+import imp
+
 MODULES_DIR = "/etc/musicazoo/modules/"
 
 class ModuleList(object):
@@ -42,5 +46,5 @@ class ModuleList(object):
                             print >> sys.stderr, "No class named %s in module %s.py" % (name, name)
                 except Exception, e:
                     print >> sys.stderr, "Error loading module %s: %s" % (name, e)
-                    print >> sys.stderr, e.message()
+                    print >> sys.stderr, e#.message()
 

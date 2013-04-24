@@ -3,7 +3,6 @@
 # AMP commands for musicazoo dispatch (server/client)
 
 from twisted.protocols import amp
-import amptypes
 
 # Exceptions
 class ModuleError(Exception):

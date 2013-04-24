@@ -1,6 +1,6 @@
 from musicazooTemplates import MusicazooShellCommandModule
 
-class Fortune(MusicazooShellCommandModule):
+class Police(MusicazooShellCommandModule):
     resources = ("audio")
     persistent = True
     keywords = ("popo", "police")

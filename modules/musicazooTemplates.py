@@ -19,6 +19,7 @@ class MusicazooShellCommandModule(object):
     playing_html = None
     subprocess = None
     running = False
+    killed = False
     
     @staticmethod
     def match(input_str):
@@ -65,6 +66,7 @@ class MusicazooShellCommandModule(object):
         if self.subprocess:
             os.system("killtree %d" % self.subprocess.pid)
         self.running = False
+        self.killed = True
 
     def status(self):
         output = self.status_dict
@@ -91,7 +93,7 @@ class MusicazooShellCommandModule(object):
         self.subprocess = Popen(command,stderr=null_f, stdout=null_f, stdin=PIPE)
         
         # Loop until the process has returned
-        while self.subprocess.poll() == None:
+        while not self.killed and self.subprocess.poll() == None:
             sleep(0.2)
 #self.subprocess.wait()
             

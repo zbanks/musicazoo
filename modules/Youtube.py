@@ -22,24 +22,25 @@ class Youtube(MusicazooShellCommandModule):
     persistent = False
     keywords = ("youtube", "yt")
     duration = 0
-    command = ("mplayer","-framedrop","-cache","8192","-vo","xv",
+    command = ("/usr/local/bin/mplayer","-framedrop","-cache","8192","-cache-min", "10","-vo","xv",
                "-fs","-slave","-cookies","-cookies-file",cookie_file)
     button_list = [("pause", "pause"),
                    ("pausing_keep seek 0 1", "restart"),
 #("speed_set -1.0", "rev"),
-                   ("speed_set 0.72", "slow"),
+                   ("speed_set 0.67", "slow"),
                    ("speed_set 1", "normal speed"),
-                   ("speed_set 1.22", "fast" ),
+                   ("speed_set 1.33", "fast" ),
 #                   ("speed_set 2.5", "ffwd")
                   ]
     button_dict = dict(button_list)
-    button_regexes = [bi[0] for bi in button_list] + [
-                   r"speed_set -?[0-5](.[0-9]{1,3})?",
+    button_regexes = [ # BE FUCKING CAREFUL WITH THESE REGEXES
+                   r"speed_set -?[0-5]([.][0-9]{1,3})?",
                    r"seek [0-9]{1,5}( [012])?"
                    ]
 
     @staticmethod
     def match(input_str):
+        return None
         if re.search("http.+www\.youtube\.com/watch.+v", input_str.strip()):
             return input_str
 
@@ -99,7 +100,7 @@ class Youtube(MusicazooShellCommandModule):
         # Loop continuously, getting output and setting titles
         while self.subprocess.poll() == None and self.running:
             out = self.subprocess.stdout.readline(100)
-            print out
+#print out
             match = re.search(r'V:\s*(\d+)[.]\d+', out)
             if match:
                 self.seconds = int(match.group(1))

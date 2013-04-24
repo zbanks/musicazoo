@@ -1,15 +1,24 @@
 #!/usr/bin/python
 
-import logging
-import uuid
+import collections
+import copy
+import copy 
+import imp
 import json
+import logging
+import os
+import re
+import subprocess
+import sys
+import threading
+import time
+import uuid
 
 from twisted.protocols.amp import AMP
 from twisted.internet import reactor
 from twisted.internet.protocol import Factory, ServerFactory
-from twisted.internet.endpoints import TCP4ServerEndpoint
+#from twisted.internet.endpoints import TCP4ServerEndpoint
 from twisted.application.service import Application
-from twisted.application.internet import StreamServerEndpointService
 
 from commands import *
 from module_list import ModuleList
@@ -118,9 +127,6 @@ class PlaybackInterface:
         self.queue = queue or collections.deque()
         self.state = state or PlaybackState(self.resources)
         self.running = {} 
-        self.queue_cmds = {"rm": self.rm_cmd,
-                           "mv": self.mv_cmd,
-                           "status": self.status_cmd }
 
     def enque(self, activity):
         self.queue.append(activity)
@@ -284,10 +290,12 @@ def create_activity(module, m_id, jsondata):
     return module(jsondata)
 
 class DispatchProtocol(AMP):
-    def __init__(self, *args, **kwargs):
+    module_list = None
+    interface = None
+    def __init__(self, module_list, interface, *args, **kwargs):
         AMP.__init__(self, *args, **kwargs)
-        self.module_list = ModuleList(MODULES_DIR)
-        self.interface = PlaybackInterface()
+        self.module_list = module_list #ModuleList(MODULES_DIR)
+        self.interface = interface #PlaybackInterface()
 
     @PushModule.responder
     def push_module(self, module, _jsondata):
@@ -338,13 +346,28 @@ class DispatchProtocol(AMP):
                               
 
 
-class DispatchFactory(ServerFactory)
+class DispatchFactory(ServerFactory):
     protocol = DispatchProtocol
+    def __init__(self, module_list, interface, *args, **kwargs):
+#ServerFactory.__init__(self, *args, **kwargs)
+        self.module_list = module_list
+        self.interface = interface 
+
+    def buildProtocol(self, addr):
+        print "Connecting to", addr
+        return self.protocol(self.module_list, self.interface)
 
 if __name__ == "__main__":
     application = Application("musicazoo dispatch")
 
-    endpoint = TCP4ServerEndpoint(reactor, 8750)
-    factory = ServerFactory()
-    service = StreamServerEndpointService(endpoint, factory)
-    service.setServiceParent(application)
+    interface = PlaybackInterface()
+    module_list = ModuleList()
+
+    #endpoint = TCP4ServerEndpoint(reactor, 8750)
+    factory = DispatchFactory(interface, module_list)
+    #service = StreamServerEndpointService(endpoint, factory)
+    #service.setServiceParent(application)
+    reactor.listenTCP(7331, factory)
+    print "Listening on 7331"
+    reactor.run()
+

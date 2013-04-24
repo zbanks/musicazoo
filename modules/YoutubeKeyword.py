@@ -1,4 +1,5 @@
-import Youtube
+#import Youtube
+from Video import Video
 import gdata.youtube.service as yt
 
 def getUrlFromKeyword(keyword):
@@ -13,7 +14,7 @@ def getUrlFromKeyword(keyword):
      else:
          return ""
 
-class YoutubeKeyword(Youtube.Youtube):
+class YoutubeKeyword(Video):
     keywords = ("keyword",)
     catchall = True
 
@@ -32,11 +33,12 @@ class YoutubeKeyword(Youtube.Youtube):
 
         # Call superclass constructor
 #return Youtube.Youtube.__init__(self,json)
-        return super(YoutubeKeyword, self).__init__(json)
+#return super(YoutubeKeyword, self).__init__(json)
+        return Video.__init__(self, json)
 
     def run(self, cb):
         if self.url != "":
-            return super(YoutubeKeyword, self).run(cb)
+            return Video.run(self, cb)
         else:
             cb()
 

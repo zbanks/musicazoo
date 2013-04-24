@@ -145,46 +145,47 @@ class PlaybackInterface:
     def refresh(self):
         if 0 == len(self.queue):
             return
-        act = self.queue[0]
-        try:
-            status = act.status()
-        except Exception as err:
-            print >> sys.stderr, err
-            return False
-        print "***", status, self.state.state, self.state.persistence, self.state.available(status["resources"]), self.state.available_over_persistent(status["resources"])
-        if self.state.available(status["resources"]):
-            self.state.use(status["resources"], status["id"], status["persistent"])
-            self.queue.remove(act)
-            self.run(act)
-            self.refresh()
-        elif self.state.available_over_persistent(status["resources"]):
-            print status
-            pause_ids = self.state.use_over_persistent(status["resources"], status["id"], status["persistent"]) 
-            print pause_ids
-            print self.playing()
-            have_paused = dict([(i, False) for i in pause_ids])
+        #act = self.queue[0]
+        for act in list(self.queue): # Iterate over copy; won't break iter on pop
+            try:
+                status = act.status()
+            except Exception as err:
+                print >> sys.stderr, err
+                return False
+            print "***", status, self.state.state, self.state.persistence, self.state.available(status["resources"]), self.state.available_over_persistent(status["resources"])
+            if self.state.available(status["resources"]):
+                self.state.use(status["resources"], status["id"], status["persistent"])
+                self.queue.remove(act)
+                self.run(act)
+                self.refresh()
+            elif self.state.available_over_persistent(status["resources"]):
+                print status
+                pause_ids = self.state.use_over_persistent(status["resources"], status["id"], status["persistent"]) 
+                print pause_ids
+                print self.playing()
+                have_paused = dict([(i, False) for i in pause_ids])
 
-            def _cb(pid):
-                def cb():
-                    have_paused[pid] = True
-                    if all(have_paused.values()):
-                        self.queue.remove(act)
-                        self.run(act)
-                        self.refresh() 
-                return cb
+                def _cb(pid):
+                    def cb():
+                        have_paused[pid] = True
+                        if all(have_paused.values()):
+                            self.queue.remove(act)
+                            self.run(act)
+                            self.refresh() 
+                    return cb
 
-            for id in pause_ids:
-                if id in self.running:
-                    try:
-                        to_pause = self.running.pop(id)
-                        self.queue.appendleft(to_pause)
-                        to_pause.pause(_cb(id))
-                    except Exception as err:
-                        print >> sys.stderr, "Error pausing Activity"
-                        print >> sys.stderr, err.message
-                        self.stop(self.running[id])
-                else:
-                    print >> sys.stderr, "Attempted to pause activity which is not running."
+                for id in pause_ids:
+                    if id in self.running:
+                        try:
+                            to_pause = self.running.pop(id)
+                            self.queue.appendleft(to_pause)
+                            to_pause.pause(_cb(id))
+                        except Exception as err:
+                            print >> sys.stderr, "Error pausing Activity"
+                            print >> sys.stderr, err.message
+                            self.stop(self.running[id])
+                    else:
+                        print >> sys.stderr, "Attempted to pause activity which is not running."
 
     def run(self, activity):
         def cb():
@@ -248,13 +249,36 @@ class PlaybackInterface:
     
     def rm_cmd(self, json):
         if "all" in json and json["all"]:
-            for act in self.running.values():
-                self.stop(act)
-            for act in self.queue:
-                self.stop(act)
+            queue = copy.copy(self.queue)
+            running = copy.copy(self.running.values())
+            for act in queue:
+                try:
+                    self.stop(act, killed=True)
+                except Exception as err:
+                    print >> sys.stderr, "Error removing queue item"
+                    print >> sys.stderr, err.message
+            for act in running:
+                try:
+                    self.stop(act)
+                except Exception as err:
+                    print >> sys.stderr, "Error removing playlist item"
+                    print >> sys.stderr, err.message
+        if "running" in json and json["running"]:
+            running = copy.copy(self.running.values())
+            for act in running:
+                try:
+                    self.stop(act)
+                except Exception as err:
+                    print >> sys.stderr, "Error removing playlist item"
+                    print >> sys.stderr, err.message
+
         elif "id" in json: 
             if json["id"] in self.running:
-                self.stop(self.running[json["id"]])
+                try:
+                    self.stop(self.running[json["id"]])
+                except Exception as err:
+                    print >> sys.stderr, "Error removing playlist item"
+                    print >> sys.stderr, err.message
             #else:
 #qus = list(self.queue)
             for act in self.queue:
@@ -276,6 +300,7 @@ class PlaybackInterface:
     def status_cmd(self, json):
         return {"success": True, "error": "", "playing": self.playing(), "queue": self.queued()}  
 
+    """
     def reload_cmd(self, json):
         print "Reload"
         try:
@@ -283,6 +308,7 @@ class PlaybackInterface:
             return {"success": True, "error": ""}
         except:
             return {"success": False, "error": "Unable to reload modules"}
+    """
  
 class Dispatch:
     """
@@ -295,6 +321,7 @@ class Dispatch:
     modules = {}
     def __init__(self,interface=None):
         self.load_modules()
+        self.load_modules() # Reload twice to resolve imports
         self.interface = interface or PlaybackInterface()
 
     def from_data(self, json_data):
@@ -313,6 +340,7 @@ class Dispatch:
                 return output
             if queue_cmd == "reload":
                 self.load_modules()
+                self.load_modules() # Reload twice to resolve things
                 return {"success": True, "error": ""}
         elif "module" in json_data:
             json_data["module"] = json_data["module"].lower()
@@ -358,7 +386,7 @@ class Dispatch:
                             print >> sys.stderr, "No class named %s in module %s.py" % (name, name)
                 except Exception, e:
                     print >> sys.stderr, "Error loading module %s: %s" % (name, e)
-                    print >> sys.stderr, e.message()
+                    print >> sys.stderr, e.message
 
 def monitor_on():
     subprocess.Popen(("/etc/musicazoo/bin/monitor-on",))
