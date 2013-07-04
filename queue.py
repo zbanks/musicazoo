@@ -16,18 +16,24 @@ class MZQueue:
 	def getHelp(self):
 		return "Try harder."
 
+	def lsQueue(self):
+		return [i,obj.TYPESTR for (i,obj) in self.queue]
+
 	def doCommand(self,line):
+		if not isinstance(line,dict):
+			return errorPacket('Command not a dict.')
+
 		try:
 			cmd=line['cmd'] # Fails if no cmd given
 		except KeyError:
-			return self.errorPacket('No command given.')
+			return errorPacket('No command given.')
 
 		try:
 			targ=line['target'] # Target is self if not given
 			try:
 				obj=dict(self.queue+self.statics)[targ] # Fails if target does not exist
 			except KeyError:
-				return self.errorPacket('Bad target.')
+				return errorPacket('Bad target.')
 		except KeyError:
 			obj=self
 
@@ -36,29 +42,30 @@ class MZQueue:
 		except KeyError:
 			args=[]
 
-		try:
-			args=list(args)
-		except TypeError:
-			return self.errorPacket('Argument list not a list.')
+		if not isinstance(args,list):
+			return errorPacket('Argument list not a list.')
 
 		try:
 			f=obj.validCommands[cmd]
 		except KeyError:	
-			return self.errorPacket('Bad command.')
+			return errorPacket('Bad command.')
 
 		result=f(obj,*args)
 
-		return self.goodPacket(result)
-
-	def errorPacket(self,err):
-		return {'success':False,'error':err}
-
-	def goodPacket(self,payload):
-		return {'success':True,'result':payload}
+		return goodPacket(result)
 
 	validCommands={
-		'help':getHelp
+		'help':getHelp,
+		'ls':lsQueue
 	}
 
+	validModules={
+		'youtube
+
 # End class MZQueue
+def errorPacket(err):
+	return {'success':False,'error':err}
+
+def goodPacket(payload):
+	return {'success':True,'result':payload}
 
