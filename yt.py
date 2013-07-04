@@ -4,9 +4,9 @@ class YoutubeModule:
 	def __init__(self,url):
 		self.url=url
 
-	def getUrl(self):
-		return url
+	def get_url(self):
+		return self.url
 
 	validCommands={
-		'getUrl',getUrl
+		'get_url':get_url
 	}

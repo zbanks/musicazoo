@@ -8,7 +8,9 @@ import json
 HOST_NAME = ''
 PORT_NUMBER = 9000
 
-q=queue.MZQueue()
+import vol
+
+q=queue.MZQueue([vol.VolumeModule()])
 
 class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 	def do_HEAD(s):

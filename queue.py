@@ -23,10 +23,13 @@ class MZQueue:
 		self.uid+=1
 
 	def getHelp(self):
-		return "Try harder."
+		return str(validCommands.keys())
 
 	def lsQueue(self):
-		return [(i,obj.TYPE_STRING) for (i,obj) in self.queue]
+		return [{'uid':i,'type':obj.TYPE_STRING} for (i,obj) in self.queue]
+
+	def lsStatics(self):
+		return [{'uid':i,'type':obj.TYPE_STRING} for (i,obj) in self.statics]
 
 	def addModule(self,name,*args):
 		mod_type=dict([(m.TYPE_STRING,m) for m in self.validModules])[name] # optimize me maybe
@@ -68,13 +71,14 @@ class MZQueue:
 		try:
 			result=f(obj,*args)
 		except Exception as e:
-			return errorPacket(e.value)
+			return errorPacket(str(e))
 
 		return goodPacket(result)
 
 	validCommands={
 		'help':getHelp,
-		'ls':lsQueue,
+		'queue':lsQueue,
+		'statics':lsStatics,
 		'add':addModule
 	}
 
