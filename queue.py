@@ -8,16 +8,31 @@
 # no target: operate on queue
 # no args: ok
 
+import yt
+
 class MZQueue:
 	def __init__(self,statics=[]):
 		self.queue=[]
 		self.statics=[]
+		self.uid=1
+		for s in statics:
+			self.statics.append((self.uid,s))
+			self.updateUID()
+
+	def updateUID(self):
+		self.uid+=1
 
 	def getHelp(self):
 		return "Try harder."
 
 	def lsQueue(self):
-		return [i,obj.TYPESTR for (i,obj) in self.queue]
+		return [(i,obj.TYPE_STRING) for (i,obj) in self.queue]
+
+	def addModule(self,name,*args):
+		mod_type=dict([(m.TYPE_STRING,m) for m in self.validModules])[name] # optimize me maybe
+		mod_inst=mod_type(*args)
+		self.queue.append((self.uid,mod_inst))
+		self.updateUID()
 
 	def doCommand(self,line):
 		if not isinstance(line,dict):
@@ -50,22 +65,33 @@ class MZQueue:
 		except KeyError:	
 			return errorPacket('Bad command.')
 
-		result=f(obj,*args)
+		try:
+			result=f(obj,*args)
+		except Exception as e:
+			return errorPacket(e.value)
 
 		return goodPacket(result)
 
 	validCommands={
 		'help':getHelp,
-		'ls':lsQueue
+		'ls':lsQueue,
+		'add':addModule
 	}
 
-	validModules={
-		'youtube
+	validModules=[
+		yt.YoutubeModule
+	]
 
 # End class MZQueue
 def errorPacket(err):
 	return {'success':False,'error':err}
 
 def goodPacket(payload):
-	return {'success':True,'result':payload}
+	if payload is not None:
+		return {'success':True,'result':payload}
+	return {'success':True}
 
+if __name__=='__main__':
+	q=MZQueue()
+	print q.addModule('youtube','google.com')
+	print q.lsQueue()
