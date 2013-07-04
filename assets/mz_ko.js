@@ -160,61 +160,81 @@ var mz_map = {
     observe: ['volume']
 };
 
+var MOULES = {
+    "youtube" : {"params": "url"}
+};
+
+var STATICS = {
+    "volume" : {"params": "vol"}
+};
+
+BASE_URL = "http://192.168.0.7:9000/";
+
 function ViewModel() { 
     var self = this;
     self.mz = ko.observable(false);
     self.mz.volume = ko.observable(0);
     self.reload = function() {
-        var qu_all = {}
-        $.post("http://localhost:8080/", qu_all, function(data) {
+        deferQuery({"cmd": "queue"}, function(queue_list) {
             if(window.no_autorefresh) return;
-            if(!data.success){
-                console.log(data.error);
-                return;
-            }
-            var results = data.results;
-            var qu_queue = {};
-            var named_module_params = function(q){
+            var fetch_module_params = function(q){
                 if(MODULES[q.module]){
                     var params = [];
-                    var m_params = MODULES[q.module].params
+                    var m_params = MODULES[q.module].params;
                     for(var i = 0; i < m_params; i++){
-                        params.push(q.id + "_" + m_params[i]);
+                        deferQuery({"cmd": "get_" + m_params[i]}, function(v){
+                            q[m_params[i]] = v;        
+                        });
                     }
                     return params;
                 }
                 console.log("Unknown module: " + q.module);
                 return [];
             };
+            /*
             var parse_module_results = function(q, qr){
                 if(MODULES[q.module]){
                     var qi = {};
                     var m_params = MODULES[q.module].params
                     for(var i = 0; i < m_params; i++){
-                        qi[m_params[i]] = qr[q.id + "_" + m_params[i]];
+                        var res = qr.pop();//qr[q.id + "_" + m_params[i]];
+                        if(res.success){
+                            qi[m_params[i]] = res.result;
+                        }else{
+                            console.log(res.error);
+                        }
                     }
                     return qi;
                 }
                 console.log("Unknown module: " + q.module);
                 return {};
             };
-            for(var i = 0; i < results.queue.length; i++){
-                qu_queue[i] = named_module_params(results.queue[i]);
+            */
+
+            for(var i = 0; i < queue_list.length; i++){
+                fetch_module_params(queue_list[i]);
             }
-            $.post("http://localhost:8080/", qu_queue, function(queue_data){
+            runQueries(function(){
+                console.log("Loaded queue:");
+                console.log(queue_list);
+                self.mz(ko.mapping.fromJS(queue_list));
+                $("ol.playlist").sortable("refresh");
+            });
+            /*
+            $.post(BASE_URL, qu_query, function(queue_data){
                 if(!queue_data.success){
                     console.log(data.error);
                     return;
                 }
-                var queue_results = queue_data.results;
                 var queue_items = [];
                 for(var i = 0; i < results.queue.length; i++){
-                    queue_items.push(parse_module_results(results.queue[i], queue_results));
+                    queue_items.push(parse_module_results(results.queue[i], queue_data));
                 }
             }, 'json');
-            self.mz(ko.mapping.fromJS(data));
-            updateSlider(self.mz().volume()); // Shitty and not ko.js style. FIXME
-            $("ol.playlist").sortable("refresh");
+            */
+            //self.mz(ko.mapping.fromJS(data));
+            //updateSlider(self.mz().volume()); // Shitty and not ko.js style. FIXME
+            //$("ol.playlist").sortable("refresh");
         }, 'json');
     };
 };  
@@ -230,3 +250,46 @@ refreshPlaylist(true);
 // Refresh playlist every 1 seconds
 setInterval(refreshPlaylist, 1000);
 
+
+var _query_queue = [];
+var _runquery_timeout;
+
+function deferQuery(data, cb){
+    _query_queue.push({"data": data, "cb": cb});
+}
+
+function forceQuery(data, cb){
+    _query_queue.push({"data": data, "cb": cb});
+    runQueries();
+}
+
+
+function runQueries(cb){
+    window.clearTimeout(_runquery_timeout);
+    if(_query_queue.length){
+        var cbs = _.pluck(_query_queue, "cb");
+        var datas = _.pluck(_query_queue, "data");
+        $.post(BASE_URL, datas, function(resp){
+            if(resp.length != cbs.length){ 
+                console.error("Did not recieve correct number of responses from server!");
+                return;
+            }
+            for(var i = 0; i < resp.length; i++){
+                var r = resp[i];
+                if(!r.success){
+                    console.log(r.error);
+                }else{
+                    cbs[i](r.result);
+                }
+            }
+            _runquery_timeout = window.setTimeout(runQueries, 0); // Defer
+        }, 'json');
+    }else{
+        _runquery_timeout = window.setTimeout(runQueries, 50);
+    }
+    if(cb){
+        cb();
+    }
+}
+
+runQueries();
