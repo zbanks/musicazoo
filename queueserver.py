@@ -19,7 +19,19 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 		s.end_headers()
 
 	def do_GET(s):
-		s.giveError("Please POST a command.")
+		#s.giveError("Please POST a command.")
+		s.send_response(200)
+		s.send_header("Content-type", "text/html")
+		s.send_header("Access-Control-Allow-Origin", "*")
+#s.send_header("Access-Control-Allow-Headers", s.headers.getheader("Access-Control-Request-Headers"))
+		s.end_headers()
+		try:
+			print s.path
+			f = open(s.path[1:])
+			s.wfile.write(f.read())
+			f.close()
+		except IOError:
+			pass
 
 	def giveError(s,error):
 		s.send_response(200)
@@ -28,10 +40,12 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 		s.wfile.write(queue.errorPacket(error))
 
 	def do_POST(s):
+		"""
 		ctype, pdict = cgi.parse_header(s.headers.getheader('content-type'))
 		if ctype != 'text/json':
 			s.giveError("No text/json found.")
 			return
+		"""
 		
 		length = int(s.headers.getheader('content-length'))
 		postdata = s.rfile.read(length)
@@ -48,7 +62,9 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 		json_output=json.dumps(results)
 
 		s.send_response(200)
+		s.send_header("Access-Control-Allow-Origin", "http://localhost:8080")
 		s.send_header("Content-type", "text/json")
+		s.send_header("Access-Control-Allow-Headers", s.headers.getheader("Access-Control-Request-Headers"))
 		s.end_headers()
 		s.wfile.write(json_output)
 
