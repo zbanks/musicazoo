@@ -11,8 +11,16 @@ PORT_NUMBER = 9000
 import vol
 
 q=queue.MZQueue([vol.VolumeModule()])
+qm=queue.MZQueueManager(q)
+qm.start()
 
-class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+from SocketServer import ThreadingMixIn
+from BaseHTTPServer import HTTPServer
+
+class MultiThreadedHTTPServer(ThreadingMixIn, HTTPServer):
+	pass
+
+class MZHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 	def do_HEAD(s):
 		s.send_response(200)
 		s.send_header("Content-type", "text/json")
@@ -58,7 +66,7 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 			s.giveError('Input must be a list of commands.')
 			return
 
-		results=[q.doCommand(cmd) for cmd in parsedata]
+		results=q.doMultipleCommandsAsync(parsedata)
 		json_output=json.dumps(results)
 
 		s.send_response(200)
@@ -69,8 +77,8 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 		s.wfile.write(json_output)
 
 if __name__ == '__main__':
-	server_class = BaseHTTPServer.HTTPServer
-	httpd = server_class((HOST_NAME, PORT_NUMBER), MyHandler)
+	server_class = MultiThreadedHTTPServer
+	httpd = server_class((HOST_NAME, PORT_NUMBER), MZHandler)
 	try:
 		httpd.serve_forever()
 	except KeyboardInterrupt:
