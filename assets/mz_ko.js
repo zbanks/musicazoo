@@ -177,65 +177,55 @@ function ViewModel() {
     self.reload = function() {
         deferQuery({"cmd": "queue"}, function(queue_list) {
             if(window.no_autorefresh) return;
+
             var fetch_module_params = function(q){
-                if(MODULES[q.module]){
-                    var params = [];
-                    var m_params = MODULES[q.module].params;
-                    for(var i = 0; i < m_params; i++){
-                        deferQuery({"cmd": "get_" + m_params[i]}, function(v){
+                if(MODULES[q.type]){
+                    var m_params = MODULES[q.type].params;
+                    for(var i = 0; i < m_params.length; i++){
+                        deferQuery({"cmd": "get_" + m_params[i], "target": q.id}, function(v){
                             q[m_params[i]] = v;        
                         });
                     }
-                    return params;
+                }else{
+                    console.log("Unknown module: " + q.type);
                 }
-                console.log("Unknown module: " + q.module);
-                return [];
             };
-            /*
-            var parse_module_results = function(q, qr){
-                if(MODULES[q.module]){
-                    var qi = {};
-                    var m_params = MODULES[q.module].params
-                    for(var i = 0; i < m_params; i++){
-                        var res = qr.pop();//qr[q.id + "_" + m_params[i]];
-                        if(res.success){
-                            qi[m_params[i]] = res.result;
-                        }else{
-                            console.log(res.error);
-                        }
-                    }
-                    return qi;
-                }
-                console.log("Unknown module: " + q.module);
-                return {};
-            };
-            */
 
             for(var i = 0; i < queue_list.length; i++){
                 fetch_module_params(queue_list[i]);
             }
+
             runQueries(function(){
                 console.log("Loaded queue:");
                 console.log(queue_list);
                 self.mz(ko.mapping.fromJS(queue_list));
                 $("ol.playlist").sortable("refresh");
             });
-            /*
-            $.post(BASE_URL, qu_query, function(queue_data){
-                if(!queue_data.success){
-                    console.log(data.error);
-                    return;
+
+        });
+        deferQuery({"cmd": "statics"}, function(statics_list) {
+            if(window.no_autorefresh) return;
+            var fetch_statics_params = function(s){
+                if(STATICS[s.type]){
+                    var s_params = STATICS[s.type].params;
+                    for(var i = 0; i < s_params.length; i++){
+                        deferQuery({"cmd": "get_" + s_params[i], "target": s.id}, function(v){
+                            s[s_params[i]] = v;
+                        });
+                    }
+                }else{
+                    console.log("Unknown static: " + q.type);
                 }
-                var queue_items = [];
-                for(var i = 0; i < results.queue.length; i++){
-                    queue_items.push(parse_module_results(results.queue[i], queue_data));
-                }
-            }, 'json');
-            */
-            //self.mz(ko.mapping.fromJS(data));
+            }
+
+            _.each(statics_list, fetch_statics_params);
+            
+            runQueries(function(){
+
+            });
             //updateSlider(self.mz().volume()); // Shitty and not ko.js style. FIXME
-            //$("ol.playlist").sortable("refresh");
-        }, 'json');
+
+        });
     };
 };  
 
