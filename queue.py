@@ -39,7 +39,7 @@ class MZQueue:
 
 	# cur command
 	def lsCur(self):
-		return {'uid':self.cur[0],'type':self.cur[1].TYPE_STRING}
+		return [{'uid':self.cur[0],'type':self.cur[1].TYPE_STRING}] if self.cur else []
 
 	# statics command
 	def lsStatics(self):
@@ -92,9 +92,13 @@ class MZQueue:
 
 		try:
 			targ=line['target'] # Target is self if not given
-			try:
-				obj=dict(self.queue+self.statics)[targ] # Fails if target does not exist
-			except KeyError:
+			print self.queue
+			print self.statics
+			print self.cur
+			lookup_dict = dict(self.queue + self.statics + ([self.cur] or []))
+			if targ in lookup_dict:
+				obj = lookup_dict[targ] # Fails if target does not exist
+			else:
 				return errorPacket('Bad target.')
 		except KeyError:
 			obj=self
@@ -109,7 +113,7 @@ class MZQueue:
 
 		try:
 			f=obj.validCommands[cmd]
-		except KeyError:	
+		except KeyError:
 			return errorPacket('Bad command.')
 
 		try:

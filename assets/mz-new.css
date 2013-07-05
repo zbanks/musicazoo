@@ -1,0 +1,183 @@
+/* @override 
+	http://musicazoo.mit.edu/static/css/mz.css
+	http://web.mit.edu/~vinitlee/Public/mz-new.css
+*/
+
+/*
+@font-face { font-family: DINPro; font-weight: 200; src: url('http://musicazoo.mit.edu/static/fonts/DINPro-Light.otf'); }
+@font-face { font-family: DINPro; font-weight: 400; src: url('http://musicazoo.mit.edu/static/fonts/DINPro-Regular.otf'); }
+@font-face { font-family: DINPro; font-weight: 500; src: url('http://musicazoo.mit.edu/static/fonts/DINPro-Medium.otf'); }
+@font-face { font-family: DINPro; font-weight: 600; src: url('http://musicazoo.mit.edu/static/fonts/DINPro-Bold.otf'); }
+@font-face { font-family: DINPro; font-weight: 800; src: url('http://musicazoo.mit.edu/static/fonts/DINPro-Black.otf'); }
+*/
+
+html {
+	font-family: DINPro, Sans;
+	color: #f3fde1;
+	background: #406873;
+	margin: 20px 15px;
+}
+
+::selection {
+	background-color: rgba(0,30,60,0.8);
+}
+
+.controls {
+	color: #406873;
+	font-size: 12px;
+	background: #f3fde1;
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 40%;
+	height: 20px;
+}
+
+h1 {
+	font-weight: 600;
+	font-size: 64px;
+}
+
+div.playlist ol li{
+	opacity: 0.6;
+	margin: 6px 0;
+}
+
+div.playlist ol li.current {
+	opacity: 1;
+}
+
+.sounds ul {
+	font-weight: 600;
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.sounds ul li{
+	color: rgb(0,30,60);
+	opacity: 0.0;
+}
+
+.sounds ul li:hover {
+	opacity: 0.1;
+}
+
+input#addtxt.addtxt {
+	background: transparent;
+	border: none;
+	border-bottom: 2px solid #f3fde1;
+	width: 300px;
+	color: #f3fde1;
+	font-size: 20px;
+	font-family: inherit;
+	padding-right: 43px;
+	outline: 0;
+	padding-left: 14px;
+}
+
+form#queueform:before {
+	content: '>';
+	font-size: 24px;
+	position: absolute;
+}
+
+input#addsubmit.addsubmit {
+	background: transparent;
+	border: none;
+	font-family: inherit;
+	color: inherit;
+	margin-left: -47px;
+	/*
+	background: #f3fde1;
+	border: none;
+	border-radius: 3px;
+	padding: 0;
+	width: 23px;
+	height: 23px;
+	text-indent: -1000px;
+	*/
+}
+
+input#addsubmit.addsubmit:hover {
+	opacity: 0.8;
+}
+
+input.uploadfile {
+	margin: 10px 0;
+	color: #f3fde1;
+}
+
+.results {
+	background: rgba(0,30,60,0.8);
+	position: absolute;
+	top: 20;
+	left: 0;
+	padding: 0px;
+	height: 130px;
+}
+
+.results ol {
+	padding: 10px 25px 15px 25px;
+}
+
+ol {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.controls a {
+	vertical-align: -2px;
+	margin-left: 25px;
+}
+
+a {
+	text-decoration: inherit;
+	color: inherit;
+}
+
+a:hover {
+	opacity: 0.8;
+}
+
+.ui-slider {
+	background-color: transparent;
+	width:60%;
+	height:20px;
+	position:absolute;
+	top: 0;
+	left: 40%;
+}
+
+.ui-slider-range {
+	background-color: #F3FDE1;
+	text-align: right;
+	height: 20px;
+}
+
+.ui-slider-range span {
+	color: #406873;
+	height: 100%;
+	padding-right: 5px;
+	vertical-align: -15px;
+	font-size: 12px;
+	cursor:hand;
+}
+
+.ui-slider-handle {
+	display: none;
+}
+
+a.related, a.rm {
+	background: #F3FDE1;
+	color: #406873;
+	padding: 1px 3px;
+	border-radius: 2px;
+	font-weight: 200;
+	margin-left: 2px;
+}
+
+a.related:hover, a.rm:hover {
+	background: rgba(0,30,60,0.8);
+}

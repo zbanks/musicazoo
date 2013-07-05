@@ -5,12 +5,13 @@ var _query_queue = [];
 var _runquery_timeout;
 var BASE_URL = "http://localhost:9000/";
 
-function deferQuery(data, cb){
-    _query_queue.push({"data": data, "cb": cb});
+function deferQuery(data, cb, err){
+    //TODO: err does nothing
+    _query_queue.push({"data": data, "cb": cb, "err": err});
 }
 
-function forceQuery(data, cb){
-    _query_queue.push({"data": data, "cb": cb});
+function forceQuery(data, cb, err){
+    deferQuery(data, cb, err);
     runQueries();
 }
 
@@ -18,9 +19,10 @@ function runQueries(cb){
     window.clearTimeout(_runquery_timeout);
     if(_query_queue.length){
         var cbs = _.pluck(_query_queue, "cb");
+        var errs = _.pluck(_query_queue, "cb");
         var datas = _.pluck(_query_queue, "data");
         $.post(BASE_URL, JSON.stringify(datas), function(resp){
-            if(resp.length != cbs.length){ 
+            if(resp.length != datas.length){ 
                 console.error("Did not recieve correct number of responses from server!");
                 return;
             }
@@ -43,6 +45,7 @@ function runQueries(cb){
     _query_queue = [];
 }
 
+/*
 // http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
 //connect items with observableArrays
 ko.bindingHandlers.sortableList = {
@@ -63,13 +66,14 @@ ko.bindingHandlers.sortableList = {
       });
   }
 };
+*/
 
 $(document).ready(function(){
     $(".uploadFile").submit(function(){
         $(".queueform");
     });
     
-
+/*
     $("input.addtxt").keyup(function(){
         var query = $(this).val();
         if(query == ""){
@@ -144,7 +148,9 @@ $(document).ready(function(){
         return false; // Prevent form submitting
     });
 
+    */
     
+        /*
     $("ol.playlist").sortable({
         update: function(ev, ui){
             var ordering = $("ol.playlist li").map(function(i, e){return $(e).attr('id')}).toArray().join(";");
@@ -158,8 +164,7 @@ $(document).ready(function(){
             window.no_autorefresh = false;
         }
     });
-    console.log(vm);
-    ko.applyBindings(vm); 
+    */
 
 });
 
@@ -195,20 +200,6 @@ var updateSlider = function(value){
 }
 
 
-var mz_map = {
-    playlist: {
-        key: function(data){
-            return ko.utils.unwrapObservable(data.id);
-        }
-    },
-    current: {
-        key: function(data){
-            console.log(data.id);
-            return ko.utils.unwrapObservable(data.id);
-        }
-    },
-    observe: ['volume']
-};
 
 var MODULES = {
     "youtube" : {
@@ -229,6 +220,7 @@ var STATICS = {
 };
 
 
+/*
 function Musicazoo() { 
     var self = this;
     self.MODULES = MODULES;
@@ -293,10 +285,64 @@ function Musicazoo() {
         });
     };
 };  
+*/
+
+Backbone.sync = function(method, model, options){
+    if(method == "read"){
+        _.each(model.keys(), function(k){
+            deferQuery({cmd: "get_" + k, target: model.id}, function(v){
+                model.set(k, v); 
+            });
+        });
+    }else if(method == "update"){
+        _.each(model.keys(), function(k){
+            if(model.hasChanged(k)){
+                deferQuery({cmd: "set_" + k, target: model.id, args: [model.get(k)]});
+            }
+        });
+    }else if(method == "delete"){
+        deferQuery({cmd: "rm", target: 0, args: [model.id]});
+    }else if(method == "create"){
+        //TODO
+        console.log("Can't create");
+    }
+    runQueries(function(){
+        options.success(model)
+    });
+}
+    
+
+var Musicazoo = Backbone.Model.extend({
+    defaults: function(){
+        return {
+            queue: new Queue();
+            statics: new StaticSet();
+            active: null;
+        };
+    }
+});
+
+var action_types = {};
+
+var Action = Backbone.Model.extend({
+    defaults: function(){
+        return {
+            
+        };
+    },
+    idAttribute: "uid"
+});
+
+var Queue = Backbone.Collection.extend({
+    model: Action,
+    parse: function(resp, options){
+        console.log("queue parse");
+        console.log(resp);
+    }
+});
 
 
-vm = new Musicazoo();
-vm.statics.subscribe(function(nv){ console.log("STATIC HIT"); console.log(nv); });
+
 
 var refreshPlaylist = function(firstTime){
     vm.reload();

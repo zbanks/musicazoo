@@ -6,8 +6,6 @@
     <script type="text/javascript" src="./assets/knockout.js"></script>
     <script type="text/javascript" src="./assets/knockout.mapping.js"></script>
     <script type="text/javascript" src="./assets/underscore.js"></script>
-    <script type="text/javascript" src="./assets/handlebars.js"></script>
-    <script type="text/javascript" src="./assets/backbone.js"></script>
     <script type="text/javascript">
         window.volume = 45;
         window.no_autorefresh = false;
@@ -16,7 +14,7 @@
     <!--
     <link rel="stylesheet" href="http://jqueryui.com/themes/base/jquery.ui.all.css"> 
     -->
-    <link rel="stylesheet" href="./assets/mz-new.css">
+    <link rel="stylesheet" href="http://musicazoo.mit.edu/static/css/mz-new.css">
 
 </head>
 <body>
@@ -39,42 +37,39 @@
             </form>
         </div>
 
-        <div class="playlist">
+        <div class="playlist" data-bind="with: mz">
             <h2>Playlist</h2>
 
             <!--
             <span><a class="rm" href="/msg?queue_cmd=rm&all=all">Clear All</a></span>
             -->
-            <script type="text/html" id="youtube">
-                <span data-bind="text: url"></span>
+            <script type="text/html" id="shellcmd">
+                <span data-bind="text:playing_html"></span>
                 <a class="rm" href="/msg?queue_cmd=rm&id=">rm</a>
             </script>
-            <script type="text/html" id="youtube_act">
-                <span data-bind="text:url"></span> - Playing
-                <a class="rm" href="/msg?queue_cmd=rm&id=">rm</a>
-            </script>
-            <ol  class="current">
-                <!-- ko foreach: activeq -->
-                <li data-bind="attr: { id: uid }, template: { name: MODULES[type()]._template_act}" class="current"></li>
-                <!-- /ko -->
-                <li data-bind="visible: (activeq().length == 0)" class="nothing current" id="nothing">Nothing</li>
+            <ol data-bind="foreach: current" class="current">
+                <li data-bind="attr: { id: id }, template: { name: ko_template()}" class="current"></li>
+                <noscript>
+                
+                    <li class="nothing current" id="nothing">Nothing</li>
+                
+                </noscript>
             </ol>
-            <ol data-bind="foreach: queue" class="playlist">
-                <li data-bind="attr: { id: uid }, template: { name: MODULES[type()]._template}"></li>
+            <ol data-bind="foreach: playlist" class="playlist">
+                <li data-bind="attr: { id: id }, template: { name: ko_template()}"></li>
+                <noscript>
+                
+                </noscript>
             </ol>
         </div>
         <div class="results"> </div>
         <div class="error"> </div>
-        <div data-bind="if: statics().volume">
-            <div class="vol-slider"></div>
-            <script type="text/javascript">
-                loadSlider();
-                console.log("SLIDE");
-            </script>
-        </div>
+        <div class="vol-slider"> </div>
 
         <div class="sounds">
-            <ul> </ul>
+            <ul>
+                
+            </ul>
         </div>
     </div>
 </body>

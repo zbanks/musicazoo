@@ -8,6 +8,7 @@ class VolumeModule:
 		return self.vol
 
 	def set_vol(self,vol):
+		print 'VOL CHANGE', vol
 		self.vol=vol
 
 	validCommands={
