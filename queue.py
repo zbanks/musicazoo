@@ -1,13 +1,3 @@
-# All things that take commands need a validCommands dict pointing to their functions.
-
-# Command format:
-# { target: num,
-#   cmd: 'cmd',
-#   args: [] }
-#
-# no target: operate on queue
-# no args: ok
-
 import threading
 import time
 import yt
@@ -31,23 +21,35 @@ class MZQueue:
 
 	# help command
 	def getHelp(self):
-		return str(validCommands.keys())
+		return str(self.commands.keys())
 
 	# queue command
-	def lsQueue(self):
+	def get_queue(self):
 		return [{'uid':i,'type':obj.TYPE_STRING} for (i,obj) in self.queue]
 
 	# cur command
-	def lsCur(self):
-		return [{'uid':self.cur[0],'type':self.cur[1].TYPE_STRING}] if self.cur else []
+	def get_cur(self):
+		if self.cur is None:
+			return None
+		else:
+			return {'uid':self.cur[0],'type':self.cur[1].TYPE_STRING}
 
 	# statics command
-	def lsStatics(self):
+	def get_statics(self):
 		return [{'uid':i,'type':obj.TYPE_STRING} for (i,obj) in self.statics]
+
+	def get_capabilities(self):
+		return dict([(
+				mod.TYPE_STRING,
+				{
+					'commands':mod.commands.keys(),
+					'parameters':mod.parameters.keys()
+				}
+			) for mod in self.modules])
 
 	# add command
 	def addModule(self,name,*args):
-		mod_type=dict([(m.TYPE_STRING,m) for m in self.validModules])[name] # optimize me maybe
+		mod_type=dict([(m.TYPE_STRING,m) for m in self.modules])[name] # optimize me maybe
 		mod_inst=mod_type(*args)
 		self.queue.append((self.uid,mod_inst))
 		self.wakeup.release()
@@ -111,9 +113,12 @@ class MZQueue:
 		if not isinstance(args,list):
 			return errorPacket('Argument list not a list.')
 
+		cmdlist=obj.commands
+		cmdlist.update({'get':self.get_params})
+
 		try:
-			f=obj.validCommands[cmd]
-		except KeyError:
+			f=cmdlist[cmd]
+		except KeyError:	
 			return errorPacket('Bad command.')
 
 		try:
@@ -123,15 +128,22 @@ class MZQueue:
 
 		return goodPacket(result)
 
-	validCommands={
+
+	def get_params(self,obj,*paramlist):
+		valid_parameters=obj.parameters
+		valid_parameters.update({'str':lambda x:str(x)})
+		return dict([(param,valid_parameters[param](obj)) for param in paramlist])
+
+	commands={
 		'help':getHelp,
-		'queue':lsQueue,
-		'statics':lsStatics,
 		'add':addModule,
-		'cur':lsCur
+		'capabilities':get_capabilities,
+		'queue':get_queue,
+		'statics':get_statics,
+		'cur':get_cur
 	}
 
-	validModules=[
+	modules=[
 		yt.YoutubeModule
 	]
 
