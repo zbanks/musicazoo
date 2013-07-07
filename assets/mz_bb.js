@@ -1,3 +1,18 @@
+/*
+// Lets Flash from another domain call JavaScript
+var params = { allowScriptAccess: "always" };
+// The element id of the Flash embed
+var atts = { id: "ytPlayer" };
+// All of the magic handled by SWFObject (http://code.google.com/p/swfobject/)
+swfobject.embedSWF("http://www.youtube.com/apiplayer?enablejsapi=1&version=3",
+                   "video", "480", "295", "9", null, null, params, atts);
+function onYouTubePlayerReady(playerId) {
+console.log('YOUTUBE', playerId);
+  player = document.getElementById("ytPlayer");
+}
+*/
+
+
 // Underscore mixins
 _.mixin(_.str.exports());
 _.mixin({
@@ -28,13 +43,29 @@ Handlebars.registerHelper('minutes', function(seconds){
     }
 });
 
+Handlebars.registerHelper('ifPaused', function(status, options){
+    if(status == "paused"){
+        return options.fn();
+    }
+});
+Handlebars.registerHelper('ifPlaying', function(status, options){
+    if(status == "playing"){
+        return options.fn();
+    }
+});
+
+
 // Handlebars templates
 
 var TEMPLATE_NAMES = {"youtube": {queue: "youtube", active: "youtube_active"} };
 
 var TEMPLATES = _.chain({
     "youtube": '<a href="{{ url }}">{{ title }}</a> - [{{ minutes duration }}] -  ({{ status}}:{{site }})',
-    "youtube_active": '<a href="{{ url }}">{{ title }}</a> - [{{ minutes duration }}] - ({{ status}}:{{site }})',
+    "youtube_active": '<div id="youtube-video"></div>' + 
+                      '<a href="{{ url }}">{{ title }}</a> - [{{ minutes time }}/{{ minutes duration }}] - ({{ status}}:{{site }})' +
+                      '{{#ifPlaying status }}&nbsp;<a href="#" class="cmd" data-action="pause">pause</a>{{/ifPlaying}}' +
+                      '{{#ifPaused status }}&nbsp;<a href="#" class="cmd" data-action="resume">resume</a>{{/ifPaused}}' +
+                      '&nbsp;<a href="#" class="cmd" data-action="stop">stop</a>',
     "unknown": '(Unknown)',
     "unknown": '(Unknown)',
     "empty": '',
@@ -458,9 +489,9 @@ authenticate(function(capabilities){
 
     var ActionView = Backbone.View.extend({
         act_template: Handlebars.compile("{{{ html }}} <a href='#' class='rm'>rm</a>"),
-        tagName: "li",
         events: {
             "click .rm": "remove",
+            "click .cmd": "cmd",
         },
         initialize: function(){
             this.listenTo(this.model, "change", this.render);
@@ -479,11 +510,14 @@ authenticate(function(capabilities){
         remove: function(){
             console.log("Remove!", this.model);
             this.model.destroy();
-        }
-
+        },
+        cmd: function(ev){
+            var action = $(ev.target).attr("data-action");
+            deferQuery({cmd: "tell_module", args: {uid: this.model.id, cmd: action}});
+        },
     });
     var ActiveView = ActionView.extend({
-        act_template: Handlebars.compile("{{{ html }}} <a href='#' class='rm'>stop</a>"),
+        act_template: Handlebars.compile("{{{ html }}}"),
     });
 
     var QueueView = Backbone.View.extend({

@@ -7,6 +7,7 @@
     <script type="text/javascript" src="./assets/jquery-ui.js"></script>
     <script type="text/javascript" src="./assets/backbone.js"></script>
     <script type="text/javascript" src="./assets/handlebars.js"></script>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/swfobject/2.2/swfobject.js"></script>
     <script type="text/javascript">
         window.volume = 45;
         window.no_autorefresh = false;
@@ -24,8 +25,8 @@
 
         <div class="controls">
             <!-- <a href="/help" id="help">Help</a> -->
-            <a href="/msg?queue_cmd=rm&running=1" >Kill</a>
-            <a href="/msg?queue_cmd=rm&all=1" >Clear</a>
+            <a href="#" >Kill</a>
+            <a href="#" >Clear</a>
             <a class="nohover">Volume:</a>
         </div>
         
@@ -40,6 +41,7 @@
 
         <div class="playlist">
             <h2>Playlist</h2>
+            <div id="video"></div>
 
             <!--
             <span><a class="rm" href="/msg?queue_cmd=rm&all=all">Clear All</a></span>

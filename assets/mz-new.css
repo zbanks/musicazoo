@@ -140,6 +140,9 @@ a {
 a:hover {
 	opacity: 0.8;
 }
+a.nohover:hover{
+    opacity: 1;
+}
 
 .ui-slider {
 	background-color: transparent;
@@ -169,7 +172,7 @@ a:hover {
 	display: none;
 }
 
-a.related, a.rm {
+a.related, a.rm, a.btn, a.cmd {
 	background: #F3FDE1;
 	color: #406873;
 	padding: 1px 3px;
