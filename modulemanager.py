@@ -1,14 +1,13 @@
 class ModuleManager:
-
-	universal_commands={
-	}
-
-	universal_parameters={
-		'str':str
-	}
-
 	def __init__(self,modules=[]):
 		self.modules=modules
+
+		self.universal_commands={
+		}
+
+		self.universal_parameters={
+			'str':str
+		}
 
 	def get_capabilities(self):
 		cap=dict([(
@@ -21,7 +20,11 @@ class ModuleManager:
 		return {'commands':self.universal_commands.keys(),'parameters':self.universal_parameters.keys(),'specifics':cap}
 
 	def get_parameter(self,module,parameter):
-		return module.parameters[parameter](module)
+		if parameter in self.universal_parameters:
+			return self.universal_parameters[parameter](module)
+		if parameter in module.parameters:
+			return module.parameters[parameter](module)
+		raise Exception("Module has no such parameter")
 
 	def get_multiple_parameters(self,module,parameter_list):
 		return dict([(parameter,self.get_parameter(module,parameter)) for parameter in parameter_list])
@@ -31,7 +34,9 @@ class ModuleManager:
 		return mod_class(**args)
 
 	def tell(self,module,cmd,args):
-		if cmd not in module.commands:
-			raise Exception("Command unknown to module")
-		return module.commands[cmd](module,**args)
+		if cmd in self.universal_commands:
+			return self.universal_commands[cmd](module,**args)
+		if cmd in module.commands:
+			return module.commands[cmd](module,**args)
+		raise Exception("Module has no such command")
 
