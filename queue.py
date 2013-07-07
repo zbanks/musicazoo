@@ -44,6 +44,20 @@ class MZQueue:
 		self.wakeup.release()
 		self.updateUID()
 
+	def rm(self,uids):
+		self.queue=[(uid,obj) for (uid,obj) in self.queue if uid not in uids]
+
+	def mv(self,uids):
+		newqueue=[]
+		oldqueue=[uid for (uid,obj) in self.queue]
+		d=dict(self.queue)
+		for uid in uids:
+			if uid in oldqueue:
+				oldqueue.remove(uid)
+				newqueue.append(uid)
+		newqueue+=oldqueue
+		self.queue=[(uid,d(uid)) for uid in newqueue]
+
 	def get_statics(self,parameters):
 		return self.statics.bulk_get_parameters(parameters)
 
@@ -135,6 +149,8 @@ class MZQueue:
 		return goodPacket(result)
 
 	commands={
+		'rm':rm,
+		'mv':mv,
 		'add':add,
 		'queue':get_queue,
 		'cur':get_cur,
