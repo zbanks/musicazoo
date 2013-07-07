@@ -8,9 +8,16 @@ import json
 HOST_NAME = ''
 PORT_NUMBER = 9000
 
+from modulemanager import *
+from staticmanager import *
+
+import modules.youtube
 import statics.volume
 
-q=queue.MZQueue([statics.volume.Volume()])
+mm=ModuleManager([modules.youtube.Youtube])
+sm=StaticManager([statics.volume.Volume])
+
+q=queue.MZQueue(mm,sm)
 qm=queue.MZQueueManager(q)
 qm.start()
 

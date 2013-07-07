@@ -3,6 +3,7 @@ import time
 import youtube_dl
 from youtube_dl.utils import *
 import vlc
+import threading
 
 class Youtube:
 	TYPE_STRING='youtube'
@@ -14,7 +15,9 @@ class Youtube:
 		self.site=None
 		self.media=None
 		self.status='added'
-		self.getVideoInfo(url)
+		t=threading.Thread(target=self.getVideoInfo, args=(url))
+		t.daemon=True
+		t.start()
 
 	def get_url(self):
 		return self.url
@@ -24,6 +27,9 @@ class Youtube:
 		self.getVideoInfo(self.url)
 		self.vlcPlay()
 		self.status='finishing'
+
+	def pause(self):
+		pass
 
 	def vlcPlay(self):
 		os.environ["DISPLAY"] = ":0"
@@ -73,6 +79,7 @@ class Youtube:
 	# Class variables
 
 	commands={
+		'pause':pause
 	}
 
 	parameters={
