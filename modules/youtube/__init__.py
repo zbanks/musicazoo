@@ -97,7 +97,7 @@ class Youtube:
 		self.status='playing'
 
 	def vlcPlay(self):
-		os.environ["DISPLAY"] = ":0"
+		#os.environ["DISPLAY"] = ":0"
 		self.vlc_i = vlc.Instance(['-f','--no-video-title-show',self.media])
 		self.vlc_mp = self.vlc_i.media_player_new()
 		vlc_media=self.vlc_i.media_new_location(self.media)
@@ -164,7 +164,6 @@ class Youtube:
 			return False
 
 		vinfo=info['entries'][0]
-		print vinfo
 		if 'title' in vinfo:
 			self.title=vinfo['title']
 		if 'duration' in vinfo:
