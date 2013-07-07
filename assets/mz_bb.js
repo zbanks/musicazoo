@@ -23,10 +23,23 @@ Handlebars.registerHelper('minutes', function(seconds){
     return output
 });
 
+// Handlebars templates
+
+var TEMPLATE_NAMES = {"youtube": {queue: "youtube", active: "youtube_active"} };
+
+var TEMPLATES = _.chain({
+    "youtube": '<a href="{{ url }}">{{ title }}</a> - [{{ minutes duration }}] -  ({{ status}}:{{site }})',
+    "youtube_active": '<a href="{{ url }}">{{ title }}</a> - [{{ minutes duration }}] - ({{ status}}:{{site }})',
+    "unknown": '(Unknown)',
+    "unknown": '(Unknown)',
+    "empty": '',
+    "nothing": '(Nothing)',
+}).map(function(v, k){ return [k, Handlebars.compile(v)] }).object().value();
+
 // NLP Constants
 
 var COMMANDS = [
-    {
+    { // Youtube
         keywords: ["youtube"],
         regex: /.*youtube.com.*watch.*v.*/, 
         module: "youtube",
@@ -34,7 +47,7 @@ var COMMANDS = [
             return match;
         }
     },
-    {
+    { // Youtube (Keyword search)
         regex: /.*/, 
         module: "youtube",
         args: function(match){
@@ -109,28 +122,6 @@ function authenticate(cb){
     });
 }
 
-/*
-// http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
-//connect items with observableArrays
-ko.bindingHandlers.sortableList = {
-  init: function(element, valueAccessor) {
-      var list = valueAccessor();
-      $(element).sortable({
-          update: function(event, ui) {
-              //retrieve our actual data item
-              var item = ui.item.tmplItem().data;
-              //figure out its new position
-              var position = ko.utils.arrayIndexOf(ui.item.parent().children(), ui.item[0]);
-              //remove the item and add it back in the right spot
-              if (position >= 0) {
-                  list.remove(item);
-                  list.splice(position, 0, item);
-              }
-          }
-      });
-  }
-};
-*/
 
 $(document).ready(function(){
     $("#queueform").submit(function(e){
@@ -228,30 +219,6 @@ $(document).ready(function(){
         return true;
     });
 
-    $(".queueform").submit(function(){
-        if($("input[type=file]").val()){
-            return;
-        }
-        var query = $(".addtxt").val();
-        if(!query){
-            return false;
-        }
-        $(".addtxt").val("");
-        $.post("/add/" + encodeURIComponent(query),  function(data){
-            console.log(data);
-            if(!data.success){
-                $("div.error").html(data.error).show(300, function(){
-                    setTimeout(5000, function(){
-                        $("div.error").hide(200);
-                    });
-                });
-            }
-            refreshPlaylist();
-            $(".addtxt").val("");
-        });
-        return false; // Prevent form submitting
-    });
-
     */
     
 
@@ -286,19 +253,6 @@ var updateSlider = function(value){
 
 
 
-var TEMPLATE_NAMES = {"youtube": {queue: "youtube", active: "youtube_active"} };
-var TEMPLATES = _.chain({
-    "youtube": '<a href="{{ url }}">{{ title }}</a> - [{{ minutes duration }}] -  ({{ status}}:{{site }})',
-    "youtube_active": '<a href="{{ url }}">{{ title }}</a> - [{{ minutes duration }}] - ({{ status}}:{{site }})',
-    "unknown": '(Unknown)',
-    "unknown": '(Unknown)',
-    "empty": '',
-    "nothing": '(Nothing)',
-}).map(function(v, k){ return [k, Handlebars.compile(v)] }).object().value();
-
-var QUEUE_TEMPLATE = Handlebars.compile('{{#each this}}\n<li>{{{this}}}</li>{{/each}}');
-
-
 authenticate(function(capabilities){
     var modules = _.objectMap(capabilities.modules.specifics, function(x){ 
         x.commands = x.commands.concat(capabilities.modules.commands); 
@@ -315,37 +269,9 @@ authenticate(function(capabilities){
     console.log(module_capabilities);
     console.log(static_capabilities);
     Backbone.sync = function(method, model, options){
-        /*
-        if(method == "read"){
-            _.each(model.parameters, function(k){
-                deferQuery({cmd: "get_" + k, target: model.id}, function(v){
-                    model.set(k, v); 
-                });
-            });
-        }else if(method == "update"){
-            _.each(model.parameters, function(k){
-                if(model.hasChanged(k)){
-                    deferQuery({cmd: "set_" + k, target: model.id, args: [model.get(k)]});
-                }
-            });
-        }else if(method == "delete"){
-            deferQuery({cmd: "rm", target: 0, args: [model.id]});
-        }else if(method == "create"){
-            //TODO
-            console.log("Can't create");
-            deferQuery({cmd: "add"});
-        }
-        runQueries(function(){
-            options.success(model)
-        });
-        return true;
-        */
         console.error("unsupported sync");
         console.log(method, model, options);
     }
-        
-
-
 
     var Action = Backbone.Model.extend({
         defaults: function(){
@@ -424,20 +350,6 @@ authenticate(function(capabilities){
         }
     });
     
-    /*
-    _.each(modules, function(v, k){
-        modules[k].Model = Action.extend({
-            type: k,
-            parameters: function(){
-                return v.parameters;
-            },
-            commands: function(){
-                return v.commands;
-            }
-        });
-    });
-    */
-
     var Static = Backbone.Model.extend({
         defaults: function(){
             return {
