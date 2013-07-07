@@ -102,6 +102,7 @@ class Youtube:
 		self.vlc_mp = self.vlc_i.media_player_new()
 		vlc_media=self.vlc_i.media_new_location(self.media)
 		self.vlc_mp.set_media(vlc_media)
+		self.vlc_mp.set_xwindow(0)
 		self.vlc_mp.set_fullscreen(True)
 
 		self.vlc_mp.play()
