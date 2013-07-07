@@ -13,6 +13,13 @@ sm=StaticManager([Volume()])
 q=MZQueue(mm,sm)
 print q.doCommand({'cmd':'module_capabilities'})
 print q.doCommand({'cmd':'static_capabilities'})
+
+print q.doCommand({'cmd':'statics','args':{'parameters':{'0':['vol']}}})
+print q.doCommand({'cmd':'tell_static','args':{'uid':'0','cmd':'set_vol','args':{'vol':30}}})
+print q.doCommand({'cmd':'statics','args':{'parameters':{'0':['vol']}}})
+
+'''
+
 print q.doCommand({'cmd':'statics','args':{'parameters':{0:['vol']}}})
 print q.doCommand({'cmd':'add','args':{'type':'youtube','args':{'url':'asdf'}}})
 print q.doCommand({'cmd':'add','args':{'type':'youtube','args':{'url':'ghjk'}}})
@@ -20,6 +27,7 @@ print q.doCommand({'cmd':'add','args':{'type':'youtube','args':{'url':'ghjk'}}})
 print q.doCommand({'cmd':'queue'})
 print q.doCommand({'cmd':'mv','args':{'uids':[u'1',u'0']}})
 print q.doCommand({'cmd':'queue'})
+'''
 
 '''
 print q.doCommand({'cmd':'queue','args':{'parameters':{'youtub':['url']}}})

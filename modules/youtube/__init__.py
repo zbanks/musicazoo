@@ -117,6 +117,7 @@ class Youtube:
 					self.status='playing'
 				self.duration=float(duration)/1000
 				self.time=float(self.vlc_mp.get_time())/1000
+		self.vlc_mp.stop()
 
 	# Class variables
 

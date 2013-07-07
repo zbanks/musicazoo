@@ -1,13 +1,14 @@
+import alsaaudio
+
 class Volume:
 	def __init__(self):
-		self.vol=50
+		self.mixer=alsaaudio.Mixer()
 
 	def get_vol(self):
-		return self.vol
+		return int(self.mixer.getvolume()[0])
 
 	def set_vol(self,vol):
-		print 'VOL CHANGE', vol
-		self.vol=vol
+		self.mixer.setvolume(vol)
 
 	commands={
 		'set_vol':set_vol
