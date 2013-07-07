@@ -15,6 +15,9 @@ class Youtube:
 		self.duration=None
 		self.site=None
 		self.media=None
+		self.thumbnail=None
+		self.description=None
+		self.time=None
 		self.status='added'
 		t=threading.Thread(target=self.getVideoInfo, args=[url])
 		t.daemon=True
@@ -37,6 +40,15 @@ class Youtube:
 
 	def get_status(self):
 		return self.status
+
+	def get_thumbnail(self):
+		return self.thumbnail
+
+	def get_description(self):
+		return self.description
+
+	def get_time(self):
+		return self.time
 
 	def play(self):
 		self.status='loading'
@@ -64,42 +76,17 @@ class Youtube:
 		self.vlc_mp.set_media(media)
 		self.vlc_mp.set_fullscreen(True)
 
-		self.status='playing'
 		self.vlc_mp.play()
-
-		'''
-		if not self.duration:
-		    for i in range(10):
-			self.duration = self.vlc_mp.get_length() / 1000
-			if self.duration != -1:
-			    self.loaded = True
-			    break
-			print 'waiting for dir'
-			time.sleep(0.2)
-		    else:
-			self.duration = 0
-		print 'dur', self.duration
-		timeat = lambda x: "%d:%02d" % (x / 60, x % 60)
-		'''
 
 		# Loop continuously, getting output and setting titles
 		while self.vlc_mp.get_state() != vlc.State.Ended :
-			time.sleep(0.5)
-
-			'''		    
-		    self.seconds = self.vlc_mp.get_time() / 1000
-		    self.duration = max(self.vlc_mp.get_length() / 1000, self.duration)
-		    if self.seconds == -1:
-			self.seconds = 0
-			self.loaded = False
-		    else:
-			self.loaded = True
-
-		    if self.url:
-			self.playing_html = "VLC - <a href='%s'>%s</a> [%s/%s] %s <span class='ytprogress'></span>" % (self.url, self.title, timeat(self.seconds), timeat(self.duration), buttons) 
-		    else:
-			self.playing_html = "VLC - %s [%s:%s] %s" % (self.title, timeat(self.seconds), timeat(self.duration), buttons) 
-			'''
+			time.sleep(0.1)
+			duration=self.vlc_mp.get_length()
+			if duration>0:
+				if self.status=='loading':
+					self.status='playing'
+				self.duration=float(duration)/1000
+				self.time=float(self.vlc_mp.get_time())/1000
 
 	# Class variables
 
@@ -114,7 +101,10 @@ class Youtube:
 		'duration':get_duration,
 		'site':get_site,
 		'media':get_media,
+		'thumbnail':get_thumbnail,
+		'description':get_description,
 		'status':get_status,
+		'time':get_time,
 	}
 
 	# Low-level stuff.
@@ -145,6 +135,10 @@ class Youtube:
 			self.site=vinfo['extractor']
 		if 'url' in vinfo:
 			self.media=vinfo['url']
+		if 'thumbnail' in vinfo:
+			self.thumbnail=vinfo['thumbnail']
+		if 'description' in vinfo:
+			self.description=vinfo['description']
 		if self.status=='added':
 			self.status='ready'
 
