@@ -1,3 +1,6 @@
+// Mixin underscore.string
+_.mixin(_.str.exports());
+
 var volume_lockout = false;
 setInterval(function(){ volume_lockout = false; }, 500);
 _.mixin({
@@ -100,7 +103,16 @@ $(document).ready(function(){
         return false; // Prevent form submitting
     });
 
+    $("a.push").on("click", function(){
+        console.log("!!!");
+        var $this = $(this);
+        $(".addtxt").val($this.attr("content"));
+        $(".results").html("");
+        $("#queueform").submit();
+    });
+
     $("input.addtxt").keyup(function(){
+        console.log('asdf');
         var query = $(this).val();
         if(query == ""){
             $(".results").html("");
@@ -112,7 +124,7 @@ $(document).ready(function(){
 
             for(var j = 0; j < data.data.items.length && j < 5; j++){
                 var vid = data.data.items[j];
-                list.append($("<a href='/add/youtube/" + vid.id + "'><li>" + vid.title + "</li></a>"));
+                list.append($("<a class='push' href='#' content='http://youtube.com/watch?v=" + vid.id + "'><li>" + vid.title + "</li></a>"));
             }
             $(".results").html("").append(list);
         });
