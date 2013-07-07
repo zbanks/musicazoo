@@ -18,16 +18,16 @@ class StaticManager:
 		return l
 
 	def get_parameter(self,static,parameter):
-		return static.parameters[parameter]()
+		return static.parameters[parameter](static)
 
 	def get_multiple_parameters(self,static,parameter_list):
-		return dict([(parameter,get_parameter(static,parameter)) for parameter in parameter_list])
+		return dict([(parameter,self.get_parameter(static,parameter)) for parameter in parameter_list])
 
 	def bulk_get_parameters(self,parameters):
 		return dict([(
 			uid,
-			self.get_parameter_list(self.statics[uid],parameter_list)
-		) for (uid,parameter_list) in parameters])
+			self.get_multiple_parameters(self.statics[uid],parameter_list)
+		) for (uid,parameter_list) in parameters.iteritems()])
 
 	def tell(self,static_uid,cmd,args):
 		if static_uid not in self.statics:

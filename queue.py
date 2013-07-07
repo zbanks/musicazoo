@@ -45,7 +45,7 @@ class MZQueue:
 		self.updateUID()
 
 	def get_statics(self,parameters):
-		return self.statics.bulk_get_parameters(self,parameters)
+		return self.statics.bulk_get_parameters(parameters)
 
 	def static_capabilities(self):
 		return self.statics.get_capabilities()
@@ -115,7 +115,7 @@ class MZQueue:
 		try:
 			result=f(self,*args)
 		except Exception as e:
-			raise
+			raise # For debugging, remove this for production
 			return errorPacket(str(e))
 
 		return goodPacket(result)
