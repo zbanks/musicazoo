@@ -24,10 +24,13 @@ qm.start()
 from SocketServer import ThreadingMixIn
 from BaseHTTPServer import HTTPServer
 
-class MultiThreadedHTTPServer(ThreadingMixIn, HTTPServer):
+class MultiThreadedHTTPServer(ThreadingMixIn,HTTPServer):
 	pass
 
 class MZHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+	def address_string(self):
+		return str(self.client_address[0])
+
 	def do_HEAD(s):
 		s.send_response(200)
 		s.send_header("Content-type", "text/json")
