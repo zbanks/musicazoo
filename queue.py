@@ -45,7 +45,7 @@ class MZQueue:
 		self.updateUID()
 
 	def rm(self,uids):
-		self.queue=[(uid,obj) for (uid,obj) in self.queue if uid not in uids]
+		self.queue=[(uid,obj) for (uid,obj) in self.queue if uid not in [int(uid) for uid in uids]]
 
 	def mv(self,uids):
 		newqueue=[]
@@ -57,7 +57,7 @@ class MZQueue:
 				oldqueue.remove(uid)
 				newqueue.append(uid)
 		newqueue+=oldqueue
-		self.queue=[(uid,d(uid)) for uid in newqueue]
+		self.queue=[(uid,d[uid]) for uid in newqueue]
 
 	def get_statics(self,parameters):
 		return self.statics.bulk_get_parameters(parameters)

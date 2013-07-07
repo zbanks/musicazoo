@@ -15,6 +15,13 @@ print q.doCommand({'cmd':'module_capabilities'})
 print q.doCommand({'cmd':'static_capabilities'})
 print q.doCommand({'cmd':'statics','args':{'parameters':{0:['vol']}}})
 print q.doCommand({'cmd':'add','args':{'type':'youtube','args':{'url':'asdf'}}})
+print q.doCommand({'cmd':'add','args':{'type':'youtube','args':{'url':'ghjk'}}})
+
+print q.doCommand({'cmd':'queue'})
+print q.doCommand({'cmd':'mv','args':{'uids':[1,0]}})
+print q.doCommand({'cmd':'queue'})
+
+'''
 print q.doCommand({'cmd':'queue','args':{'parameters':{'youtub':['url']}}})
 print q.doCommand({'cmd':'queue','args':{'parameters':{'youtube':['url']}}})
 print q.doCommand({'cmd':'ask_module','args':{'uid':0,'parameters':['url','str']}})
@@ -22,3 +29,4 @@ q.next()
 print q.doCommand({'cmd':'cur','args':{'parameters':{'youtube':['url']}}})
 print q.doCommand({'cmd':'tell_module','args':{'uid':0,'cmd':'pause'}})
 print q.doCommand({'cmd':'tell_static','args':{'uid':0,'cmd':'set_vol','args':{'vol':100}}})
+'''
