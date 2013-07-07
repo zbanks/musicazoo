@@ -1,6 +1,7 @@
 import threading
 import time
-import yt
+
+import modules.youtube
 
 class MZQueue:
 	def __init__(self,statics=[]):
@@ -35,17 +36,24 @@ class MZQueue:
 			return {'uid':self.cur[0],'type':self.cur[1].TYPE_STRING}
 
 	# statics command
-	def get_statics(self):
-		return [{'uid':i,'type':obj.TYPE_STRING} for (i,obj) in self.statics]
+	def get_static_capabilities(self):
+		l=[]
+		for (i,obj) in self.statics:
+			d=obj.constants
+			d.update({
+			'uid':i,
+			'commands':obj.commands.keys(),
+			'parameters':obj.parameters.keys(),
+			})
+			l.append(d)
+		return l
 
-	def get_capabilities(self):
-		return dict([(
-				mod.TYPE_STRING,
-				{
-					'commands':mod.commands.keys(),
-					'parameters':mod.parameters.keys()
-				}
-			) for mod in self.modules])
+	def get_module_capabilities(self):
+		return [{
+				'type':mod.TYPE_STRING,
+				'commands':mod.commands.keys(),
+				'parameters':mod.parameters.keys()
+			} for mod in self.modules]
 
 	# add command
 	def addModule(self,name,*args):
@@ -133,14 +141,14 @@ class MZQueue:
 	commands={
 		'help':getHelp,
 		'add':addModule,
-		'capabilities':get_capabilities,
+		'capabilities':get_module_capabilities,
 		'queue':get_queue,
-		'statics':get_statics,
+		'statics':get_static_capabilities,
 		'cur':get_cur
 	}
 
 	modules=[
-		yt.YoutubeModule
+		modules.youtube.Youtube
 	]
 
 # End class MZQueue

@@ -1,6 +1,4 @@
-class VolumeModule:
-	TYPE_STRING="volume"
-
+class Volume:
 	def __init__(self):
 		self.vol=50
 
@@ -10,7 +8,14 @@ class VolumeModule:
 	def set_vol(self,vol):
 		self.vol=vol
 
-	validCommands={
-		'get_vol':get_vol,
+	commands={
 		'set_vol':set_vol
+	}
+
+	parameters={
+		'vol':get_vol
+	}
+
+	constants={
+		'class':'volume'
 	}
