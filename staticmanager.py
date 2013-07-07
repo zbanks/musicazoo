@@ -25,7 +25,7 @@ class StaticManager:
 
 	def bulk_get_parameters(self,parameters):
 		return dict([(
-			uid,
+			int(uid),
 			self.get_multiple_parameters(self.statics[int(uid)],parameter_list)
 		) for (uid,parameter_list) in parameters.iteritems()])
 
