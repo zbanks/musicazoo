@@ -62,6 +62,12 @@ class Youtube:
 		self.vlc_mp.pause()
 		self.status='paused'
 
+	def stop(self):
+		if self.status != 'playing' and self.status != 'paused':
+			raise Exception("Video is not playing nor paused")
+		self.vlc_mp.stop()
+		self.status='stopped'
+
 	def resume(self):
 		if self.status != 'paused':
 			raise Exception("Video is not paused")
@@ -93,6 +99,7 @@ class Youtube:
 	commands={
 		'pause':pause,
 		'resume':resume,
+		'stop':stop,
 	}
 
 	parameters={
