@@ -20,20 +20,28 @@ class MZQueue:
 	def updateUID(self):
 		self.uid+=1
 
-	# help command
-	def getHelp(self):
-		return str(self.commands.keys())
-
 	# queue command
-	def get_queue(self):
-		return [{'uid':i,'type':obj.TYPE_STRING} for (i,obj) in self.queue]
+	def get_queue(self,capabilities={}):
+		l=[]
+		for (i,obj) in self.queue:
+			d={'uid':i,'type':obj.TYPE_STRING}
+			if obj.TYPE_STRING in capabilities:
+				d['parameters']=self.get_params(obj,*(capabilities[obj.TYPE_STRING]))
+			l.append(d)
+		return l
 
 	# cur command
-	def get_cur(self):
+	def get_cur(self,capabilities={}):
 		if self.cur is None:
 			return None
-		else:
-			return {'uid':self.cur[0],'type':self.cur[1].TYPE_STRING}
+
+		(uid,obj)=self.cur
+
+		d={'uid':uid,'type':obj.TYPE_STRING}
+		if obj.TYPE_STRING in capabilities:
+			d['parameters']=self.get_params(obj,*(capabilities[obj.TYPE_STRING]))
+
+		return d
 
 	# statics command
 	def get_static_capabilities(self):
@@ -52,7 +60,7 @@ class MZQueue:
 		return [{
 				'type':mod.TYPE_STRING,
 				'commands':mod.commands.keys(),
-				'parameters':mod.parameters.keys()
+				'parameters':mod.parameters.keys(),
 			} for mod in self.modules]
 
 	# add command
@@ -135,11 +143,10 @@ class MZQueue:
 
 	def get_params(self,obj,*paramlist):
 		valid_parameters=obj.parameters
-		valid_parameters.update({'str':lambda x:str(x)})
+		valid_parameters.update({'str':str})
 		return dict([(param,valid_parameters[param](obj)) for param in paramlist])
 
 	commands={
-		'help':getHelp,
 		'add':addModule,
 		'capabilities':get_module_capabilities,
 		'queue':get_queue,
