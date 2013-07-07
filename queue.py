@@ -15,31 +15,31 @@ class MZQueue:
 		self.uid+=1
 
 	# queue command
-	def get_queue(self,capabilities={}):
+	def get_queue(self,parameters={}):
 		l=[]
 		for (uid,obj) in self.queue:
 			d={'uid':uid,'type':obj.TYPE_STRING}
-			if obj.TYPE_STRING in capabilities:
-				d['parameters']=self.modules.get_multiple_parameters(obj,capabilities[obj.TYPE_STRING])
+			if obj.TYPE_STRING in parameters:
+				d['parameters']=self.modules.get_multiple_parameters(obj,parameters[obj.TYPE_STRING])
 			l.append(d)
 		return l
 
 	# cur command
-	def get_cur(self,capabilities={}):
+	def get_cur(self,parameters={}):
 		if self.cur is None:
 			return None
 
 		(uid,obj)=self.cur
 
 		d={'uid':uid,'type':obj.TYPE_STRING}
-		if obj.TYPE_STRING in capabilities:
-			d['parameters']=self.modules.get_multiple_parameters(obj,capabilities[obj.TYPE_STRING])
+		if obj.TYPE_STRING in parameters:
+			d['parameters']=self.modules.get_multiple_parameters(obj,parameters[obj.TYPE_STRING])
 
 		return d
 
 	# add command
-	def add(self,name,*args):
-		mod_inst=self.modules.instantiate(name,*args)
+	def add(self,type,args):
+		mod_inst=self.modules.instantiate(type,args)
 		self.queue.append((self.uid,mod_inst))
 		self.wakeup.release()
 		self.updateUID()
@@ -53,13 +53,13 @@ class MZQueue:
 	def module_capabilities(self):
 		return self.modules.get_capabilities()
 
-	def tell_module(self,uid,cmd,*args):
+	def tell_module(self,uid,cmd,args={}):
 		d=dict(self.queue+([self.cur] or []))
 		if uid not in d:
 			raise Exception("Module identifier not in queue or cur")
 		return self.modules.tell(d[uid],cmd,args)
 
-	def tell_static(self,uid,cmd,*args):
+	def tell_static(self,uid,cmd,args):
 		return self.statics.tell(uid,cmd,args)
 
 	# Changes out the current module for the top of the queue
@@ -102,10 +102,10 @@ class MZQueue:
 		try:
 			args=line['args']
 		except KeyError:
-			args=[]
+			args={}
 
-		if not isinstance(args,list):
-			return errorPacket('Argument list not a list.')
+		if not isinstance(args,dict):
+			return errorPacket('Argument list not a dict.')
 
 		try:
 			f=self.commands[cmd]
@@ -113,7 +113,7 @@ class MZQueue:
 			return errorPacket('Bad command.')
 
 		try:
-			result=f(self,*args)
+			result=f(self,**args)
 		except Exception as e:
 			raise # For debugging, remove this for production
 			return errorPacket(str(e))

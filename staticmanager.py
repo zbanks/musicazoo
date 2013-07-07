@@ -35,5 +35,5 @@ class StaticManager:
 		static=self.statics[static_uid]
 		if cmd not in static.commands:
 			raise Exception("Command unknown to static")
-		return static.commands[cmd](static,*args)
+		return static.commands[cmd](static,**args)
 			
