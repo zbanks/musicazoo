@@ -9,7 +9,9 @@ import os
 class Youtube:
 	TYPE_STRING='youtube'
 
-	def __init__(self,url):
+	def __init__(self,queue,uid,url):
+		self.queue=queue
+		self.uid=uid
 		self.url=url
 		self.title=None
 		self.duration=None
@@ -52,23 +54,30 @@ class Youtube:
 
 	def play(self):
 		self.status='loading'
-		self.getVideoInfo(self.url)
+		if not self.getVideoInfo(self.url):
+			return
 		self.vlcPlay()
 		self.status='finishing'
 
 	def pause(self):
+		if self.status == 'paused':
+			return
 		if self.status != 'playing':
 			raise Exception("Video is not playing")
 		self.vlc_mp.pause()
 		self.status='paused'
 
 	def stop(self):
+		if self.status == 'stopped':
+			return
 		if self.status != 'playing' and self.status != 'paused':
 			raise Exception("Video is not playing nor paused")
 		self.vlc_mp.stop()
 		self.status='stopped'
 
 	def resume(self):
+		if self.status == 'playing':
+			return
 		if self.status != 'paused':
 			raise Exception("Video is not paused")
 		self.vlc_mp.play()
@@ -131,7 +140,13 @@ class Youtube:
 
 		y=youtube_dl.YoutubeDL({'outtmpl':'','format':'18'}) # empty outtmpl needed due to weird issue in youtube-dl
 		y.add_default_info_extractors()
-		info=y.extract_info(url,download=False)
+
+		try:
+			info=y.extract_info(url,download=False)
+		except Exception:
+			self.status='invalid'
+			self.queue.removeMeAsync(self.uid) # Remove if possible
+			return False
 
 		vinfo=info['entries'][0]
 		if 'title' in vinfo:
@@ -148,6 +163,8 @@ class Youtube:
 			self.description=vinfo['description']
 		if self.status=='added':
 			self.status='ready'
+
+		return True
 
 if __name__=='__main__':
 	m=Youtube("http://www.youtube.com/watch?v=F57P9C4SAW4")

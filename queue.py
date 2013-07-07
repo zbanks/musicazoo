@@ -39,7 +39,7 @@ class MZQueue:
 
 	# add command
 	def add(self,type,args):
-		mod_inst=self.modules.instantiate(type,args)
+		mod_inst=self.modules.instantiate(type,self,self.uid,args)
 		self.queue.append((self.uid,mod_inst))
 		self.wakeup.release()
 		self.updateUID()
@@ -117,6 +117,10 @@ class MZQueue:
 		self.lock.release()
 		return result
 
+	# Removes a module asynchronously
+	def removeMeAsync(self,uid):
+		self.sync(lambda:self.rm([uid]))
+
 	# Parse and run a command
 	def doCommand(self,line):
 		if not isinstance(line,dict):
@@ -143,7 +147,6 @@ class MZQueue:
 		try:
 			result=f(self,**args)
 		except Exception as e:
-			raise # For debugging, remove this for production
 			return errorPacket(str(e))
 
 		return goodPacket(result)

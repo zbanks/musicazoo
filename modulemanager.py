@@ -29,9 +29,11 @@ class ModuleManager:
 	def get_multiple_parameters(self,module,parameter_list):
 		return dict([(parameter,self.get_parameter(module,parameter)) for parameter in parameter_list])
 
-	def instantiate(self,name,args):
+	def instantiate(self,name,queue,uid,args):
+		if 'queue' in args or 'uid' in args:
+			raise Exception('arg list cannot contain queue or uid')
 		mod_class=dict([(m.TYPE_STRING,m) for m in self.modules])[name] # optimize me maybe
-		return mod_class(**args)
+		return mod_class(queue,uid,**args)
 
 	def tell(self,module,cmd,args):
 		if cmd in self.universal_commands:
