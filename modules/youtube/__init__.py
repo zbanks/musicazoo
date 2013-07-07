@@ -103,7 +103,7 @@ class Youtube:
 		self.vlc_mp.play()
 
 		# Loop continuously, getting output and setting titles
-		while self.vlc_mp.get_state() != vlc.State.Ended :
+		while self.vlc_mp.get_state() not in [vlc.State.Ended,vlc.State.Stopped]:
 			time.sleep(0.1)
 			duration=self.vlc_mp.get_length()
 			if duration>0:
