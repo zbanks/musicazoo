@@ -54,12 +54,26 @@ class MZQueue:
 		return self.modules.get_capabilities()
 
 	def tell_module(self,uid,cmd,args={}):
-		d=dict(self.queue+([self.cur] or []))
+		uid=int(uid)
+		d=self.available_modules()
 		if uid not in d:
 			raise Exception("Module identifier not in queue or cur")
 		return self.modules.tell(d[uid],cmd,args)
 
+	def available_modules(self):
+		if self.cur is None:
+			return dict(self.queue)
+		return dict(self.queue+[self.cur])
+
+	def ask_module(self,uid,parameters):
+		uid=int(uid)
+		d=self.available_modules()
+		if uid not in d:
+			raise Exception("Module identifier not in queue or cur")
+		return self.modules.get_multiple_parameters(d[uid],parameters)
+
 	def tell_static(self,uid,cmd,args):
+		uid=int(uid)
 		return self.statics.tell(uid,cmd,args)
 
 	# Changes out the current module for the top of the queue
@@ -129,6 +143,7 @@ class MZQueue:
 		'module_capabilities':module_capabilities,
 		'tell_module':tell_module,
 		'tell_static':tell_static,
+		'ask_module':ask_module,
 	}
 
 # End class MZQueue

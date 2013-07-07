@@ -29,11 +29,11 @@ class StaticManager:
 			self.get_multiple_parameters(self.statics[uid],parameter_list)
 		) for (uid,parameter_list) in parameters.iteritems()])
 
-	def tell(self,static_uid,cmd,args):
-		if static_uid not in self.statics:
+	def tell(self,uid,cmd,args):
+		if uid not in self.statics:
 			raise Exception("Static identifier not found")
-		static=self.statics[static_uid]
+		static=self.statics[uid]
 		if cmd not in static.commands:
 			raise Exception("Command unknown to static")
 		return static.commands[cmd](static,**args)
-			
+

@@ -1,15 +1,24 @@
 class ModuleManager:
+
+	universal_commands={
+	}
+
+	universal_parameters={
+		'str':str
+	}
+
 	def __init__(self,modules=[]):
 		self.modules=modules
 
 	def get_capabilities(self):
-		return dict([(
+		cap=dict([(
 			module.TYPE_STRING,
 			{
 				'commands':module.commands.keys(),
 				'parameters':module.parameters.keys(),
 			}
 		) for module in self.modules])
+		return {'commands':self.universal_commands.keys(),'parameters':self.universal_parameters.keys(),'specifics':cap}
 
 	def get_parameter(self,module,parameter):
 		return module.parameters[parameter](module)
