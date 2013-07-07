@@ -1,21 +1,15 @@
 import threading
 import time
 
-import modules.youtube
-
 class MZQueue:
-	def __init__(self,statics=[]):
+	def __init__(self,module_manager,static_manager):
 		self.queue=[]
 		self.cur=None
-		self.statics=[]
-		self.uid=1
+		self.modules=module_manager
+		self.statics=static_manager
+		self.uid=0
 		self.lock=threading.Semaphore()		# Used to avoid queue concurrency issues
 		self.wakeup=threading.Semaphore()	# Used to wake up the thread manager when something is added to the queue 
-
-		# Loop through all the statics we want to add, and assign the UIDs
-		for s in statics:
-			self.statics.append((self.uid,s))
-			self.updateUID()
 
 	def updateUID(self):
 		self.uid+=1
@@ -23,10 +17,10 @@ class MZQueue:
 	# queue command
 	def get_queue(self,capabilities={}):
 		l=[]
-		for (i,obj) in self.queue:
-			d={'uid':i,'type':obj.TYPE_STRING}
+		for (uid,obj) in self.queue:
+			d={'uid':uid,'type':obj.TYPE_STRING}
 			if obj.TYPE_STRING in capabilities:
-				d['parameters']=self.get_params(obj,*(capabilities[obj.TYPE_STRING]))
+				d['parameters']=self.modules.get_multiple_parameters(obj,capabilities[obj.TYPE_STRING])
 			l.append(d)
 		return l
 
@@ -39,36 +33,34 @@ class MZQueue:
 
 		d={'uid':uid,'type':obj.TYPE_STRING}
 		if obj.TYPE_STRING in capabilities:
-			d['parameters']=self.get_params(obj,*(capabilities[obj.TYPE_STRING]))
+			d['parameters']=self.modules.get_multiple_parameters(obj,capabilities[obj.TYPE_STRING])
 
 		return d
 
-	# statics command
-	def get_static_capabilities(self):
-		l={}
-		for (i,obj) in self.statics:
-			d=obj.constants
-			d.update({
-			'commands':obj.commands.keys(),
-			'parameters':obj.parameters.keys(),
-			})
-			l[i]=d
-		return l
-
-	def get_module_capabilities(self):
-		return dict([(mod.TYPE_STRING,
-			{
-				'commands':mod.commands.keys(),
-				'parameters':mod.parameters.keys(),
-			}) for mod in self.modules])
-
 	# add command
-	def addModule(self,name,*args):
-		mod_type=dict([(m.TYPE_STRING,m) for m in self.modules])[name] # optimize me maybe
-		mod_inst=mod_type(*args)
+	def add(self,name,*args):
+		mod_inst=self.modules.instantiate(name,*args)
 		self.queue.append((self.uid,mod_inst))
 		self.wakeup.release()
 		self.updateUID()
+
+	def get_statics(self,parameters):
+		return self.statics.bulk_get_parameters(self,parameters)
+
+	def static_capabilities(self):
+		return self.statics.get_capabilities()
+
+	def module_capabilities(self):
+		return self.modules.get_capabilities()
+
+	def tell_module(self,uid,cmd,*args):
+		d=dict(self.queue+([self.cur] or []))
+		if uid not in d:
+			raise Exception("Module identifier not in queue or cur")
+		return self.modules.tell(d[uid],cmd,args)
+
+	def tell_static(self,uid,cmd,*args):
+		return self.statics.tell(uid,cmd,args)
 
 	# Changes out the current module for the top of the queue
 	def next(self):
@@ -108,19 +100,6 @@ class MZQueue:
 			return errorPacket('No command given.')
 
 		try:
-			targ=line['target'] # Target is self if not given
-			print self.queue
-			print self.statics
-			print self.cur
-			lookup_dict = dict(self.queue + self.statics + ([self.cur] or []))
-			if targ in lookup_dict:
-				obj = lookup_dict[targ] # Fails if target does not exist
-			else:
-				return errorPacket('Bad target.')
-		except KeyError:
-			obj=self
-
-		try:
 			args=line['args']
 		except KeyError:
 			args=[]
@@ -128,38 +107,29 @@ class MZQueue:
 		if not isinstance(args,list):
 			return errorPacket('Argument list not a list.')
 
-		cmdlist=obj.commands
-		cmdlist.update({'get':self.get_params})
-
 		try:
-			f=cmdlist[cmd]
+			f=self.commands[cmd]
 		except KeyError:	
 			return errorPacket('Bad command.')
 
 		try:
-			result=f(obj,*args)
+			result=f(self,*args)
 		except Exception as e:
+			raise
 			return errorPacket(str(e))
 
 		return goodPacket(result)
 
-
-	def get_params(self,obj,*paramlist):
-		valid_parameters=obj.parameters
-		valid_parameters.update({'str':str})
-		return dict([(param,valid_parameters[param](obj)) for param in paramlist])
-
 	commands={
-		'add':addModule,
-		'capabilities':get_module_capabilities,
+		'add':add,
 		'queue':get_queue,
-		'statics':get_static_capabilities,
-		'cur':get_cur
+		'cur':get_cur,
+		'statics':get_statics,
+		'static_capabilities':static_capabilities,
+		'module_capabilities':module_capabilities,
+		'tell_module':tell_module,
+		'tell_static':tell_static,
 	}
-
-	modules=[
-		modules.youtube.Youtube
-	]
 
 # End class MZQueue
 
