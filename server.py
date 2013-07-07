@@ -6,7 +6,7 @@ import cgi
 import json
 
 HOST_NAME = ''
-PORT_NUMBER = 8000
+PORT_NUMBER = 9000
 
 from modulemanager import *
 from staticmanager import *

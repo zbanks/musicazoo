@@ -11,7 +11,7 @@ _.mixin({
 
 var _query_queue = [];
 var _runquery_timeout;
-var BASE_URL = "http://localhost:8000/";
+var BASE_URL = "http://localhost:9000/";
 
 function deferQuery(data, cb, err){
     //TODO: err does nothing
@@ -103,7 +103,7 @@ $(document).ready(function(){
         return false; // Prevent form submitting
     });
 
-    $("a.push").on("click", function(){
+    $(".results").delegate("a.push", "click", function(){
         console.log("!!!");
         var $this = $(this);
         $(".addtxt").val($this.attr("content"));
@@ -262,8 +262,8 @@ var updateSlider = function(value){
 
 var TEMPLATE_NAMES = {"youtube": {queue: "youtube", active: "youtube_active"} };
 var TEMPLATES = _.chain({
-    "youtube": '<a href="{{ url }}">{{ url }}</a>',
-    "youtube_active": '<a href="{{ url }}">{{ url }}</a>',
+    "youtube": '<a href="{{ url }}">{{ title }}</a> - [{{ duration }}] -  ({{ status }})',
+    "youtube_active": '<a href="{{ url }}">{{ title }}</a> - [{{ duration }}] - ({{ status }})',
     "unknown": '(Unknown)',
     "unknown": '(Unknown)',
     "empty": '',
