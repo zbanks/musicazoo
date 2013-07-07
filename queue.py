@@ -60,7 +60,7 @@ class MZQueue:
 			{
 				'commands':mod.commands.keys(),
 				'parameters':mod.parameters.keys(),
-			} for mod in self.modules)])
+			}) for mod in self.modules])
 
 	# add command
 	def addModule(self,name,*args):
