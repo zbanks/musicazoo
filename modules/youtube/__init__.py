@@ -178,7 +178,7 @@ class Youtube:
 		if 'description' in vinfo:
 			self.description=vinfo['description']
 		if 'id' in vinfo:
-			self.vid=vinfo['vid']
+			self.vid=vinfo['id']
 		if self.status=='added':
 			self.status='ready'
 
