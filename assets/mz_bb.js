@@ -1,17 +1,72 @@
-// Mixin underscore.string
+// Underscore mixins
 _.mixin(_.str.exports());
 
-var volume_lockout = false;
-setInterval(function(){ volume_lockout = false; }, 500);
 _.mixin({
     objectMap : function(obj, fn){
         return _.chain(obj).map(function(v, k){ return [k, fn(v)] }).object().value();
     }
 });
 
+
+// Handlebars extras
+Handlebars.registerHelper('minutes', function(seconds){
+    var output = "";
+    if(seconds > 3600){
+        var hours = Math.floor(seconds / 3600);
+        output = hours + ":";
+        seconds %= 3600;
+    }
+    var minutes = Math.floor(seconds / 60);
+    seconds %= 60;
+    seconds = Math.floor(seconds);
+    output += minutes + ":" + seconds;
+    return output
+});
+
+// Handlebars templates
+
+var TEMPLATE_NAMES = {"youtube": {queue: "youtube", active: "youtube_active"} };
+
+var TEMPLATES = _.chain({
+    "youtube": '<a href="{{ url }}">{{ title }}</a> - [{{ minutes duration }}] -  ({{ status}}:{{site }})',
+    "youtube_active": '<a href="{{ url }}">{{ title }}</a> - [{{ minutes duration }}] - ({{ status}}:{{site }})',
+    "unknown": '(Unknown)',
+    "unknown": '(Unknown)',
+    "empty": '',
+    "nothing": '(Nothing)',
+}).map(function(v, k){ return [k, Handlebars.compile(v)] }).object().value();
+
+// NLP Constants
+
+var COMMANDS = [
+    { // Youtube
+        keywords: ["youtube"],
+        regex: /.*youtube.com.*watch.*v.*/, 
+        module: "youtube",
+        args: function(match){
+            return match;
+        }
+    },
+    { // Youtube (Keyword search)
+        regex: /.*/, 
+        module: "youtube",
+        args: function(match){
+            //TODO: lookup video
+            console.error("Need to query for video");
+            return match;
+        }
+    }
+];
+
+
+var volume_lockout = false;
+setInterval(function(){ volume_lockout = false; }, 500);
+
+
 var _query_queue = [];
 var _runquery_timeout;
-var BASE_URL = "http://localhost:9000/";
+//var BASE_URL = "http://localhost:9000/";
+var BASE_URL = "/";
 
 function deferQuery(data, cb, err){
     //TODO: err does nothing
@@ -67,28 +122,6 @@ function authenticate(cb){
     });
 }
 
-/*
-// http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
-//connect items with observableArrays
-ko.bindingHandlers.sortableList = {
-  init: function(element, valueAccessor) {
-      var list = valueAccessor();
-      $(element).sortable({
-          update: function(event, ui) {
-              //retrieve our actual data item
-              var item = ui.item.tmplItem().data;
-              //figure out its new position
-              var position = ko.utils.arrayIndexOf(ui.item.parent().children(), ui.item[0]);
-              //remove the item and add it back in the right spot
-              if (position >= 0) {
-                  list.remove(item);
-                  list.splice(position, 0, item);
-              }
-          }
-      });
-  }
-};
-*/
 
 $(document).ready(function(){
     $("#queueform").submit(function(e){
@@ -104,7 +137,6 @@ $(document).ready(function(){
     });
 
     $(".results").delegate("a.push", "click", function(){
-        console.log("!!!");
         var $this = $(this);
         $(".addtxt").val($this.attr("content"));
         $(".results").html("");
@@ -187,47 +219,8 @@ $(document).ready(function(){
         return true;
     });
 
-    $(".queueform").submit(function(){
-        if($("input[type=file]").val()){
-            return;
-        }
-        var query = $(".addtxt").val();
-        if(!query){
-            return false;
-        }
-        $(".addtxt").val("");
-        $.post("/add/" + encodeURIComponent(query),  function(data){
-            console.log(data);
-            if(!data.success){
-                $("div.error").html(data.error).show(300, function(){
-                    setTimeout(5000, function(){
-                        $("div.error").hide(200);
-                    });
-                });
-            }
-            refreshPlaylist();
-            $(".addtxt").val("");
-        });
-        return false; // Prevent form submitting
-    });
-
     */
     
-        /*
-    $("ol.playlist").sortable({
-        update: function(ev, ui){
-            var ordering = $("ol.playlist li").map(function(i, e){return $(e).attr('id')}).toArray().join(";");
-            var url = "/msg?queue_cmd=mv&ordering=" + ordering;
-            $.get(url);
-        },
-        start: function(ev, ui){
-            window.no_autorefresh = true;
-        },
-        stop: function(ev, ui){
-            window.no_autorefresh = false;
-        }
-    });
-    */
 
 });
 
@@ -260,19 +253,6 @@ var updateSlider = function(value){
 
 
 
-var TEMPLATE_NAMES = {"youtube": {queue: "youtube", active: "youtube_active"} };
-var TEMPLATES = _.chain({
-    "youtube": '<a href="{{ url }}">{{ title }}</a> - [{{ duration }}] -  ({{ status }})',
-    "youtube_active": '<a href="{{ url }}">{{ title }}</a> - [{{ duration }}] - ({{ status }})',
-    "unknown": '(Unknown)',
-    "unknown": '(Unknown)',
-    "empty": '',
-    "nothing": '(Nothing)',
-}).map(function(v, k){ return [k, Handlebars.compile(v)] }).object().value();
-
-var QUEUE_TEMPLATE = Handlebars.compile('{{#each this}}\n<li>{{{this}}}</li>{{/each}}');
-
-
 authenticate(function(capabilities){
     var modules = _.objectMap(capabilities.modules.specifics, function(x){ 
         x.commands = x.commands.concat(capabilities.modules.commands); 
@@ -289,37 +269,9 @@ authenticate(function(capabilities){
     console.log(module_capabilities);
     console.log(static_capabilities);
     Backbone.sync = function(method, model, options){
-        /*
-        if(method == "read"){
-            _.each(model.parameters, function(k){
-                deferQuery({cmd: "get_" + k, target: model.id}, function(v){
-                    model.set(k, v); 
-                });
-            });
-        }else if(method == "update"){
-            _.each(model.parameters, function(k){
-                if(model.hasChanged(k)){
-                    deferQuery({cmd: "set_" + k, target: model.id, args: [model.get(k)]});
-                }
-            });
-        }else if(method == "delete"){
-            deferQuery({cmd: "rm", target: 0, args: [model.id]});
-        }else if(method == "create"){
-            //TODO
-            console.log("Can't create");
-            deferQuery({cmd: "add"});
-        }
-        runQueries(function(){
-            options.success(model)
-        });
-        return true;
-        */
         console.error("unsupported sync");
         console.log(method, model, options);
     }
-        
-
-
 
     var Action = Backbone.Model.extend({
         defaults: function(){
@@ -328,10 +280,31 @@ authenticate(function(capabilities){
                 exists: true,
             };
         },
+        sync: function(method, model, options){
+            if(method == "read"){
+                if(this.active){
+                    deferQuery({cmd: "cur", args: {parameters: module_capabilities}}, options.success);
+                }else{
+                    console.error("Unable to sync queue item");
+                }
+            }else if(method == "delete"){
+                console.log("deleting", model)
+                if(this.active){
+                    //deferQuery
+                    // Eh, try anyways
+                    deferQuery({cmd: "rm", args: {uids: [model.id]}}, options.success);
+                    deferQuery({cmd: "tell_module", args: {uid: model.id, cmd: "stop"}});
+                }else{
+                    deferQuery({cmd: "rm", args: {uids: [model.id]}}, options.success);
+                }
+            } else{
+                console.error("Unable to perform action on queue item:" + method);
+            }
+            return this;
+        },
         parse: function(resp, options){
             if(resp){
                 var attrs = {type: resp.type, uid: resp.uid, exists: true};
-                //var attrs = {exists: true};
                 _.each(resp.parameters, function(v, k){ attrs[k] = v; });
 
                 if(TEMPLATES[resp.type]){
@@ -360,21 +333,12 @@ authenticate(function(capabilities){
     });
 
     var CurrentAction = Action.extend({
-        sync: function(method, model, options){
-            if(method != "read"){
-                console.error("Can only read from CurrentAction");
-                return;
-            }
-            deferQuery({cmd: "cur", args: {parameters: module_capabilities}}, options.success);
-        },
         active: true
     });
 
     var Queue = Backbone.Collection.extend({
         model: Action,
         parse: function(resp, options){
-            console.log("queue parse");
-            console.log(resp);
             return resp;
         },
         sync: function(method, model, options){
@@ -386,20 +350,6 @@ authenticate(function(capabilities){
         }
     });
     
-    /*
-    _.each(modules, function(v, k){
-        modules[k].Model = Action.extend({
-            type: k,
-            parameters: function(){
-                return v.parameters;
-            },
-            commands: function(){
-                return v.commands;
-            }
-        });
-    });
-    */
-
     var Static = Backbone.Model.extend({
         defaults: function(){
             return {
@@ -407,13 +357,11 @@ authenticate(function(capabilities){
             };
         },
         parse: function(resp, options){
-            console.log("static parse");
-            console.log(resp);
             if(resp){
                 //var attrs = {class: resp.class, uid: resp.uid, exists: true};
                 var attrs = {};
                 _.each(resp, function(v, k){ attrs[k] = v; });
-                console.log('static', attrs, resp);
+                //console.log('static', attrs, resp);
 
                 this.parameters = statics[resp.uid].parameters;
                 this.commands = statics[resp.uid].commands;
@@ -430,8 +378,8 @@ authenticate(function(capabilities){
     var StaticSet = Backbone.Collection.extend({
         model: Static,
         parse: function(resp, options){
-            console.log("statics parse");
-            console.log(resp);
+            //console.log("statics parse");
+            //console.log(resp);
             // Flatten dict to list
             return _.map(resp, function(v, k){ 
                 v.uid = k;
@@ -449,22 +397,6 @@ authenticate(function(capabilities){
 
     });
 
-    /*
-    _.each(statics, function(v, k){
-        statics[k].Model = Static.extend({
-            type: k,
-            parameters: function(){
-                return v.parameters;
-            },
-            commands: function(){
-                return v.commands;
-            }
-        });
-    });
-    */
-
-
-
     var Musicazoo = Backbone.Model.extend({
         defaults: function(){
             return {
@@ -480,31 +412,100 @@ authenticate(function(capabilities){
         }
     });
 
+    var ActionView = Backbone.View.extend({
+        act_template: Handlebars.compile("{{{ html }}} <a href='#' class='rm'>rm</a>"),
+        tagName: "li",
+        events: {
+            "click .rm": "remove",
+        },
+        initialize: function(){
+            this.listenTo(this.model, "change", this.render);
+            this.render();
+            return this;
+        },
+        render: function(ev){
+            var tmpl = this.model.active ? "template_active" : "template_queue";
+            this.$el.html(this.act_template({
+                html: TEMPLATES[this.model[tmpl]](this.model.attributes),
+                model: this.model
+            }));
+            return this;
+
+        },
+        remove: function(){
+            console.log("Remove!", this.model);
+            this.model.destroy();
+        }
+
+    });
+    var ActiveView = ActionView.extend({
+        act_template: Handlebars.compile("{{{ html }}} <a href='#' class='rm'>stop</a>"),
+    });
+
     var QueueView = Backbone.View.extend({
         initialize: function(){
+            this.subviews = {};
+            this.no_autorefresh = false;
+            this.$el.sortable({
+                update: function(ev, ui){
+                    var ordering = $("ol.playlist li").map(function(i, e){return $(e).attr('data-view-id')}).toArray();
+                    console.log("ORDERING:", ordering);
+                    // idk where this could go
+                    deferQuery({cmd: "mv", args:{uids: ordering}});
+                },
+                start: function(ev, ui){
+                    self.no_autorefresh = true;
+                },
+                stop: function(ev, ui){
+                    self.no_autorefresh = false;
+                },
+            });
+
+            this.listenTo(this.collection, "add", this.addOne);
+            this.listenTo(this.collection, "remove", this.removeOne); 
             this.listenTo(this.collection, "all", this.render); //FIXME?
             return this;
         },
-        render:function(){
-            this.$el.html(QUEUE_TEMPLATE(_.map(this.collection.models, function(m){
-                return TEMPLATES[m.template_queue](m.attributes);
-            })));
+        addOne: function(model){
+            var $v_el = $("<li></li>").attr("data-view-id", model.id);
+            var view = new ActionView({model: model, el: $v_el});
+            this.subviews[model.id] = view;
+            this.render();
+        },
+        removeOne: function(model){
+            this.subviews[model.id].$el.detach();
+            delete this.subviews[model.id];
+        },
+        render: function(event, model, collection, options){
+            if(this.no_autorefresh){
+                return;
+            }
+
+            var self = this;
+            if(event == "reset"){ 
+                console.error("RESET QUEUEVIEW"); //???
+                this.subviews = {}; // Clear
+                _.each(this.collection.models, _.bind(this.addOne, this));
+
+            }else{
+                console.log("Queueview event", event);
+
+                this.$el.html($(_.map(this.collection.models, function(model){
+                    if(self.subviews[model.id]){ //TODO hack
+                        return self.subviews[model.id].el;
+                    }
+                })));
+
+                // Delegate events to models now added to the DOM
+                _.each(this.subviews, function(view){
+                    view.delegateEvents();
+                });
+
+            }
             return this;
         }
     });
 
-    var ActiveView = Backbone.View.extend({
-        initialize: function(){
-            this.listenTo(this.model, "change", this.render);
-            return this;
-        },
-        render: function(){
-            this.$el.html(TEMPLATES[this.model.template_active](this.model.attributes));
-            console.log("render active");
-            console.log(TEMPLATES[this.model.template_active](this.model.attributes));
-            return this;
-        }
-    });
 
     var StaticVolumeView = Backbone.View.extend({
         initialize: function(){
@@ -512,7 +513,7 @@ authenticate(function(capabilities){
         },
         _loaded: false,
         render: function(act){
-            console.log("static view", act, this.collection);
+            //console.log("static view", act, this.collection);
             var vol = this.collection.findWhere({"class": "volume"}); 
             if(vol){
                 if(!this._loaded){ //FIXME?
@@ -535,7 +536,9 @@ authenticate(function(capabilities){
 
 
     refreshPlaylist = function(firstTime){
-        mz.fetch();
+        if(!window.no_autorefresh){
+            mz.fetch();
+        }
     }
 
     refreshPlaylist(true);
