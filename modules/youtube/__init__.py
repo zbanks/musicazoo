@@ -4,7 +4,7 @@ import youtube_dl
 from youtube_dl.utils import *
 import vlc
 
-class YoutubeModule:
+class Youtube:
 	TYPE_STRING='youtube'
 
 	def __init__(self,url):
