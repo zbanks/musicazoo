@@ -188,8 +188,9 @@ var loadSlider = function(){
                 return;
             volume_lockout = true;
             console.log(ui.value);
-            deferQuery({"cmd": "set_vol", "args": [ui.value], "target": vm.statics().volume.uid() }, function(){ volume_lockout = false; });
-            console.log({"cmd": "set_vol", "args": [ui.value], "target": vm.statics().volume.uid() });
+            console.log("???");
+            //deferQuery({"cmd": "set_vol", "args": [ui.value], "target": vm.statics().volume.uid() }, function(){ volume_lockout = false; });
+            //console.log({"cmd": "set_vol", "args": [ui.value]});
             /*
             $.get("/vol/" + ui.value, function(){
                 volume_lockout = false;   
@@ -296,18 +297,33 @@ function Musicazoo() {
 };  
 */
 
+var TEMPLATE_NAMES = {"youtube": {queue: "youtube", active: "youtube_active"} };
+var TEMPLATES = _.chain({
+    "youtube": '<a href="{{ url }}">{{ url }}</a>',
+    "youtube_active": '<a href="{{ url }}">{{ url }}</a>',
+    "unknown": '(Unknown)',
+    "unknown": '(Unknown)',
+}).map(function(v, k){ return [k, Handlebars.compile(v)] }).object().value();
+
+var QUEUE_TEMPLATE = Handlebars.compile('{{#each this}}\n<li>{{{this}}}</li>{{/each}}');
+
+
 authenticate(function(capabilities){
-    var modules = capabilities.modules; // We care about everything
-    var statics = capabilities.statics;
+    var modules = capabilities;//.modules; // We care about everything
+    var statics = {}; capabilities.statics;
+    var module_capabilities = _.chain(modules).map(function(v, k){ return [k, v.parameters] }).object().value();
+    console.log(capabilities);
+    console.log(module_capabilities);
     Backbone.sync = function(method, model, options){
+        /*
         if(method == "read"){
-            _.each(model.parameters(), function(k){
+            _.each(model.parameters, function(k){
                 deferQuery({cmd: "get_" + k, target: model.id}, function(v){
                     model.set(k, v); 
                 });
             });
         }else if(method == "update"){
-            _.each(model.parameters(), function(k){
+            _.each(model.parameters, function(k){
                 if(model.hasChanged(k)){
                     deferQuery({cmd: "set_" + k, target: model.id, args: [model.get(k)]});
                 }
@@ -322,6 +338,10 @@ authenticate(function(capabilities){
         runQueries(function(){
             options.success(model)
         });
+        return true;
+        */
+        console.error("unsupported sync");
+        console.log(method, model, options);
     }
         
 
@@ -330,12 +350,42 @@ authenticate(function(capabilities){
     var Action = Backbone.Model.extend({
         defaults: function(){
             return {
-                active: false,
-                template_queue: "unknown",
-                template_active: "unknown_active"
+                type: null,
             };
         },
-        idAttribute: "uid"
+        parse: function(resp, options){
+            var attrs = {type: resp.type, uid: resp.uid};
+            _.each(resp.parameters, function(v, k){ attrs[k] = v; });
+
+            if(TEMPLATES[resp.type]){
+                this.template_queue = TEMPLATE_NAMES[resp.type].queue;
+                this.template_active = TEMPLATE_NAMES[resp.type].active;
+            }else{
+                this.template_queue = "unknown";
+                this.template_active = "unknown";
+            }
+            
+            this.parameters = modules[resp.type].parameters;
+            this.commands = modules[resp.type].commands;
+            return attrs;
+        },
+        idAttribute: "uid",
+        parameters: [],
+        commands: [],
+        template_queue: "unknown",
+        template_active: "unknown",
+        active: false
+    });
+
+    var CurrentAction = Action.extend({
+        sync: function(method, model, options){
+            if(method != "read"){
+                console.error("Can only read from CurrentAction");
+                return;
+            }
+            deferQuery({cmd: "cur", args: [module_capabilities]}, options.success);
+        },
+        active: true
     });
 
     var Queue = Backbone.Collection.extend({
@@ -343,9 +393,18 @@ authenticate(function(capabilities){
         parse: function(resp, options){
             console.log("queue parse");
             console.log(resp);
+            return resp;
+        },
+        sync: function(method, model, options){
+            if(method != "read"){
+                console.error("Can only read from Queue");
+                return;
+            }
+            deferQuery({cmd: "queue", args: [module_capabilities]}, options.success);
         }
     });
     
+    /*
     _.each(modules, function(v, k){
         modules[k].Model = Action.extend({
             type: k,
@@ -357,6 +416,7 @@ authenticate(function(capabilities){
             }
         });
     });
+    */
 
     var Static = Backbone.Model.extend({
         defaults: function(){
@@ -364,7 +424,13 @@ authenticate(function(capabilities){
 
             };
         },
-        idAttribute: "uid"
+        parse: function(resp, options){
+            console.log("static parse");
+            console.log(resp);
+        },
+        idAttribute: "uid",
+        parameters: [],
+        commands: []
     });
     
     var StaticSet = Backbone.Collection.extend({
@@ -372,10 +438,17 @@ authenticate(function(capabilities){
         parse: function(resp, options){
             console.log("statics parse");
             console.log(resp);
+        },
+        sync: function(method, model, options){
+            if(method != "read"){
+                console.error("Can only read from StaticSet");
+                return;
+            }
         }
 
     });
 
+    /*
     _.each(statics, function(v, k){
         statics[k].Model = Static.extend({
             type: k,
@@ -387,26 +460,79 @@ authenticate(function(capabilities){
             }
         });
     });
+    */
 
 
 
     var Musicazoo = Backbone.Model.extend({
         defaults: function(){
             return {
-                queue: new Queue();
-                statics: new StaticSet();
-                active: null;
+                queue: new Queue(),
+                statics: new StaticSet(),
+                active: new CurrentAction()
             };
+        },
+        fetch: function(){
+            this.get('queue').fetch();
+            this.get('statics').fetch();
+            this.get('active').fetch();
         }
     });
 
+    var QueueView = Backbone.View.extend({
+        initialize: function(){
+            this.listenTo(this.collection, "all", this.render); //FIXME?
+            return this;
+        },
+        render:function(){
+            this.$el.html(QUEUE_TEMPLATE(_.map(this.collection.models, function(m){
+                return TEMPLATES[m.template_queue](m.attributes);
+            })));
+            return this;
+        }
+    });
+
+    var ActiveView = Backbone.View.extend({
+        initialize: function(){
+            this.listenTo(this.model, "change", this.render);
+            return this;
+        },
+        render: function(){
+            this.$el.html(TEMPLATES[this.model.template_active](this.model.attributes));
+            console.log("render active");
+            console.log(TEMPLATES[this.model.template_active](this.model.attributes));
+            return this;
+        }
+    });
+
+    var StaticVolumeView = Backbone.View.extend({
+        initialize: function(){
+            this.listenTo(this.collection, "all", this.render);
+        },
+        _loaded: false,
+        render: function(){
+            if(this.collection.get("volume")){
+                if(!this._loaded){
+                    loadSlider();
+                    this._loaded = true;
+                }
+                updateSlider(this.collection.get("volume").get('vol'));
+            }
+        }
+    });
+
+    mz = new Musicazoo();
+    qv = new QueueView({collection: mz.get('queue'), el: $("ol.playlist")});
+    cv = new ActiveView({model: mz.get('active'), el: $("ol.current")});
+    vol = new StaticVolumeView({collection: mz.get('statics')});
+    mz.fetch();
 
 
     var refreshPlaylist = function(firstTime){
-        vm.reload();
+        //vm.reload();
     }
 
     refreshPlaylist(true);
     // Refresh playlist every 1 seconds
     setInterval(refreshPlaylist, 1000);
-}
+});
