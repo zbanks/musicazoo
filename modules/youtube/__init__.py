@@ -21,6 +21,7 @@ class Youtube:
 		self.thumbnail=None
 		self.description=None
 		self.time=None
+		self.vid=None
 		self.status='added'
 		t=threading.Thread(target=self.getVideoInfo, args=[url])
 		t.daemon=True
@@ -52,6 +53,9 @@ class Youtube:
 
 	def get_time(self):
 		return self.time
+
+	def get_vid(self):
+		return self.vid
 
 	def play(self):
 		self.status='loading'
@@ -94,10 +98,10 @@ class Youtube:
 
 	def vlcPlay(self):
 		os.environ["DISPLAY"] = ":0"
-		self.vlc_i = vlc.Instance('--fullscreen')
+		self.vlc_i = vlc.Instance(['-f','--no-video-title-show',self.media])
 		self.vlc_mp = self.vlc_i.media_player_new()
-		media = self.vlc_i.media_new(self.media)
-		self.vlc_mp.set_media(media)
+		vlc_media=self.vlc_i.media_new_location(self.media)
+		self.vlc_mp.set_media(vlc_media)
 		self.vlc_mp.set_fullscreen(True)
 
 		self.vlc_mp.play()
@@ -131,6 +135,7 @@ class Youtube:
 		'description':get_description,
 		'status':get_status,
 		'time':get_time,
+		'vid':get_vid,
 	}
 
 	# Low-level stuff.
@@ -159,6 +164,7 @@ class Youtube:
 			return False
 
 		vinfo=info['entries'][0]
+		print vinfo
 		if 'title' in vinfo:
 			self.title=vinfo['title']
 		if 'duration' in vinfo:
@@ -171,6 +177,8 @@ class Youtube:
 			self.thumbnail=vinfo['thumbnail']
 		if 'description' in vinfo:
 			self.description=vinfo['description']
+		if 'id' in vinfo:
+			self.vid=vinfo['vid']
 		if self.status=='added':
 			self.status='ready'
 
