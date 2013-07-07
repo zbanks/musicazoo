@@ -45,6 +45,13 @@ function runQueries(cb){
     _query_queue = [];
 }
 
+function authenticate(cb){
+    // Auth & get capabilities
+    forceQuery({cmd: "capabilities"}, function(cap){
+        cb(cap);
+    });
+}
+
 /*
 // http://www.knockmeout.net/2011/05/dragging-dropping-and-sorting-with.html
 //connect items with observableArrays
@@ -201,6 +208,7 @@ var updateSlider = function(value){
 
 
 
+/*
 var MODULES = {
     "youtube" : {
         _params: ["url"],
@@ -218,6 +226,7 @@ var STATICS = {
         }
     }
 };
+*/
 
 
 /*
@@ -287,70 +296,117 @@ function Musicazoo() {
 };  
 */
 
-Backbone.sync = function(method, model, options){
-    if(method == "read"){
-        _.each(model.keys(), function(k){
-            deferQuery({cmd: "get_" + k, target: model.id}, function(v){
-                model.set(k, v); 
+authenticate(function(capabilities){
+    var modules = capabilities.modules; // We care about everything
+    var statics = capabilities.statics;
+    Backbone.sync = function(method, model, options){
+        if(method == "read"){
+            _.each(model.parameters(), function(k){
+                deferQuery({cmd: "get_" + k, target: model.id}, function(v){
+                    model.set(k, v); 
+                });
             });
+        }else if(method == "update"){
+            _.each(model.parameters(), function(k){
+                if(model.hasChanged(k)){
+                    deferQuery({cmd: "set_" + k, target: model.id, args: [model.get(k)]});
+                }
+            });
+        }else if(method == "delete"){
+            deferQuery({cmd: "rm", target: 0, args: [model.id]});
+        }else if(method == "create"){
+            //TODO
+            console.log("Can't create");
+            deferQuery({cmd: "add"});
+        }
+        runQueries(function(){
+            options.success(model)
         });
-    }else if(method == "update"){
-        _.each(model.keys(), function(k){
-            if(model.hasChanged(k)){
-                deferQuery({cmd: "set_" + k, target: model.id, args: [model.get(k)]});
+    }
+        
+
+
+
+    var Action = Backbone.Model.extend({
+        defaults: function(){
+            return {
+                active: false,
+                template_queue: "unknown",
+                template_active: "unknown_active"
+            };
+        },
+        idAttribute: "uid"
+    });
+
+    var Queue = Backbone.Collection.extend({
+        model: Action,
+        parse: function(resp, options){
+            console.log("queue parse");
+            console.log(resp);
+        }
+    });
+    
+    _.each(modules, function(v, k){
+        modules[k].Model = Action.extend({
+            type: k,
+            parameters: function(){
+                return v.parameters;
+            },
+            commands: function(){
+                return v.commands;
             }
         });
-    }else if(method == "delete"){
-        deferQuery({cmd: "rm", target: 0, args: [model.id]});
-    }else if(method == "create"){
-        //TODO
-        console.log("Can't create");
-    }
-    runQueries(function(){
-        options.success(model)
     });
-}
+
+    var Static = Backbone.Model.extend({
+        defaults: function(){
+            return {
+
+            };
+        },
+        idAttribute: "uid"
+    });
     
+    var StaticSet = Backbone.Collection.extend({
+        model: Static,
+        parse: function(resp, options){
+            console.log("statics parse");
+            console.log(resp);
+        }
 
-var Musicazoo = Backbone.Model.extend({
-    defaults: function(){
-        return {
-            queue: new Queue();
-            statics: new StaticSet();
-            active: null;
-        };
+    });
+
+    _.each(statics, function(v, k){
+        statics[k].Model = Static.extend({
+            type: k,
+            parameters: function(){
+                return v.parameters;
+            },
+            commands: function(){
+                return v.commands;
+            }
+        });
+    });
+
+
+
+    var Musicazoo = Backbone.Model.extend({
+        defaults: function(){
+            return {
+                queue: new Queue();
+                statics: new StaticSet();
+                active: null;
+            };
+        }
+    });
+
+
+
+    var refreshPlaylist = function(firstTime){
+        vm.reload();
     }
-});
 
-var action_types = {};
-
-var Action = Backbone.Model.extend({
-    defaults: function(){
-        return {
-            
-        };
-    },
-    idAttribute: "uid"
-});
-
-var Queue = Backbone.Collection.extend({
-    model: Action,
-    parse: function(resp, options){
-        console.log("queue parse");
-        console.log(resp);
-    }
-});
-
-
-
-
-var refreshPlaylist = function(firstTime){
-    vm.reload();
+    refreshPlaylist(true);
+    // Refresh playlist every 1 seconds
+    setInterval(refreshPlaylist, 1000);
 }
-
-refreshPlaylist(true);
-// Refresh playlist every 1 seconds
-setInterval(refreshPlaylist, 1000);
-
-
-runQueries();
