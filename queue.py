@@ -56,7 +56,7 @@ class MZQueue:
 				oldqueue.remove(uid)
 				newqueue.append(uid)
 		newqueue+=oldqueue
-		self.queue=[(uid,d(uid)) for uid in newqueue]
+		self.queue=[(uid,d[uid]) for uid in newqueue]
 
 	def get_statics(self,parameters):
 		return self.statics.bulk_get_parameters(parameters)
