@@ -52,6 +52,7 @@ class MZQueue:
 		oldqueue=[uid for (uid,obj) in self.queue]
 		d=dict(self.queue)
 		for uid in uids:
+			uid=int(uid)
 			if uid in oldqueue:
 				oldqueue.remove(uid)
 				newqueue.append(uid)
