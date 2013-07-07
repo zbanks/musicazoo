@@ -99,6 +99,26 @@ $(document).ready(function(){
         deferQuery({cmd: "add", args: {type: "youtube", args: {url: query}}}, refreshPlaylist);
         return false; // Prevent form submitting
     });
+
+    $("input.addtxt").keyup(function(){
+        var query = $(this).val();
+        if(query == ""){
+            $(".results").html("");
+            return;
+        }
+        var ytrequrl = "http://gdata.youtube.com/feeds/api/videos?v=2&orderby=relevance&alt=jsonc&q=" + encodeURIComponent(query) + "&max-results=5&callback=?"
+        $.getJSON(ytrequrl, function(data){
+            var list = $("<ol class='suggest'></ol>");
+
+            for(var j = 0; j < data.data.items.length && j < 5; j++){
+                var vid = data.data.items[j];
+                list.append($("<a href='/add/youtube/" + vid.id + "'><li>" + vid.title + "</li></a>"));
+            }
+            $(".results").html("").append(list);
+        });
+        return true;
+    });
+
     
 /*
     $(".uploadFile").submit(function(){
@@ -298,9 +318,9 @@ authenticate(function(capabilities){
         },
         parse: function(resp, options){
             if(resp){
-                //var attrs = {type: resp.type, uid: resp.uid, exists: true};
-                var attrs = {exists: true};
-                _.each(resp, function(v, k){ attrs[k] = v; });
+                var attrs = {type: resp.type, uid: resp.uid, exists: true};
+                //var attrs = {exists: true};
+                _.each(resp.parameters, function(v, k){ attrs[k] = v; });
 
                 if(TEMPLATES[resp.type]){
                     this.template_queue = TEMPLATE_NAMES[resp.type].queue;
