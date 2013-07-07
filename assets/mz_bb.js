@@ -1,9 +1,14 @@
 var volume_lockout = false;
 setInterval(function(){ volume_lockout = false; }, 500);
+_.mixin({
+    objectMap : function(obj, fn){
+        return _.chain(obj).map(function(v, k){ return [k, fn(v)] }).object().value();
+    }
+});
 
 var _query_queue = [];
 var _runquery_timeout;
-var BASE_URL = "http://localhost:9000/";
+var BASE_URL = "http://localhost:8000/";
 
 function deferQuery(data, cb, err){
     //TODO: err does nothing
@@ -47,8 +52,15 @@ function runQueries(cb){
 
 function authenticate(cb){
     // Auth & get capabilities
-    forceQuery({cmd: "capabilities"}, function(cap){
-        cb(cap);
+    var caps = {};
+    deferQuery({cmd: "module_capabilities"}, function(mcap){
+        caps.modules = mcap;
+    });
+    deferQuery({cmd: "static_capabilities"}, function(scap){
+        caps.statics = scap;  
+    });
+    runQueries(function(){
+        cb(caps);
     });
 }
 
@@ -175,7 +187,7 @@ $(document).ready(function(){
 
 });
 
-var loadSlider = function(){
+var loadSlider = function(updateCb){
     $("div.vol-slider").slider({
         orientation: "horizontal",
         range: "min",
@@ -188,14 +200,9 @@ var loadSlider = function(){
                 return;
             volume_lockout = true;
             console.log(ui.value);
-            console.log("???");
-            //deferQuery({"cmd": "set_vol", "args": [ui.value], "target": vm.statics().volume.uid() }, function(){ volume_lockout = false; });
-            //console.log({"cmd": "set_vol", "args": [ui.value]});
-            /*
-            $.get("/vol/" + ui.value, function(){
-                volume_lockout = false;   
+            updateCb(ui.value, function(){
+                volume_lockout = false;    
             });
-            */
         }
     });
     updateSlider(window.volume);
@@ -209,93 +216,6 @@ var updateSlider = function(value){
 
 
 
-/*
-var MODULES = {
-    "youtube" : {
-        _params: ["url"],
-        _template: "youtube",
-        _template_act: "youtube_act"
-    }
-};
-
-var STATICS = {
-    "volume" : {
-        _template: "volume",
-        _params: ["vol"],
-        create: function(options){
-            return ko.mapping.fromJS(options.data, {}, this);
-        }
-    }
-};
-*/
-
-
-/*
-function Musicazoo() { 
-    var self = this;
-    self.MODULES = MODULES;
-    self.STATICS = STATICS;
-    // The following are sub View-Models
-    self.queue = ko.observable([]);
-    self.activeq = ko.observable([]);
-    self.statics = ko.observable({volume: {vol: ko.observable(0)}}); 
-    self.statics().volume.vol.subscribe(updateSlider);
-
-    self.reload = function() {
-        if(window.no_autorefresh) return;
-        var fetch_params = function(defs){
-            return function(q){
-                if(defs[q.type]){
-                    _.each(defs[q.type]._params, function(mp){
-                        deferQuery({"cmd": "get_" + mp, "target": q.uid}, function(v){
-                            q[mp] = v; 
-                        });
-                    });
-                }else{
-                    console.log("Unknown static/module: " + q.type);
-                }
-            };
-        }
-
-        deferQuery({"cmd": "queue"}, function(queue_list) {
-            _.each(queue_list, fetch_params(self.MODULES));
-
-            runQueries(function(){
-                console.log("Loaded queue:");
-                console.log(queue_list);
-                ko.mapping.fromJS(queue_list, {}, self.queue);
-                $("ol.playlist").sortable("refresh");
-            });
-
-        });
-        deferQuery({"cmd": "cur"}, function(queue_cur_list) {
-            _.each(queue_cur_list, fetch_params(self.MODULES));
-
-            runQueries(function(){
-                console.log("Loaded current queue:");
-                console.log(queue_cur_list);
-                ko.mapping.fromJS(queue_cur_list, {}, self.activeq);
-            });
-
-        });
-        deferQuery({"cmd": "statics"}, function(statics_list) {
-            _.each(statics_list, fetch_params(self.STATICS));
-            
-            runQueries(function(){
-                var _sts = {};
-                for(var i = 0; i < statics_list.length; i++){
-                    _sts[statics_list[i].type] = statics_list[i];
-                }
-                //updateSlider(statics.volume.vol)
-                //console.log(_sts);
-                ko.mapping.fromJS(_sts, self.STATICS, self.statics);
-                //self.statics().volume.vol.subscribe(function(nv){ console.log("VOL HIT"); console.log(nv); });
-                //self.statics().volume.vol_test = ko.computed(function(){ return self.statics().volume.vol(); });
-            });
-        });
-    };
-};  
-*/
 
 var TEMPLATE_NAMES = {"youtube": {queue: "youtube", active: "youtube_active"} };
 var TEMPLATES = _.chain({
@@ -303,17 +223,22 @@ var TEMPLATES = _.chain({
     "youtube_active": '<a href="{{ url }}">{{ url }}</a>',
     "unknown": '(Unknown)',
     "unknown": '(Unknown)',
+    "empty": '',
+    "nothing": '(Nothing)',
 }).map(function(v, k){ return [k, Handlebars.compile(v)] }).object().value();
 
 var QUEUE_TEMPLATE = Handlebars.compile('{{#each this}}\n<li>{{{this}}}</li>{{/each}}');
 
 
 authenticate(function(capabilities){
-    var modules = capabilities;//.modules; // We care about everything
-    var statics = {}; capabilities.statics;
-    var module_capabilities = _.chain(modules).map(function(v, k){ return [k, v.parameters] }).object().value();
+    var modules = capabilities.modules; // We care about everything
+    var statics = capabilities.statics;
+    //var module_capabilities = _.chain(modules).map(function(v, k){ return [k, v.parameters] }).object().value();
+    var static_capabilities = _.objectMap(statics, function(x){ return x.parameters });
+    var module_capabilities = _.objectMap(modules, function(x){ return x.parameters });
     console.log(capabilities);
     console.log(module_capabilities);
+    console.log(static_capabilities);
     Backbone.sync = function(method, model, options){
         /*
         if(method == "read"){
@@ -351,23 +276,30 @@ authenticate(function(capabilities){
         defaults: function(){
             return {
                 type: null,
+                exists: true,
             };
         },
         parse: function(resp, options){
-            var attrs = {type: resp.type, uid: resp.uid};
-            _.each(resp.parameters, function(v, k){ attrs[k] = v; });
+            if(resp){
+                var attrs = {type: resp.type, uid: resp.uid, exists: true};
+                _.each(resp.parameters, function(v, k){ attrs[k] = v; });
 
-            if(TEMPLATES[resp.type]){
-                this.template_queue = TEMPLATE_NAMES[resp.type].queue;
-                this.template_active = TEMPLATE_NAMES[resp.type].active;
+                if(TEMPLATES[resp.type]){
+                    this.template_queue = TEMPLATE_NAMES[resp.type].queue;
+                    this.template_active = TEMPLATE_NAMES[resp.type].active;
+                }else{
+                    this.template_queue = "unknown";
+                    this.template_active = "unknown";
+                }
+                
+                this.parameters = modules[resp.type].parameters;
+                this.commands = modules[resp.type].commands;
+                return attrs;
             }else{
-                this.template_queue = "unknown";
-                this.template_active = "unknown";
+                this.template_queue = "empty";
+                this.template_active = "nothing";
+                return {'exists': false};
             }
-            
-            this.parameters = modules[resp.type].parameters;
-            this.commands = modules[resp.type].commands;
-            return attrs;
         },
         idAttribute: "uid",
         parameters: [],
@@ -383,7 +315,7 @@ authenticate(function(capabilities){
                 console.error("Can only read from CurrentAction");
                 return;
             }
-            deferQuery({cmd: "cur", args: [module_capabilities]}, options.success);
+            deferQuery({cmd: "cur", args: {parameters: module_capabilities}}, options.success);
         },
         active: true
     });
@@ -400,7 +332,7 @@ authenticate(function(capabilities){
                 console.error("Can only read from Queue");
                 return;
             }
-            deferQuery({cmd: "queue", args: [module_capabilities]}, options.success);
+            deferQuery({cmd: "queue", args: {parameters: module_capabilities}}, options.success);
         }
     });
     
@@ -427,6 +359,18 @@ authenticate(function(capabilities){
         parse: function(resp, options){
             console.log("static parse");
             console.log(resp);
+            if(resp){
+                //var attrs = {class: resp.class, uid: resp.uid, exists: true};
+                var attrs = {};
+                _.each(resp, function(v, k){ attrs[k] = v; });
+                console.log('static', attrs, resp);
+
+                this.parameters = statics[resp.uid].parameters;
+                this.commands = statics[resp.uid].commands;
+                return attrs;
+            }else{
+                return {};
+            }
         },
         idAttribute: "uid",
         parameters: [],
@@ -438,12 +382,19 @@ authenticate(function(capabilities){
         parse: function(resp, options){
             console.log("statics parse");
             console.log(resp);
+            // Flatten dict to list
+            return _.map(resp, function(v, k){ 
+                v.uid = k;
+                v.class = statics[k].class;
+                return v;
+             });
         },
         sync: function(method, model, options){
             if(method != "read"){
                 console.error("Can only read from StaticSet");
                 return;
             }
+            deferQuery({cmd: "statics", args: {parameters: static_capabilities}}, options.success);
         }
 
     });
@@ -510,13 +461,18 @@ authenticate(function(capabilities){
             this.listenTo(this.collection, "all", this.render);
         },
         _loaded: false,
-        render: function(){
-            if(this.collection.get("volume")){
-                if(!this._loaded){
-                    loadSlider();
+        render: function(act){
+            console.log("static view", act, this.collection);
+            var vol = this.collection.findWhere({"class": "volume"}); 
+            if(vol){
+                if(!this._loaded){ //FIXME?
+                    loadSlider(function(val, cb){
+                        vol.set('vol', val);    
+                        deferQuery({cmd: "tell_static", args: {"uid": vol.id, "cmd": "set_vol", "args": {"vol": val}}}, cb);
+                    });
                     this._loaded = true;
                 }
-                updateSlider(this.collection.get("volume").get('vol'));
+                updateSlider(vol.get('vol'));
             }
         }
     });
@@ -529,7 +485,7 @@ authenticate(function(capabilities){
 
 
     var refreshPlaylist = function(firstTime){
-        //vm.reload();
+        mz.fetch();
     }
 
     refreshPlaylist(true);
