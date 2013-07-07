@@ -45,23 +45,22 @@ class MZQueue:
 
 	# statics command
 	def get_static_capabilities(self):
-		l=[]
+		l={}
 		for (i,obj) in self.statics:
 			d=obj.constants
 			d.update({
-			'uid':i,
 			'commands':obj.commands.keys(),
 			'parameters':obj.parameters.keys(),
 			})
-			l.append(d)
+			l[i]=d
 		return l
 
 	def get_module_capabilities(self):
-		return [{
-				'type':mod.TYPE_STRING,
+		return dict([(mod.TYPE_STRING,
+			{
 				'commands':mod.commands.keys(),
 				'parameters':mod.parameters.keys(),
-			} for mod in self.modules]
+			} for mod in self.modules)])
 
 	# add command
 	def addModule(self,name,*args):
