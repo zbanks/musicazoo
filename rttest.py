@@ -25,6 +25,6 @@ print q.doCommand({'cmd':'add','args':{'type':'youtube','args':{'url':'http://ww
 
 #print q.doCommand({'cmd':'add','args':{'type':'youtube','args':{'url':'asdf'}}})
 
-spin({'cmd':'cur','args':{'parameters':{'youtube':['status','duration','time']}}},40,2)
+spin({'cmd':'cur','args':{'parameters':{'youtube':['status','duration','time']}}},20,2)
 print q.doCommand({'cmd':'tell_module','args':{'uid':0,'cmd':'stop'}})
 spin({'cmd':'cur','args':{'parameters':{'youtube':['status','duration','time']}}},5,2)
