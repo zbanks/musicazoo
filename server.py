@@ -6,7 +6,7 @@ import cgi
 import json
 
 HOST_NAME = ''
-PORT_NUMBER = 9000
+PORT_NUMBER = 8000
 
 from modulemanager import *
 from staticmanager import *
@@ -15,7 +15,7 @@ import modules.youtube
 import statics.volume
 
 mm=ModuleManager([modules.youtube.Youtube])
-sm=StaticManager([statics.volume.Volume])
+sm=StaticManager([statics.volume.Volume()])
 
 q=queue.MZQueue(mm,sm)
 qm=queue.MZQueueManager(q)
