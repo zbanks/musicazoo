@@ -1,26 +1,31 @@
 // Underscore mixins
 _.mixin(_.str.exports());
+_.mixin({
+    obj : function(op){
+        return function(obj, fn){
+            return _.chain(obj)[op](function(v, k){ return [k, fn(v)] }).object().value();
+        };
+    }
+});
 
 _.mixin({
-    objectMap : function(obj, fn){
-        return _.chain(obj).map(function(v, k){ return [k, fn(v)] }).object().value();
-    }
+    objectMap : _.obj("map"),
+    objectFilter : _.obj("filter")
 });
 
 
 // Handlebars extras
 Handlebars.registerHelper('minutes', function(seconds){
-    var output = "";
-    if(seconds > 3600){
-        var hours = Math.floor(seconds / 3600);
-        output = hours + ":";
-        seconds %= 3600;
-    }
+    var hours = Math.floor(seconds / 3600);
+    seconds %= 3600;
     var minutes = Math.floor(seconds / 60);
     seconds %= 60;
     seconds = Math.floor(seconds);
-    output += minutes + ":" + seconds;
-    return output
+    if(hours){
+        return hours + ":" + _.lpad(minutes, 2, '0') + ":" + _.lpad(seconds, 2, '0');
+    }else{
+        return minutes + ":" + _.lpad(seconds, 2, '0');
+    }
 });
 
 // Handlebars templates
@@ -43,17 +48,20 @@ var COMMANDS = [
         keywords: ["youtube"],
         regex: /.*youtube.com.*watch.*v.*/, 
         module: "youtube",
-        args: function(match){
-            return match;
+        args: function(match, cb){
+            cb({url: match});
         }
     },
     { // Youtube (Keyword search)
         regex: /.*/, 
         module: "youtube",
-        args: function(match){
-            //TODO: lookup video
-            console.error("Need to query for video");
-            return match;
+        args: function(match, cb){
+            var ytrequrl = "http://gdata.youtube.com/feeds/api/videos?v=2&orderby=relevance&alt=jsonc&q=" + encodeURIComponent(match) + "&max-results=5&callback=?"
+            $.getJSON(ytrequrl, function(data){
+                if(data.data.items.length >= 1){
+                    cb({url: "http://youtube.com/watch?v=" + data.data.items[0].id});
+                }
+            });
         }
     }
 ];
@@ -122,6 +130,35 @@ function authenticate(cb){
     });
 }
 
+var command_match = function(commands, text, cb){
+    text = _.trim(text);
+    var kw = _.strLeft(text, " ");
+    var rest = _.strLeft(text, " ");
+    var match = null;
+    for(var i = 0; i < commands.length; i++){
+        var cmd = commands[i];
+        if(cmd.keywords){
+            if(_.contains(cmd.keywords, kw)){
+                match = rest;
+            }
+        }
+        if(cmd.regex){
+            var regx = cmd.regex.exec(text);
+            console.log(regx);
+            if(regx){
+                match = regx[0];
+            }
+        }
+        if(match){
+            cmd.args(match, function(args){
+                cb({type: cmd.module, args: args});
+            });
+            return true;
+        }
+    }
+    return false;
+}
+
 
 $(document).ready(function(){
     $("#queueform").submit(function(e){
@@ -132,7 +169,9 @@ $(document).ready(function(){
             return false;
         }
         $(".addtxt").val("");
-        deferQuery({cmd: "add", args: {type: "youtube", args: {url: query}}}, refreshPlaylist);
+        command_match(COMMANDS, query, function(args){
+            deferQuery({cmd: "add", args: args}, refreshPlaylist);
+        });
         return false; // Prevent form submitting
     });
 
@@ -153,10 +192,13 @@ $(document).ready(function(){
         var ytrequrl = "http://gdata.youtube.com/feeds/api/videos?v=2&orderby=relevance&alt=jsonc&q=" + encodeURIComponent(query) + "&max-results=5&callback=?"
         $.getJSON(ytrequrl, function(data){
             var list = $("<ol class='suggest'></ol>");
+            var tmpl = Handlebars.compile("<a class='push' href='#' content='http://youtube.com/watch?v={{{ id }}}'><li>{{ title }} - [{{ minutes duration }}] </li></a>");
 
             for(var j = 0; j < data.data.items.length && j < 5; j++){
                 var vid = data.data.items[j];
-                list.append($("<a class='push' href='#' content='http://youtube.com/watch?v=" + vid.id + "'><li>" + vid.title + "</li></a>"));
+                console.log(vid);
+                //list.append($("<a class='push' href='#' content='http://youtube.com/watch?v=" + vid.id + "'><li>" + vid.title + "</li></a>"));
+                list.append($(tmpl(vid)));
             }
             $(".results").html("").append(list);
         });
@@ -259,12 +301,13 @@ authenticate(function(capabilities){
         x.parameters = x.parameters.concat(capabilities.modules.parameters); 
         return x;
     });
-    console.log("Modules:", modules);
     var statics = capabilities.statics;
-    console.log("Statics:", statics);
-    //var module_capabilities = _.chain(modules).map(function(v, k){ return [k, v.parameters] }).object().value();
     var static_capabilities = _.objectMap(statics, function(x){ return x.parameters });
     var module_capabilities = _.objectMap(modules, function(x){ return x.parameters });
+    var commands = _.filter(COMMANDS, function(x){ return  _.contains(_.keys(modules), x.module); });
+    console.log("Modules:", modules);
+    console.log("Statics:", statics);
+    console.log("Commands:", commands);
     console.log(capabilities);
     console.log(module_capabilities);
     console.log(static_capabilities);
