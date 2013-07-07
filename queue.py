@@ -162,9 +162,10 @@ class MZQueueManager(threading.Thread):
 
 	def run(self):
 		while True:
-			self.mzq.wakeup.acquire() # Block here if no more things to play
 			if self.mzq.nextAsync(): # Switch out module
 				self.mzq.cur[1].play() # Block here while playing
+			else:
+				self.mzq.wakeup.acquire() # Block here if no more things to play
 
 # End class MZQueueManager
 
