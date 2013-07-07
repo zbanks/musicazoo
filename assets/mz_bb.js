@@ -347,7 +347,7 @@ authenticate(function(capabilities){
         },
         parse: function(resp, options){
             if(resp){
-                var attrs = {type: resp.type, uid: resp.uid, exists: true};
+                var attrs = {type: resp.type, uid: resp.uid, _order: resp._order, exists: true};
                 _.each(resp.parameters, function(v, k){ attrs[k] = v; });
 
                 if(TEMPLATES[resp.type]){
@@ -381,8 +381,9 @@ authenticate(function(capabilities){
 
     var Queue = Backbone.Collection.extend({
         model: Action,
+        comparator: "_order",
         parse: function(resp, options){
-            return resp;
+            return _.map(resp, function(r, i){ r._order = i; return r});
         },
         sync: function(method, model, options){
             if(method != "read"){
@@ -530,6 +531,7 @@ authenticate(function(capabilities){
                 this.subviews = {}; // Clear
                 _.each(this.collection.models, _.bind(this.addOne, this));
 
+            }else if(event == "sync"){
             }else{
                 console.log("Queueview event", event);
 

@@ -18,7 +18,7 @@ print q.doCommand({'cmd':'add','args':{'type':'youtube','args':{'url':'asdf'}}})
 print q.doCommand({'cmd':'add','args':{'type':'youtube','args':{'url':'ghjk'}}})
 
 print q.doCommand({'cmd':'queue'})
-print q.doCommand({'cmd':'mv','args':{'uids':[1,0]}})
+print q.doCommand({'cmd':'mv','args':{'uids':[u'1',u'0']}})
 print q.doCommand({'cmd':'queue'})
 
 '''
