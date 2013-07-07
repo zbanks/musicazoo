@@ -5,6 +5,7 @@ from youtube_dl.utils import *
 import vlc
 import threading
 import os
+import loading
 
 class Youtube:
 	TYPE_STRING='youtube'
@@ -54,10 +55,18 @@ class Youtube:
 
 	def play(self):
 		self.status='loading'
+		self.show_loading_screen()
 		if not self.getVideoInfo(self.url):
 			return
 		self.vlcPlay()
 		self.status='finishing'
+
+	def show_loading_screen(self):
+		self.loading_screen=loading.LoadingScreen()
+		self.loading_screen.show()
+
+	def hide_loading_screen(self):
+		self.loading_screen.close()
 
 	def pause(self):
 		if self.status == 'paused':
@@ -99,6 +108,7 @@ class Youtube:
 			duration=self.vlc_mp.get_length()
 			if duration>0:
 				if self.status=='loading':
+					self.hide_loading_screen()
 					self.status='playing'
 				self.duration=float(duration)/1000
 				self.time=float(self.vlc_mp.get_time())/1000
@@ -167,5 +177,5 @@ class Youtube:
 		return True
 
 if __name__=='__main__':
-	m=Youtube("http://www.youtube.com/watch?v=F57P9C4SAW4")
+	m=Youtube(None,None,"http://www.youtube.com/watch?v=F57P9C4SAW4")
 	m.play()
