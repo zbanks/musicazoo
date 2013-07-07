@@ -88,11 +88,23 @@ ko.bindingHandlers.sortableList = {
 */
 
 $(document).ready(function(){
-    $(".uploadFile").submit(function(){
-        $(".queueform");
+    $("#queueform").submit(function(e){
+        e.preventDefault();
+        console.log("queue");
+        var query = $(".addtxt").val();
+        if(!query){
+            return false;
+        }
+        $(".addtxt").val("");
+        deferQuery({cmd: "add", args: {type: "youtube", args: {url: query}}}, refreshPlaylist);
+        return false; // Prevent form submitting
     });
     
 /*
+    $(".uploadFile").submit(function(){
+        $(".queueform");
+    });
+
     $("input.addtxt").keyup(function(){
         var query = $(this).val();
         if(query == ""){
@@ -209,7 +221,6 @@ var loadSlider = function(updateCb){
 }
 
 var updateSlider = function(value){
-    console.log(value);
     $("div.vol-slider").slider("option", "value", value);
     $(".ui-slider-range").html("<span>" + value + "</span>");
 }
@@ -231,8 +242,14 @@ var QUEUE_TEMPLATE = Handlebars.compile('{{#each this}}\n<li>{{{this}}}</li>{{/e
 
 
 authenticate(function(capabilities){
-    var modules = capabilities.modules; // We care about everything
+    var modules = _.objectMap(capabilities.modules.specifics, function(x){ 
+        x.commands = x.commands.concat(capabilities.modules.commands); 
+        x.parameters = x.parameters.concat(capabilities.modules.parameters); 
+        return x;
+    });
+    console.log("Modules:", modules);
     var statics = capabilities.statics;
+    console.log("Statics:", statics);
     //var module_capabilities = _.chain(modules).map(function(v, k){ return [k, v.parameters] }).object().value();
     var static_capabilities = _.objectMap(statics, function(x){ return x.parameters });
     var module_capabilities = _.objectMap(modules, function(x){ return x.parameters });
@@ -281,8 +298,9 @@ authenticate(function(capabilities){
         },
         parse: function(resp, options){
             if(resp){
-                var attrs = {type: resp.type, uid: resp.uid, exists: true};
-                _.each(resp.parameters, function(v, k){ attrs[k] = v; });
+                //var attrs = {type: resp.type, uid: resp.uid, exists: true};
+                var attrs = {exists: true};
+                _.each(resp, function(v, k){ attrs[k] = v; });
 
                 if(TEMPLATES[resp.type]){
                     this.template_queue = TEMPLATE_NAMES[resp.type].queue;
@@ -484,7 +502,7 @@ authenticate(function(capabilities){
     mz.fetch();
 
 
-    var refreshPlaylist = function(firstTime){
+    refreshPlaylist = function(firstTime){
         mz.fetch();
     }
 
