@@ -11,7 +11,7 @@ def pronounciation(text):
     )
     text = remove_urls(text)
     for reg, repl in subs:
-        text = re.sub(reg, repl, text, re.IGNORECASE)
+        text = re.sub(reg, repl, text, flags=re.IGNORECASE)
 	return text
 
 def remove_urls(text):
