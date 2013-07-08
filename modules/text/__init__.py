@@ -9,7 +9,7 @@ class Text:
 
 	preprocessing_engines={
 		'none':preprocessors.no_preprocessor,
-		'casual':preprocessors.casual,
+		'pronounciation':preprocessors.pronounciation,
 		'remove_urls':preprocessors.remove_urls,
 	}
 

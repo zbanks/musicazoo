@@ -3,14 +3,13 @@ import re
 def no_preprocessor(text):
 	return text
 
-def casual(text):
-    text = re.sub(r'(?:\w*://)?(?:.*?\.)?(?:([a-zA-Z-1-9]*)\.)?([a-zA-Z-1-9]*\.[a-zA-Z]{1,})', " link ", text)
+def pronounciation(text):
     subs = (
-        (r'mit[.]edu', " mit dot edju "),
-        (r'(\w+://)?(.*?\.)?(([a-zA-Z-1-9]*)\.)?([a-zA-Z-1-9]*\.[a-zA-Z]{1,})', " link "),
+        (r'mit\.edu', " mit dot edju "),
         (r'<3', " wub "),
         (r'zbanks', " z banks ")
     )
+    text = remove_urls(text)
     for reg, repl in subs:
         text = re.sub(reg, repl, text, re.IGNORECASE)
 	return text

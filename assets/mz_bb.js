@@ -99,8 +99,8 @@ var COMMANDS = [
         args: function(match, cb, kw){
             cb({
                 text: match,
-                text_preprocessor: "casual",
-                speech_preprocessor: "casual",
+                text_preprocessor: "none",
+                speech_preprocessor: "pronounciation",
                 text2speech: "google",
                 renderer: "splash",
                 duration: 1,
