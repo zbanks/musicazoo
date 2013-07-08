@@ -83,8 +83,8 @@ var TEMPLATE_NAMES = {
 var TEMPLATES = _.objectMap({
     "youtube": $("script.youtube-template").html(),
     "youtube_active": $("script.youtube-active-template").html(),
-    "text": $("script.text-active-template").html(),
-    "text_active": $("script.text-template").html(),
+    "text": $("script.text-template").html(),
+    "text_active": $("script.text-active-template").html(),
     "unknown": '(Unknown)',
     "empty": '',
     "nothing": '(Nothing)',
@@ -103,7 +103,42 @@ var COMMANDS = [
                 speech_preprocessor: "none",
                 text2speech: "google",
                 renderer: "splash",
-                duration: 1
+                duration: 1,
+                short_description: "(Text)",
+                long_description: "Text: " + match,
+            });
+        }
+    },
+    { // Tell me a joke
+        module: "text",
+        regex: /tell me a joke/,
+        args: function(match, cb, kw){
+            cb({
+                text: "no",
+                text_preprocessor: "none",
+                speech_preprocessor: "none",
+                text2speech: "google",
+                renderer: "splash",
+                duration: 1,
+                short_description: "(Tell me a joke)",
+                long_description: "Joke",
+            });
+        }
+    },
+    { // Luke I am your father
+        module: "text",
+        regex: /luke I am your father/i,
+        args: function(match, cb, kw){
+            cb({
+                text: "no",
+                text_preprocessor: "none",
+                speech_preprocessor: "none",
+                text2speech: "google",
+                renderer: "splash",
+                duration: 1,
+                speed: 0.1,
+                short_description: "(Awkward)",
+                long_description: "Luke,",
             });
         }
     },
@@ -247,8 +282,9 @@ $(document).ready(function(){
 
     $("input.addtxt").keyup(function(){
         var query = $(this).val();
+        var $results = $(".results");
         if(query == ""){
-            $(".results").html("");
+            $results.html("");
             return;
         }
         var ytrequrl = "http://gdata.youtube.com/feeds/api/videos?v=2&orderby=relevance&alt=jsonc&q=" + encodeURIComponent(query) + "&max-results=5&callback=?"
@@ -256,11 +292,16 @@ $(document).ready(function(){
             var list = $("<ol class='suggest'></ol>");
             var tmpl = Handlebars.compile("<a class='push' href='#' content='http://youtube.com/watch?v={{{ id }}}'><li>{{ title }} - [{{ minutes duration }}] </li></a>");
 
+            if(!data.data.items){
+                $results.html("");
+                return;
+            }
+
             for(var j = 0; j < data.data.items.length && j < 5; j++){
                 var vid = data.data.items[j];
                 list.append($(tmpl(vid)));
             }
-            $(".results").html("").append(list);
+            $results.html("").append(list);
         });
         return true;
     });
@@ -317,21 +358,30 @@ authenticate(function(capabilities){
                 this.commands = [];
             }
 
-            if(this.hasCommand("pause") && this.hasCommand("resume") && this.hasParameter("status")){
+            // Send status updates to server
+            this.off("change:status"); // Reset events
+            if(this.hasParameter("status")){
                 this.on("change:status", function(model, status, options){
                     if(!options.parse){ // Not a server update
                         var prev_status = this.previous('status');
-                        if(prev_status == "paused" && status == "playing"){
-                            deferQuery({cmd: "tell_module", args: {uid: this.id, cmd: "resume"}});
-                        }else if(prev_status == "playing" && status == "paused"){
-                            deferQuery({cmd: "tell_module", args: {uid:this.id, cmd: "pause"}});
-                        }else if(status == "stopped"){
-                            deferQuery({cmd: "tell_module", args: {uid:this.id, cmd: "stop"}});
+
+                        // Play/pause switch
+                        if(this.hasCommand("pause") && this.hasCommand("resume")){
+                            if(prev_status == "paused" && status == "playing"){
+                                deferQuery({cmd: "tell_module", args: {uid: this.id, cmd: "resume"}});
+                            }else if(prev_status == "playing" && status == "paused"){
+                                deferQuery({cmd: "tell_module", args: {uid:this.id, cmd: "pause"}});
+                            }
+                        }
+
+                        // Stop
+                        if(this.hasCommand("stop")){
+                            if(status == "stopped"){
+                                deferQuery({cmd: "tell_module", args: {uid:this.id, cmd: "stop"}});
+                            }
                         }
                     }
                 }, this);
-            }else{
-                this.off("change:status");
             }
         },
         initialize: function(params, options, x){
@@ -606,5 +656,5 @@ authenticate(function(capabilities){
 
     refreshPlaylist(true);
     // Refresh playlist every 1 seconds
-    setInterval(refreshPlaylist, 1000);
+    setInterval(refreshPlaylist, 5000);
 });

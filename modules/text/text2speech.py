@@ -1,5 +1,5 @@
 import urllib,urllib2
-import os.fsync
+import os
 
 def google(obj):
 	text=obj.textToSpeak

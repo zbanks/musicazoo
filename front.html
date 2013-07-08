@@ -30,23 +30,31 @@
             {{#if_eq status neq='stopped' }}
                 <a href="#" class="action-set" data-property="status" data-value="stopped">stop</a>
             {{/if_eq}}
-            - ({{ status }}:{{ site }})
         {{else}}
         <a href="{{ url }}"> (Loading youtube video...) </a>
         {{/if_eq}}
+        <!-- ({{ status }}:{{ site }}) -->
     </script>
     <script class="youtube-template" type="text/x-handlebars-template">
         {{#if_eq status neq='added'}}
         <a href="{{ url }}"> {{ title }} </a>
         - [{{ minutes duration }}]
-        - ({{ status }}:{{ site }})
         {{else}}
         <a href="{{ url }}"> (Loading youtube video...) </a>
         {{/if_eq}}
+        <!-- ({{ status }}:{{ site }}) -->
 
     </script>
-    <script class="text-active-template text-template" type="text/x-handlebars-template">
-        {{ text }} - {{ status }} - [{{ minutes duration }}]
+    <script class="text-active-template" type="text/x-handlebars-template">
+        {{ long_description }}
+        {{#if_eq status neq='stopped' }}
+            <a href="#" class="action-set" data-property="status" data-value="stopped">stop</a>
+        {{/if_eq}}
+        <!-- {{ status }} -->
+    </script>
+    <script class="text-template" type="text/x-handlebars-template">
+        {{ short_description }}
+        <!-- {{ status }} -->
     </script>
     <script type="text/javascript" src="./assets/mz_bb.js"></script>
     <!--
