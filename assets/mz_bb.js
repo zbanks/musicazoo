@@ -99,8 +99,8 @@ var COMMANDS = [
         args: function(match, cb, kw){
             cb({
                 text: match,
-                text_preprocessor: "none",
-                speech_preprocessor: "none",
+                text_preprocessor: "casual",
+                speech_preprocessor: "casual",
                 text2speech: "google",
                 renderer: "splash",
                 duration: 1,
@@ -136,9 +136,27 @@ var COMMANDS = [
                 text2speech: "google",
                 renderer: "splash",
                 duration: 1,
-                speed: 0.1,
+                speed: 0.3,
                 short_description: "(Awkward)",
                 long_description: "Luke,",
+            });
+        }
+    },
+    { // Fuck
+        module: "text",
+        keywords: ["fuck"],
+        args: function(match, cb, kw){
+            var words = "ahole,aholes,asshole,assholes,asswipe,biatch,bitch,bitches,blo_job,blow_job,blowjob,cocksucker,cunt,cunts,dickhead,fuck,fucked,fucking,fuckoff,fucks,handjob,handjobs,motherfucker,mother-fucker,motherfuckers,muthafucker,muthafuckers,nigga,niggs,nigger,niggers,pedofile,pedophile,phag,phuc,phuck,phucked,phucker,shat,shit,shits,shithead,shitter,shitting".split(",");
+            cb({
+                text: _.chain(words).shuffle().last(10).value().join(" "),
+                text_preprocessor: "none",
+                speech_preprocessor: "none",
+                text2speech: "google",
+                renderer: "splash",
+                duration: 2,
+                speed: 1,
+                short_description: "Fuck!",
+                long_description: "(Please hold while Musicazoo expresses itself)",
             });
         }
     },

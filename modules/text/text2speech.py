@@ -2,7 +2,7 @@ import urllib,urllib2
 import os
 
 def google(obj):
-	text=obj.textToSpeak
+	text=unicode(obj.textToSpeak)
 
 	limit=99
 	whitespace=['.',',',':',';','--','-','\t','\r\n','\n\r','\n','\r',' ']
