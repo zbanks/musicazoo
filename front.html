@@ -16,7 +16,7 @@
     <script class="youtube-active-template" type="text/x-handlebars-template">
         {{#if_eq status neq='added'}}
             <!-- <div id="youtube-video"> </div> -->
-            <a href="{{ url }}"> {{ title }} </a> 
+            <a href="{{ url }}"> {{ title }} </a>
             - [{{ minutes time }}/{{ minutes duration }}]
             {{#if_eq status eq='loading' }}
                 - (Loading...)
@@ -32,16 +32,16 @@
             {{/if_eq}}
             - ({{ status }}:{{ site }})
         {{else}}
-        <a href="{{ url }}"> (Loading youtube video...) </a> 
+        <a href="{{ url }}"> (Loading youtube video...) </a>
         {{/if_eq}}
     </script>
     <script class="youtube-template" type="text/x-handlebars-template">
         {{#if_eq status neq='added'}}
-        <a href="{{ url }}"> {{ title }} </a> 
+        <a href="{{ url }}"> {{ title }} </a>
         - [{{ minutes duration }}]
         - ({{ status }}:{{ site }})
         {{else}}
-        <a href="{{ url }}"> (Loading youtube video...) </a> 
+        <a href="{{ url }}"> (Loading youtube video...) </a>
         {{/if_eq}}
 
     </script>
@@ -50,7 +50,7 @@
     </script>
     <script type="text/javascript" src="./assets/mz_bb.js"></script>
     <!--
-    <link rel="stylesheet" href="http://jqueryui.com/themes/base/jquery.ui.all.css"> 
+    <link rel="stylesheet" href="http://jqueryui.com/themes/base/jquery.ui.all.css">
     -->
     <link rel="stylesheet" href="./assets/mz-new.css">
 
