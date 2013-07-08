@@ -1,11 +1,38 @@
 import urllib,urllib2
 
 def google(obj):
-	request=urllib2.Request('http://translate.google.com/translate_tts',urllib.urlencode({'q':obj.textToSpeak,'tl':'en'}))
-	request.add_header('User-Agent','Mozilla/5.0 (X11; U; Linux i686) Gecko/20071127 Firefox/2.0.0.11')
-	opener = urllib2.build_opener()
-	mp3 = opener.open(request).read()
-	obj.sndfile.write(mp3)
+	text=obj.textToSpeak
+
+	limit=99
+	whitespace=['.',',',':',';','--','-','\t','\r\n','\n\r','\n','\r',' ']
+
+	chunks=[]
+	while True:
+		if len(text)<=limit:
+			chunks.append(text)
+			break
+		space=-1
+		for char in whitespace:
+			space=text.rfind(char,0,limit)
+			if space>=0:
+				space+=len(char)
+				break
+		if space<0:
+			space=limit
+		chunks.append(text[0:space])
+		if len(text)==space:
+			break
+		text=text[space:]
+
+	total=len(chunks)
+	for idx in range(total):
+		text=chunks[idx]
+		request=urllib2.Request('http://translate.google.com/translate_tts',urllib.urlencode({'q':text,'tl':'en','idx':idx,'total':total,'textlen':len(text)}))
+		request.add_header('User-Agent','Mozilla/5.0 (X11; U; Linux i686) Gecko/20071127 Firefox/2.0.0.11')
+		opener = urllib2.build_opener()
+		mp3=opener.open(request).read()
+		obj.sndfile.write(mp3)
+
 	obj.sndfile.flush()
 	return True
 

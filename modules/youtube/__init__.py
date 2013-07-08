@@ -121,12 +121,19 @@ class Youtube:
 				self.time=float(self.vlc_mp.get_time())/1000
 		self.vlc_mp.stop()
 
+	def set_rate(self,rate):
+		self.vlc_mp.set_rate(rate)
+
+	def get_rate(self,rate):
+		return self.vlc_mp.get_rate()
+
 	# Class variables
 
 	commands={
 		'pause':pause,
 		'resume':resume,
 		'stop':stop,
+		'set_rate':set_rate,
 	}
 
 	parameters={
@@ -140,6 +147,7 @@ class Youtube:
 		'status':get_status,
 		'time':get_time,
 		'vid':get_vid,
+		'rate':get_rate,
 	}
 
 	# Low-level stuff.
