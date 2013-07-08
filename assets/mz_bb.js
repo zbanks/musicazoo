@@ -165,7 +165,7 @@ function runQueries(cb){
             for(var i = 0; i < resp.length; i++){
                 var r = resp[i];
                 if(!r.success){
-                    console.log(r.error);
+                    console.error("Server Error:", r.error);
                 }else if(cbs[i]){
                     cbs[i](r.result);
                 }
@@ -209,7 +209,6 @@ var command_match = function(commands, text, cb){
         }
         if(cmd.regex){
             var regx = cmd.regex.exec(text);
-            console.log(regx);
             if(regx){
                 match = regx[0];
             }
@@ -228,7 +227,6 @@ var command_match = function(commands, text, cb){
 $(document).ready(function(){
     $("#queueform").submit(function(e){
         e.preventDefault();
-        console.log("queue");
         var query = $(".addtxt").val();
         if(!query){
             return false;
@@ -248,7 +246,6 @@ $(document).ready(function(){
     });
 
     $("input.addtxt").keyup(function(){
-        console.log('asdf');
         var query = $(this).val();
         if(query == ""){
             $(".results").html("");
@@ -283,9 +280,8 @@ authenticate(function(capabilities){
     console.log("Modules:", modules);
     console.log("Statics:", statics);
     console.log("Commands:", commands);
-    console.log(capabilities);
-    console.log(module_capabilities);
-    console.log(static_capabilities);
+    console.log("Module capabilities: ", module_capabilities);
+    console.log("Static capabilities: ", static_capabilities);
     Backbone.sync = function(method, model, options){
         console.error("unsupported sync");
         console.log(method, model, options);
@@ -322,7 +318,6 @@ authenticate(function(capabilities){
             }
 
             if(this.hasCommand("pause") && this.hasCommand("resume") && this.hasParameter("status")){
-                //console.log("Registering status");
                 this.on("change:status", function(model, status, options){
                     if(!options.parse){ // Not a server update
                         var prev_status = this.previous('status');
