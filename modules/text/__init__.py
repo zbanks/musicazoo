@@ -9,6 +9,7 @@ class Text:
 
 	preprocessing_engines={
 		'none':preprocessors.no_preprocessor,
+		'remove_urls':preprocessors.remove_urls,
 	}
 
 	text2speech_engines={
