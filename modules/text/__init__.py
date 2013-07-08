@@ -10,6 +10,7 @@ class Text:
 	preprocessing_engines={
 		'none':preprocessors.no_preprocessor,
 		'casual':preprocessors.casual,
+		'remove_urls':preprocessors.remove_urls,
 	}
 
 	text2speech_engines={
