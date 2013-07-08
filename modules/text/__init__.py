@@ -20,11 +20,17 @@ class Text:
 		'splash':renderers.Splash
 	}
 
-	def __init__(self,queue,uid,text,text_preprocessor='none',speech_preprocessor='none',text2speech='google',renderer='splash',duration=0):
+	def __init__(self,queue,uid,text,short_description=None,long_description=None,text_preprocessor='none',speech_preprocessor='none',text2speech='google',renderer='splash',duration=0):
 		self.queue=queue
 		self.uid=uid
 
 		self.text=text
+		self.short_description=short_description
+		if long_description is not None:
+			self.long_description=long_description
+		else:
+			self.long_description=short_description
+
 		self.text_preprocessor=self.preprocessing_engines[text_preprocessor]
 		self.speech_preprocessor=self.preprocessing_engines[speech_preprocessor]
 		self.text2speech=self.text2speech_engines[text2speech]
@@ -47,6 +53,12 @@ class Text:
 
 	def get_text(self):
 		return self.text
+
+	def get_short_desc(self):
+		return self.short_description
+
+	def get_long_desc(self):
+		return self.long_description
 
 	def get_duration(self):
 		if self.status!='ready':
@@ -91,4 +103,6 @@ class Text:
 		'status':get_status,
 		'text':get_text,
 		'duration':get_duration,
+		'short_description':get_short_desc,
+		'long_description':get_long_desc,
 	}
