@@ -97,8 +97,8 @@ class Youtube:
 		self.status='playing'
 
 	def vlcPlay(self):
-		#os.environ["DISPLAY"] = ":0"
-		self.vlc_i = vlc.Instance(['-f','--no-video-title-show',self.media])
+		os.environ["DISPLAY"] = ":0"
+		self.vlc_i = vlc.Instance(['-f','--no-video-title-show'])
 		self.vlc_mp = self.vlc_i.media_player_new()
 		vlc_media=self.vlc_i.media_new_location(self.media)
 		self.vlc_mp.set_media(vlc_media)

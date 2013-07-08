@@ -2,6 +2,7 @@ import preprocessors
 import text2speech
 import renderers
 import threading
+import tempfile
 
 class Text:
 	TYPE_STRING='text'
@@ -27,6 +28,9 @@ class Text:
 		self.text_preprocessor=self.preprocessing_engines[text_preprocessor]
 		self.speech_preprocessor=self.preprocessing_engines[speech_preprocessor]
 		self.text2speech=self.text2speech_engines[text2speech]
+
+		self.sndfile=tempfile.NamedTemporaryFile()
+
 		self.renderer=self.rendering_engines[renderer]
 		self.duration=duration
 
@@ -45,13 +49,17 @@ class Text:
 		return self.text
 
 	def get_duration(self):
+		if self.status!='ready':
+			return None
+		if self.status!='playing' and self.hasSound:
+			return None
 		return self.duration
 
 	def prepare(self):
 		try:
 			self.textToShow=self.text_preprocessor(self.text)
 			self.textToSpeak=self.speech_preprocessor(self.text)
-			self.text2speech(self)
+			self.hasSound=self.text2speech(self)
 			self.status='ready'
 		except Exception:
 			raise
@@ -64,6 +72,7 @@ class Text:
 		if self.status != 'ready':
 			return
 		self.renderer(self)
+		self.sndfile.close()
 
 	commands={
 	}
