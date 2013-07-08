@@ -17,7 +17,7 @@ class Text:
 	}
 
 	rendering_engines={
-		'splash':renderers.splash
+		'splash':renderers.Splash
 	}
 
 	def __init__(self,queue,uid,text,text_preprocessor='none',speech_preprocessor='none',text2speech='google',renderer='splash',duration=0):
@@ -60,6 +60,7 @@ class Text:
 			self.textToShow=self.text_preprocessor(self.text)
 			self.textToSpeak=self.speech_preprocessor(self.text)
 			self.hasSound=self.text2speech(self)
+			self.display=self.renderer(self)
 			self.status='ready'
 		except Exception:
 			raise
@@ -71,10 +72,19 @@ class Text:
 		self.ready.acquire()
 		if self.status != 'ready':
 			return
-		self.renderer(self)
+		self.status='playing'
+		self.display.play()
+		self.status='finishing'
 		self.sndfile.close()
 
+	def stop(self):
+		if self.status != 'playing':
+			raise Exception("Not playing -- cannot stop")
+		self.display.stop()
+		self.status='stopped'
+
 	commands={
+		'stop':stop
 	}
 
 	parameters={
