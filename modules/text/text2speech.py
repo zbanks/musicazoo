@@ -35,7 +35,7 @@ def google(obj):
 		obj.sndfile.write(mp3)
 
 	obj.sndfile.flush()
-	os.fsync()
+	os.fsync(obj.sndfile)
 	return True
 
 def no_text2speech(obj):
