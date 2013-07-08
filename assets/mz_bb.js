@@ -1,17 +1,26 @@
+// Youtube iframe
+
 /*
-// Lets Flash from another domain call JavaScript
-var params = { allowScriptAccess: "always" };
-// The element id of the Flash embed
-var atts = { id: "ytPlayer" };
-// All of the magic handled by SWFObject (http://code.google.com/p/swfobject/)
-swfobject.embedSWF("http://www.youtube.com/apiplayer?enablejsapi=1&version=3",
-                   "video", "480", "295", "9", null, null, params, atts);
-function onYouTubePlayerReady(playerId) {
-console.log('YOUTUBE', playerId);
-  player = document.getElementById("ytPlayer");
+var player;
+function playYoutubeVideo(id, time) {
+    player = new YT.Player('video', {
+        height: '390',
+        width: '640',
+        //videoId: id,
+        events: {
+            'onReady': function(ev){
+                //ev.target.playVideo(); 
+                player.loadVideoById(id, time);
+                //ev.target.seekTo(time*1, true);
+            },
+            'onStateChange': function(ev){
+                console.log(ev);
+            }
+        }
+    });
+    console.log(player);
 }
 */
-
 
 // Underscore mixins
 _.mixin(_.str.exports());
@@ -71,15 +80,7 @@ var TEMPLATE_NAMES = {
     }
 };
 
-var TEMPLATES = _.chain({
-    /*
-    "youtube": '<a href="{{ url }}">{{ title }}</a> - [{{ minutes duration }}] -  ({{ status}}:{{site }})',
-    "youtube_active": '<div id="youtube-video"></div>' + 
-                      '<a href="{{ url }}">{{ title }}</a> - [{{ minutes time }}/{{ minutes duration }}] - ({{ status}}:{{site }})' +
-                      '{{#ifPlaying status }}&nbsp;<a href="#" class="action-set" data-property="status" data-value="paused">pause</a>{{/ifPlaying}}' +
-                      '{{#ifPaused status }}&nbsp;<a href="#" class="action-set" data-property="status" data-value="playing">resume</a>{{/ifPaused}}' +
-                      '&nbsp;<a href="#" class="action-set" data-property="status" data-value="stopped">stop</a>',
-    */
+var TEMPLATES = _.objectMap({
     "youtube": $("script.youtube-template").html(),
     "youtube_active": $("script.youtube-active-template").html(),
     "text": $("script.text-active-template").html(),
@@ -87,7 +88,7 @@ var TEMPLATES = _.chain({
     "unknown": '(Unknown)',
     "empty": '',
     "nothing": '(Nothing)',
-}).map(function(v, k){  return [k, Handlebars.compile(v)] }).object().value();
+}, Handlebars.compile);
 
 // NLP Constants
 
@@ -114,6 +115,8 @@ var COMMANDS = [
             cb({url: match});
         }
     },
+    // Playlist
+    // https://gdata.youtube.com/feeds/api/playlists/4DAEFAF23BB3CDD0?alt=jsonc&v=2
     { // Youtube (Keyword search)
         regex: /.*/, 
         module: "youtube",
@@ -136,7 +139,7 @@ setInterval(function(){ volume_lockout = false; }, 500);
 var _query_queue = [];
 var _runquery_timeout;
 //var BASE_URL = "http://localhost:9000/";
-var BASE_URL = "/";
+var BASE_URL = "/cmd";
 
 function deferQuery(data, cb, err){
     //TODO: err does nothing
@@ -258,8 +261,6 @@ $(document).ready(function(){
 
             for(var j = 0; j < data.data.items.length && j < 5; j++){
                 var vid = data.data.items[j];
-                //console.log(vid);
-                //list.append($("<a class='push' href='#' content='http://youtube.com/watch?v=" + vid.id + "'><li>" + vid.title + "</li></a>"));
                 list.append($(tmpl(vid)));
             }
             $(".results").html("").append(list);
@@ -267,90 +268,7 @@ $(document).ready(function(){
         return true;
     });
 
-    
-/*
-    $(".uploadFile").submit(function(){
-        $(".queueform");
-    });
-
-    $("input.addtxt").keyup(function(){
-        var query = $(this).val();
-        if(query == ""){
-            $(".results").html("");
-            return;
-        }
-        var ytrequrl = "http://gdata.youtube.com/feeds/api/videos?v=2&orderby=relevance&alt=jsonc&q=" + encodeURIComponent(query) + "&max-results=5&callback=?"
-        $.getJSON(ytrequrl, function(data){
-            var list = $("<ol class='suggest'></ol>");
-            var i = 0;
-            var index = query.indexOf(" ");
-
-            if(index == -1){
-                cmd_ = "";
-                cmd = query.toLowerCase();
-            }else{
-                var cmd_ = query.substr(index);
-                var cmd = query.substr(0, index).toLowerCase();
-            }
-            
-            var isCmdPrefix = function(prefix){
-                if(cmd.length < prefix.length){
-                    return cmd == prefix.substr(0, cmd.length);
-                }
-                if(cmd.length == 0){
-                    return false;
-                }
-                return cmd == prefix
-            }
-
-            for(var j = 0; j < window.commands.length && i < 5; j++){
-                var c = window.commands[j];
-                console.log(c, cmd);
-
-                if(isCmdPrefix(c)){
-                    console.log(c, cmd_);
-                    list.append($("<a href='/add/" + c + "+" + cmd_ + "'><li><strong>" + c + "</strong>" + cmd_ + "</li></a>"));
-                    i++
-                }
-            }
-
-            for(var j = 0; j < data.data.items.length && j + i < 5; j++){
-                var vid = data.data.items[j];
-                list.append($("<a href='/add/youtube/" + vid.id + "'><li>" + vid.title + "</li></a>"));
-            }
-            $(".results").html("").append(list);
-        });
-        return true;
-    });
-
-    */
-    
-
 });
-
-var loadSlider = function(updateCb){
-    var debouncedCb = _.debounce(updateCb, 300);
-    $("div.vol-slider").slider({
-        orientation: "horizontal",
-        range: "min",
-        min: 0,
-        max: 100,
-        value: window.volume,
-        slide: function(ev, ui) {
-            updateSlider(ui.value);
-            debouncedCb(ui.value);
-        }
-    });
-    updateSlider(window.volume);
-}
-
-var updateSlider = function(value){
-    $("div.vol-slider").slider("option", "value", value);
-    $(".ui-slider-range").html("<span>" + value + "</span>");
-}
-
-
-
 
 authenticate(function(capabilities){
     var modules = _.objectMap(capabilities.modules.specifics, function(x){ 
@@ -483,13 +401,8 @@ authenticate(function(capabilities){
             deferQuery({cmd: "queue", args: {parameters: module_capabilities}}, options.success);
         }
     });
-    
-    var Static = Backbone.Model.extend({
-        defaults: function(){
-            return {
 
-            };
-        },
+    var Static = Backbone.Model.extend({
         initialize: function(prop, options){
             this.parameters = statics[prop.uid].parameters;
             this.commands = statics[prop.uid].commands;
@@ -505,12 +418,10 @@ authenticate(function(capabilities){
         hasParameter: function(p){ return _.contains(this.parameters, p); },
         hasCommand: function(p){ return _.contains(this.commands, p); }
     });
-    
+
     var StaticSet = Backbone.Collection.extend({
         model: Static,
         parse: function(resp, options){
-            //console.log("statics parse");
-            //console.log(resp);
             // Flatten dict to list
             return _.map(resp, function(v, k){ 
                 v.uid = k;
@@ -565,7 +476,6 @@ authenticate(function(capabilities){
 
         },
         remove: function(){
-            console.log("Remove!", this.model);
             this.model.destroy();
         },
         actionSet : function(ev){
@@ -582,6 +492,14 @@ authenticate(function(capabilities){
     });
     var ActiveView = ActionView.extend({
         act_template: Handlebars.compile("{{{ html }}}"),
+        initialize: function(){
+            this.listenTo(this.model, "change", this.render);
+            this.listenTo(this.model, "change:uid", function(model){
+                //playYoutubeVideo(model.get('vid'), model.get('time'));
+            });
+            this.render();
+            return this;
+        }
     });
 
     var QueueView = Backbone.View.extend({
@@ -591,7 +509,6 @@ authenticate(function(capabilities){
             this.$el.sortable({
                 update: function(ev, ui){
                     var ordering = $("ol.playlist li").map(function(i, e){return $(e).attr('data-view-id')}).toArray();
-                    console.log("ORDERING:", ordering);
                     // idk where this could go
                     deferQuery({cmd: "mv", args:{uids: ordering}});
                 },
@@ -622,17 +539,8 @@ authenticate(function(capabilities){
             if(this.no_autorefresh){
                 return;
             }
-
             var self = this;
-            if(event == "reset"){ 
-                console.error("RESET QUEUEVIEW"); //???
-                this.subviews = {}; // Clear
-                _.each(this.collection.models, _.bind(this.addOne, this));
-
-            }else if(event == "sync"){
-            }else{
-                console.log("Queueview event", event);
-
+            if(event != "reset" && event != "sync"){
                 this.$el.html($(_.map(this.collection.models, function(model){
                     if(self.subviews[model.id]){ //TODO hack
                         return self.subviews[model.id].el;
@@ -643,46 +551,62 @@ authenticate(function(capabilities){
                 _.each(this.subviews, function(view){
                     view.delegateEvents();
                 });
-
             }
             return this;
         }
     });
 
-
     var StaticVolumeView = Backbone.View.extend({
         initialize: function(){
-            this.listenTo(this.collection, "add", this.render);
-            this.listenTo(this.collection, "change:vol", this.updateVolSlide);
+            this.render();
+            this.listenTo(this.model, "change:vol", this.render);
         },
-        _loaded: false,
-        render: function(act){
-            var vol = this.collection.findWhere({"class": "volume"}); 
-            if(vol){
-                if(!this._loaded){ //FIXME?
-                    loadSlider(function(val){
-                        vol.set('vol', val);    
-                    });
-                    this._loaded = true;
+        loadSlider : _.once(function(){
+            var self = this;
+            var setVal = _.debounce(function(x){
+                self.model.set('vol', x);
+            }, 500);
+            $("div.vol-slider").slider({
+                orientation: "horizontal",
+                range: "min",
+                min: 0,
+                max: 100,
+                value: window.volume,
+                slide: function(ev, ui) {
+                    self.updateSlider(ui.value);
+                    setVal(ui.value); // debounced
                 }
-            }
+            });
+        }),
+        updateSlider : function(value){
+            $("div.vol-slider").slider("option", "value", value);
+            $(".ui-slider-range").html("<span>" + value + "</span>");
         },
-        updateVolSlide: function(model, v){
-            updateSlider(v);
+        render: function(v){
+            //var vol = this.collection.findWhere({"class": "volume"});
+            this.loadSlider();
+            this.updateSlider(this.model.get('vol'));
+        },
+    });
+
+    var StaticSetView = Backbone.View.extend({
+        initialize: function(){
+            this.listenTo(this.collection, "add", function(model){
+                if(model.get('class') == "volume"){
+                    var sv = new StaticVolumeView({model: model});
+                }
+            });
         }
     });
 
     mz = new Musicazoo();
     qv = new QueueView({collection: mz.get('queue'), el: $("ol.playlist")});
     cv = new ActiveView({model: mz.get('active'), el: $("ol.current")});
-    vol = new StaticVolumeView({collection: mz.get('statics')});
+    ssv = new StaticSetView({collection: mz.get('statics')});
     mz.fetch();
 
-
     refreshPlaylist = function(firstTime){
-        if(!window.no_autorefresh){
-            mz.fetch();
-        }
+        mz.fetch();
     }
 
     refreshPlaylist(true);
