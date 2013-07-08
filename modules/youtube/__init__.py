@@ -124,7 +124,7 @@ class Youtube:
 	def set_rate(self,rate):
 		self.vlc_mp.set_rate(rate)
 
-	def get_rate(self,rate):
+	def get_rate(self):
 		return self.vlc_mp.get_rate()
 
 	# Class variables

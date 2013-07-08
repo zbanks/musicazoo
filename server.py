@@ -41,7 +41,7 @@ class MZHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         s.send_header("Content-type", "text/json")
         s.end_headers()
 
-    """
+#    """
     def do_GET(s):
         #s.giveError("Please POST a command.")
         s.send_response(200)
@@ -56,7 +56,7 @@ class MZHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             f.close()
         except IOError:
             pass
-    """
+#    """
 
     def giveError(s,error):
         s.send_response(200)
