@@ -1,17 +1,26 @@
+// Youtube iframe
+
 /*
-// Lets Flash from another domain call JavaScript
-var params = { allowScriptAccess: "always" };
-// The element id of the Flash embed
-var atts = { id: "ytPlayer" };
-// All of the magic handled by SWFObject (http://code.google.com/p/swfobject/)
-swfobject.embedSWF("http://www.youtube.com/apiplayer?enablejsapi=1&version=3",
-                   "video", "480", "295", "9", null, null, params, atts);
-function onYouTubePlayerReady(playerId) {
-console.log('YOUTUBE', playerId);
-  player = document.getElementById("ytPlayer");
+var player;
+function playYoutubeVideo(id, time) {
+    player = new YT.Player('video', {
+        height: '390',
+        width: '640',
+        //videoId: id,
+        events: {
+            'onReady': function(ev){
+                //ev.target.playVideo(); 
+                player.loadVideoById(id, time);
+                //ev.target.seekTo(time*1, true);
+            },
+            'onStateChange': function(ev){
+                console.log(ev);
+            }
+        }
+    });
+    console.log(player);
 }
 */
-
 
 // Underscore mixins
 _.mixin(_.str.exports());
@@ -114,6 +123,8 @@ var COMMANDS = [
             cb({url: match});
         }
     },
+    // Playlist
+    // https://gdata.youtube.com/feeds/api/playlists/4DAEFAF23BB3CDD0?alt=jsonc&v=2
     { // Youtube (Keyword search)
         regex: /.*/, 
         module: "youtube",
@@ -136,7 +147,7 @@ setInterval(function(){ volume_lockout = false; }, 500);
 var _query_queue = [];
 var _runquery_timeout;
 //var BASE_URL = "http://localhost:9000/";
-var BASE_URL = "/";
+var BASE_URL = "/cmd";
 
 function deferQuery(data, cb, err){
     //TODO: err does nothing
@@ -582,6 +593,14 @@ authenticate(function(capabilities){
     });
     var ActiveView = ActionView.extend({
         act_template: Handlebars.compile("{{{ html }}}"),
+        initialize: function(){
+            this.listenTo(this.model, "change", this.render);
+            this.listenTo(this.model, "change:uid", function(model){
+                //playYoutubeVideo(model.get('vid'), model.get('time'));
+            });
+            this.render();
+            return this;
+        }
     });
 
     var QueueView = Backbone.View.extend({
