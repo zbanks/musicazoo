@@ -21,6 +21,6 @@ def spin(cmd,secs,freq):
 		time.sleep(1.0/freq)
 
 
-print q.doCommand({'cmd':'add','args':{'type':'text','args':{'text':'hello i am a text','duration':3}}})
+print q.doCommand({'cmd':'add','args':{'type':'text','args':{'text':'hello i am a long text that should totally wrap around the screen a few times','duration':3}}})
 
 spin({'cmd':'cur','args':{'parameters':{'text':['status','text']}}},200,2)
