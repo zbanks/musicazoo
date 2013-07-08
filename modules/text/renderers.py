@@ -20,9 +20,10 @@ class TextAndSound(graphics.FullScreenGraphics):
 
 	def play(self):
 		self.vlc_mp.play()
+		self.vlc_mp.set_rate(float(self.text.speed))
 		while self.vlc_mp.get_length()==0:
 			time.sleep(0.1)
-		self.text.duration+=float(self.vlc_mp.get_length())/1000
+		self.text.duration+=float(self.vlc_mp.get_length())/1000/float(self.text.speed)
 
 		self.animate()
 		self.show()

@@ -20,7 +20,7 @@ class Text:
 		'splash':renderers.Splash
 	}
 
-	def __init__(self,queue,uid,text,short_description=None,long_description=None,text_preprocessor='none',speech_preprocessor='none',text2speech='google',renderer='splash',duration=0):
+	def __init__(self,queue,uid,text,short_description=None,long_description=None,text_preprocessor='none',speech_preprocessor='none',text2speech='google',renderer='splash',duration=0,speed=1.0):
 		self.queue=queue
 		self.uid=uid
 
@@ -30,6 +30,7 @@ class Text:
 			self.long_description=long_description
 		else:
 			self.long_description=short_description
+		self.speed=speed
 
 		self.text_preprocessor=self.preprocessing_engines[text_preprocessor]
 		self.speech_preprocessor=self.preprocessing_engines[speech_preprocessor]
