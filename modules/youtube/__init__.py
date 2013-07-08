@@ -23,6 +23,7 @@ class Youtube:
 		self.time=None
 		self.vid=None
 		self.status='added'
+		self.ready=threading.Semaphore(0)
 		t=threading.Thread(target=self.getVideoInfo, args=[url])
 		t.daemon=True
 		t.start()
@@ -60,7 +61,8 @@ class Youtube:
 	def play(self):
 		self.status='loading'
 		self.show_loading_screen()
-		if not self.getVideoInfo(self.url):
+		self.ready.acquire()
+		if self.status=='invalid':
 			return
 		self.vlcPlay()
 		self.status='finishing'
@@ -163,6 +165,7 @@ class Youtube:
 		except Exception:
 			self.status='invalid'
 			self.queue.removeMeAsync(self.uid) # Remove if possible
+			self.ready.release()
 			return False
 
 		vinfo=info['entries'][0]
@@ -180,9 +183,11 @@ class Youtube:
 			self.description=vinfo['description']
 		if 'id' in vinfo:
 			self.vid=vinfo['id']
+
 		if self.status=='added':
 			self.status='ready'
 
+		self.ready.release()
 		return True
 
 if __name__=='__main__':
