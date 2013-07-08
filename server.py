@@ -12,6 +12,7 @@ from modulemanager import *
 from staticmanager import *
 
 import modules.youtube
+import modules.text
 import statics.volume
 
 mm=ModuleManager([modules.youtube.Youtube,modules.text.Text])
