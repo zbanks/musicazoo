@@ -43,38 +43,69 @@ Handlebars.registerHelper('minutes', function(seconds){
     }
 });
 
-Handlebars.registerHelper('ifPaused', function(status, options){
-    if(status == "paused"){
-        return options.fn();
-    }
-});
-Handlebars.registerHelper('ifPlaying', function(status, options){
-    if(status == "playing"){
-        return options.fn();
+Handlebars.registerHelper('if_eq', function(x, options){
+    if(options.hash.eq){
+        if(x == options.hash.eq){
+            return options.fn(this);
+        }
+        return options.inverse(this);
+    }else{
+        if(x == options.hash.neq){
+            return options.inverse(this);
+        }
+        return options.fn(this);
     }
 });
 
 
 // Handlebars templates
 
-var TEMPLATE_NAMES = {"youtube": {queue: "youtube", active: "youtube_active"} };
+var TEMPLATE_NAMES = {
+    "youtube": {
+        queue: "youtube",
+        active: "youtube_active"
+    },
+    "text": {
+        queue: "text",
+        active: "text_active"
+    }
+};
 
 var TEMPLATES = _.chain({
+    /*
     "youtube": '<a href="{{ url }}">{{ title }}</a> - [{{ minutes duration }}] -  ({{ status}}:{{site }})',
     "youtube_active": '<div id="youtube-video"></div>' + 
                       '<a href="{{ url }}">{{ title }}</a> - [{{ minutes time }}/{{ minutes duration }}] - ({{ status}}:{{site }})' +
-                      '{{#ifPlaying status }}&nbsp;<a href="#" class="cmd" data-action="pause">pause</a>{{/ifPlaying}}' +
-                      '{{#ifPaused status }}&nbsp;<a href="#" class="cmd" data-action="resume">resume</a>{{/ifPaused}}' +
-                      '&nbsp;<a href="#" class="cmd" data-action="stop">stop</a>',
-    "unknown": '(Unknown)',
+                      '{{#ifPlaying status }}&nbsp;<a href="#" class="action-set" data-property="status" data-value="paused">pause</a>{{/ifPlaying}}' +
+                      '{{#ifPaused status }}&nbsp;<a href="#" class="action-set" data-property="status" data-value="playing">resume</a>{{/ifPaused}}' +
+                      '&nbsp;<a href="#" class="action-set" data-property="status" data-value="stopped">stop</a>',
+    */
+    "youtube": $("script.youtube-template").html(),
+    "youtube_active": $("script.youtube-active-template").html(),
+    "text": $("script.text-active-template").html(),
+    "text_active": $("script.text-template").html(),
     "unknown": '(Unknown)',
     "empty": '',
     "nothing": '(Nothing)',
-}).map(function(v, k){ return [k, Handlebars.compile(v)] }).object().value();
+}).map(function(v, k){  return [k, Handlebars.compile(v)] }).object().value();
 
 // NLP Constants
 
 var COMMANDS = [
+    { // Text
+        keywords: ["text", "say"],
+        module: "text",
+        args: function(match, cb, kw){
+            cb({
+                text: match,
+                text_preprocessor: "none",
+                speech_preprocessor: "none",
+                text2speech: "google",
+                renderer: "splash",
+                duration: 1
+            });
+        }
+    },
     { // Youtube
         keywords: ["youtube"],
         regex: /.*youtube.com.*watch.*v.*/, 
@@ -164,7 +195,7 @@ function authenticate(cb){
 var command_match = function(commands, text, cb){
     text = _.trim(text);
     var kw = _.strLeft(text, " ");
-    var rest = _.strLeft(text, " ");
+    var rest = _.strRight(text, " ");
     var match = null;
     for(var i = 0; i < commands.length; i++){
         var cmd = commands[i];
@@ -183,7 +214,7 @@ var command_match = function(commands, text, cb){
         if(match){
             cmd.args(match, function(args){
                 cb({type: cmd.module, args: args});
-            });
+            }, kw);
             return true;
         }
     }
@@ -227,7 +258,7 @@ $(document).ready(function(){
 
             for(var j = 0; j < data.data.items.length && j < 5; j++){
                 var vid = data.data.items[j];
-                console.log(vid);
+                //console.log(vid);
                 //list.append($("<a class='push' href='#' content='http://youtube.com/watch?v=" + vid.id + "'><li>" + vid.title + "</li></a>"));
                 list.append($(tmpl(vid)));
             }
@@ -298,6 +329,7 @@ $(document).ready(function(){
 });
 
 var loadSlider = function(updateCb){
+    var debouncedCb = _.debounce(updateCb, 300);
     $("div.vol-slider").slider({
         orientation: "horizontal",
         range: "min",
@@ -306,13 +338,7 @@ var loadSlider = function(updateCb){
         value: window.volume,
         slide: function(ev, ui) {
             updateSlider(ui.value);
-            if(volume_lockout)
-                return;
-            volume_lockout = true;
-            console.log(ui.value);
-            updateCb(ui.value, function(){
-                volume_lockout = false;    
-            });
+            debouncedCb(ui.value);
         }
     });
     updateSlider(window.volume);
@@ -354,6 +380,52 @@ authenticate(function(capabilities){
                 exists: true,
             };
         },
+        updateType: function(){
+            var type = this.get('type')
+            if(this.get('exists')){
+                if(TEMPLATES[type]){
+                    this.template_queue = TEMPLATE_NAMES[type].queue;
+                    this.template_active = TEMPLATE_NAMES[type].active;
+                }else{
+                    this.template_queue = "unknown";
+                    this.template_active = "unknown";
+                }
+            }else{
+                this.template_queue = "empty";
+                this.template_active = "nothing";
+            }
+
+            if(modules[type]){
+                this.parameters = modules[type].parameters;
+                this.commands = modules[type].commands;
+            }else{
+                this.parameters = [];
+                this.commands = [];
+            }
+
+            if(this.hasCommand("pause") && this.hasCommand("resume") && this.hasParameter("status")){
+                //console.log("Registering status");
+                this.on("change:status", function(model, status, options){
+                    if(!options.parse){ // Not a server update
+                        var prev_status = this.previous('status');
+                        if(prev_status == "paused" && status == "playing"){
+                            deferQuery({cmd: "tell_module", args: {uid: this.id, cmd: "resume"}});
+                        }else if(prev_status == "playing" && status == "paused"){
+                            deferQuery({cmd: "tell_module", args: {uid:this.id, cmd: "pause"}});
+                        }else if(status == "stopped"){
+                            deferQuery({cmd: "tell_module", args: {uid:this.id, cmd: "stop"}});
+                        }
+                    }
+                }, this);
+            }else{
+                this.off("change:status");
+            }
+        },
+        initialize: function(params, options, x){
+            this.on("change:type", this.updateType, this);
+            this.on("change:exists", this.updateType, this);
+            this.updateType();
+        },
         sync: function(method, model, options){
             if(method == "read"){
                 if(this.active){
@@ -367,12 +439,12 @@ authenticate(function(capabilities){
                     //deferQuery
                     // Eh, try anyways
                     deferQuery({cmd: "rm", args: {uids: [model.id]}}, options.success);
-                    deferQuery({cmd: "tell_module", args: {uid: model.id, cmd: "stop"}});
+                    //deferQuery({cmd: "tell_module", args: {uid: model.id, cmd: "stop"}});
                 }else{
                     deferQuery({cmd: "rm", args: {uids: [model.id]}}, options.success);
                 }
-            } else{
-                console.error("Unable to perform action on queue item:" + method);
+            }else{
+                console.log("ERROR:", "Unable to perform action on queue item:" + method);
             }
             return this;
         },
@@ -380,27 +452,14 @@ authenticate(function(capabilities){
             if(resp){
                 var attrs = {type: resp.type, uid: resp.uid, _order: resp._order, exists: true};
                 _.each(resp.parameters, function(v, k){ attrs[k] = v; });
-
-                if(TEMPLATES[resp.type]){
-                    this.template_queue = TEMPLATE_NAMES[resp.type].queue;
-                    this.template_active = TEMPLATE_NAMES[resp.type].active;
-                }else{
-                    this.template_queue = "unknown";
-                    this.template_active = "unknown";
-                }
-                
-                this.parameters = modules[resp.type].parameters;
-                this.commands = modules[resp.type].commands;
                 return attrs;
             }else{
-                this.template_queue = "empty";
-                this.template_active = "nothing";
                 return {'exists': false};
             }
         },
         idAttribute: "uid",
-        parameters: [],
-        commands: [],
+        hasParameter: function(p){ return _.contains(this.parameters, p); },
+        hasCommand: function(p){ return _.contains(this.commands, p); },
         template_queue: "unknown",
         template_active: "unknown",
         active: false
@@ -431,23 +490,20 @@ authenticate(function(capabilities){
 
             };
         },
-        parse: function(resp, options){
-            if(resp){
-                //var attrs = {class: resp.class, uid: resp.uid, exists: true};
-                var attrs = {};
-                _.each(resp, function(v, k){ attrs[k] = v; });
-                //console.log('static', attrs, resp);
-
-                this.parameters = statics[resp.uid].parameters;
-                this.commands = statics[resp.uid].commands;
-                return attrs;
-            }else{
-                return {};
+        initialize: function(prop, options){
+            this.parameters = statics[prop.uid].parameters;
+            this.commands = statics[prop.uid].commands;
+            if(this.hasParameter('vol') && this.hasCommand('set_vol')){
+                this.on('change:vol', function(model, vol, options){
+                    if(!options.parse){
+                        deferQuery({cmd: "tell_static", args: {"uid": this.id, "cmd": "set_vol", "args": {"vol": vol}}});
+                    }
+                });
             }
         },
         idAttribute: "uid",
-        parameters: [],
-        commands: []
+        hasParameter: function(p){ return _.contains(this.parameters, p); },
+        hasCommand: function(p){ return _.contains(this.commands, p); }
     });
     
     var StaticSet = Backbone.Collection.extend({
@@ -492,6 +548,7 @@ authenticate(function(capabilities){
         events: {
             "click .rm": "remove",
             "click .cmd": "cmd",
+            "click .action-set": "actionSet",
         },
         initialize: function(){
             this.listenTo(this.model, "change", this.render);
@@ -511,8 +568,15 @@ authenticate(function(capabilities){
             console.log("Remove!", this.model);
             this.model.destroy();
         },
+        actionSet : function(ev){
+            var $t = $(ev.target);
+            var property = $t.attr('data-property');
+            var value = $t.attr('data-value');
+            this.model.set(property, value);
+        },
         cmd: function(ev){
             var action = $(ev.target).attr("data-action");
+            console.log("DEPRICATED 'cmd'");
             deferQuery({cmd: "tell_module", args: {uid: this.model.id, cmd: action}});
         },
     });
@@ -588,22 +652,23 @@ authenticate(function(capabilities){
 
     var StaticVolumeView = Backbone.View.extend({
         initialize: function(){
-            this.listenTo(this.collection, "all", this.render);
+            this.listenTo(this.collection, "add", this.render);
+            this.listenTo(this.collection, "change:vol", this.updateVolSlide);
         },
         _loaded: false,
         render: function(act){
-            //console.log("static view", act, this.collection);
             var vol = this.collection.findWhere({"class": "volume"}); 
             if(vol){
                 if(!this._loaded){ //FIXME?
-                    loadSlider(function(val, cb){
+                    loadSlider(function(val){
                         vol.set('vol', val);    
-                        deferQuery({cmd: "tell_static", args: {"uid": vol.id, "cmd": "set_vol", "args": {"vol": val}}}, cb);
                     });
                     this._loaded = true;
                 }
-                updateSlider(vol.get('vol'));
             }
+        },
+        updateVolSlide: function(model, v){
+            updateSlider(v);
         }
     });
 

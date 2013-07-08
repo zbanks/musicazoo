@@ -12,6 +12,41 @@
         window.volume = 45;
         window.no_autorefresh = false;
     </script>
+    <script class="youtube-active-template" type="text/x-handlebars-template">
+        {{#if_eq status neq='added'}}
+            <!-- <div id="youtube-video"> </div> -->
+            <a href="{{ url }}"> {{ title }} </a> 
+            - [{{ minutes time }}/{{ minutes duration }}]
+            {{#if_eq status eq='loading' }}
+                - (Loading...)
+            {{/if_eq}}
+            {{#if_eq status eq='playing' }}
+                <a href="#" class="action-set" data-property="status" data-value="paused">pause</a>
+            {{/if_eq}}
+            {{#if_eq status eq='paused' }}
+                <a href="#" class="action-set" data-property="status" data-value="playing">resume</a>
+            {{/if_eq}}
+            {{#if_eq status neq='stopped' }}
+                <a href="#" class="action-set" data-property="status" data-value="stopped">stop</a>
+            {{/if_eq}}
+            - ({{ status }}:{{ site }})
+        {{else}}
+        <a href="{{ url }}"> (Loading youtube video...) </a> 
+        {{/if_eq}}
+    </script>
+    <script class="youtube-template" type="text/x-handlebars-template">
+        {{#if_eq status neq='added'}}
+        <a href="{{ url }}"> {{ title }} </a> 
+        - [{{ minutes duration }}]
+        - ({{ status }}:{{ site }})
+        {{else}}
+        <a href="{{ url }}"> (Loading youtube video...) </a> 
+        {{/if_eq}}
+
+    </script>
+    <script class="text-active-template text-template" type="text/x-handlebars-template">
+        {{ text }} - {{ status }} - [{{ minutes duration }}]
+    </script>
     <script type="text/javascript" src="./assets/mz_bb.js"></script>
     <!--
     <link rel="stylesheet" href="http://jqueryui.com/themes/base/jquery.ui.all.css"> 
