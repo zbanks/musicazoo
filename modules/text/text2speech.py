@@ -1,4 +1,5 @@
 import urllib,urllib2
+import os.fsync
 
 def google(obj):
 	text=obj.textToSpeak
@@ -34,6 +35,7 @@ def google(obj):
 		obj.sndfile.write(mp3)
 
 	obj.sndfile.flush()
+	os.fsync()
 	return True
 
 def no_text2speech(obj):
