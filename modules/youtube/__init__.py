@@ -2,7 +2,7 @@ import time
 
 import youtube_dl
 from youtube_dl.utils import *
-import mplayer_player_compat as player
+import vlc_player_compat as player
 import threading
 import os
 import loading
