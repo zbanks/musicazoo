@@ -68,4 +68,45 @@ class Splash(TextAndSound):
 
 class Email(TextAndSound):
     def init(self):
-        pass
+#text = self.text.textToShow
+        text = self.text
+        send_line, _, text = text.partition('\n')
+        subject_line, _, text = text.partition('\n')
+
+        self.root = Tkinter.Tk()
+        self.root.configure(background=COLORS['bg'])
+        s_width = self.root.winfo_screenwidth() - 1
+        s_height = self.root.winfo_screenheight() - 1
+        self.root.geometry("{0}x{1}+0+0".format(s_width, s_height))
+
+        self.wf = Tkinter.Label(self.root, 
+                                font=("Arial", 48), 
+                                bg=COLORS['bg'], 
+                                fg=COLORS['fg'], 
+                                wraplength=s_width,
+                                text=send_line)
+        self.wf.pack(padx=PADX)
+        self.wt = Tkinter.Label(self.root, 
+                                font=("Arial", 48), 
+                                bg=COLORS['bg'], 
+                                fg=COLORS['fg'], 
+                                wraplength=s_width,
+                                text=subject_line)
+        self.wt.pack(padx=PADX)
+
+        self.w = Tkinter.Text(self.root,
+                              font=("Arial", 36),
+                              bg=COLORS['bg'],
+                              fg=COLORS['fg'],
+                              wrap=Tkinter.WORD,
+                              highlightthickness=0,
+                              relief=Tkinter.FLAT)
+        self.w.insert(Tkinter.END, text)
+        self.w.pack(side=Tkinter.TOP, fill=Tkinter.BOTH, padx=PADX)
+
+#self.root.after(0, self.animate)
+        print "Ready"
+        self.root.mainloop()
+
+if __name__ == "__main__":
+    e = Email("From: test\nSubject: test subject\nMore stuff\n More\nMore\nMore!")
