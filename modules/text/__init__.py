@@ -10,16 +10,19 @@ class Text:
 	preprocessing_engines={
 		'none':preprocessors.no_preprocessor,
 		'pronounciation':preprocessors.pronounciation,
+		'pronounce_email':preprocessors.pronounce_email,
+		'email':preprocessors.no_preprocessor, #TODO
 		'remove_urls':preprocessors.remove_urls,
 	}
 
 	text2speech_engines={
 		'none':text2speech.no_text2speech,
-		'google':text2speech.google
+		'google':text2speech.google,
 	}
 
 	rendering_engines={
-		'splash':renderers.Splash
+		'splash':renderers.Splash,
+		'email':renderers.Email,
 	}
 
 	def __init__(self,queue,uid,text,short_description=None,long_description=None,text_preprocessor='none',speech_preprocessor='pronounciation',text2speech='google',renderer='splash',duration=0,speed=1.0):

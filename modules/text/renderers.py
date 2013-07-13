@@ -61,32 +61,30 @@ class TextAndSound(graphics.FullScreenGraphics):
 
 class Splash(TextAndSound):
 	def init(self):
-		self.c=Tkinter.Canvas(self,width=self.width,height=self.height,bg='black',highlightthickness=0)
+		self.c=Tkinter.Canvas(self,width=self.width,height=self.height,bg=COLORS['bg'],highlightthickness=0)
 		self.c.pack()
 		(x,y) = self.center()
-		self.textbox=self.c.create_text((x,y), text=self.text.textToShow, fill="white", justify=Tkinter.CENTER, font=("Helvetica",72), width=self.width)
+		self.textbox=self.c.create_text((x,y), text=self.text.textToShow, fill=COLORS['fg'], justify=Tkinter.CENTER, font=("Arial",72), width=self.width)
 
 class Email(TextAndSound):
     def init(self):
-#text = self.text.textToShow
-        text = self.text
+        text = self.text.textToShow
         send_line, _, text = text.partition('\n')
         subject_line, _, text = text.partition('\n')
 
-        self.root = Tkinter.Tk()
-        self.root.configure(background=COLORS['bg'])
-        s_width = self.root.winfo_screenwidth() - 1
-        s_height = self.root.winfo_screenheight() - 1
-        self.root.geometry("{0}x{1}+0+0".format(s_width, s_height))
+        self.configure(background=COLORS['bg'])
+        s_width = self.winfo_screenwidth() - 1
+        s_height = self.winfo_screenheight() - 1
+        self.geometry("{0}x{1}+0+0".format(s_width, s_height))
 
-        self.wf = Tkinter.Label(self.root, 
+        self.wf = Tkinter.Label(self, 
                                 font=("Arial", 48), 
                                 bg=COLORS['bg'], 
                                 fg=COLORS['fg'], 
                                 wraplength=s_width,
                                 text=send_line)
         self.wf.pack(padx=PADX)
-        self.wt = Tkinter.Label(self.root, 
+        self.wt = Tkinter.Label(self, 
                                 font=("Arial", 48), 
                                 bg=COLORS['bg'], 
                                 fg=COLORS['fg'], 
@@ -94,7 +92,7 @@ class Email(TextAndSound):
                                 text=subject_line)
         self.wt.pack(padx=PADX)
 
-        self.w = Tkinter.Text(self.root,
+        self.w = Tkinter.Text(self,
                               font=("Arial", 36),
                               bg=COLORS['bg'],
                               fg=COLORS['fg'],
@@ -103,10 +101,3 @@ class Email(TextAndSound):
                               relief=Tkinter.FLAT)
         self.w.insert(Tkinter.END, text)
         self.w.pack(side=Tkinter.TOP, fill=Tkinter.BOTH, padx=PADX)
-
-#self.root.after(0, self.animate)
-        print "Ready"
-        self.root.mainloop()
-
-if __name__ == "__main__":
-    e = Email("From: test\nSubject: test subject\nMore stuff\n More\nMore\nMore!")
