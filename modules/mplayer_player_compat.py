@@ -9,25 +9,22 @@ class Player:
 		self.sl=None
 		self.t=None
 
-	def load(self,media):
+	def load(self,media,cookies=None):
 		os.environ["DISPLAY"] = ":0"
-		self.mp=mplayer.Player()
-		self.mp.loadfile(media)
+		args=['-fs','-http-header-fields','User-Agent: Mozilla/5.0 (X11; U; Linux i686) Gecko/20071127 Firefox/2.0.0.11']
+		if cookies is not None:
+			args+=['-cookies','-cookies-file',cookies,media]
+		self.mp=mplayer.Player(args=args)
 		self.loaded=True
 
 	def up(self):
 		if not self.loaded:
 			return False
 
-		alive=self.mp.is_alive()
+		if self.length() is None:
+			return True # Wait for video to show up
 
-		if not alive:
-			return False
-
-		if not self.mp.fullscreen:
-			self.mp.fullscreen=True
-
-		return True
+		return self.mp.width is not None
 
 	def play(self):
 		if self.mp.paused:

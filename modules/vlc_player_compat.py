@@ -5,7 +5,7 @@ class Player:
 	def __init__(self):
 		self.loaded=False
 
-	def load(self,media):
+	def load(self,media,cookies=None):
 		os.environ["DISPLAY"] = ":0"
 		self.vlc_i = vlc.Instance(['-f','--no-video-title-show'])
 		self.vlc_mp = self.vlc_i.media_player_new()

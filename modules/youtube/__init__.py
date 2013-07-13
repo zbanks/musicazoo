@@ -6,6 +6,7 @@ import mplayer_player_compat as player
 import threading
 import os
 import loading
+import tempfile
 
 class Youtube:
 	TYPE_STRING='youtube'
@@ -23,6 +24,7 @@ class Youtube:
 		self.description=None
 		self.time=None
 		self.vid=None
+		self.cookies=None
 		self.status='added'
 		self.ready=threading.Semaphore(0)
 		t=threading.Thread(target=self.getVideoInfo, args=[url])
@@ -99,7 +101,7 @@ class Youtube:
 		self.status='playing'
 
 	def vidPlay(self):
-		self.player.load(self.media)
+		self.player.load(self.media,cookies=self.cookies)
 
 		self.status='loading'
 
@@ -114,6 +116,8 @@ class Youtube:
 				self.duration=duration
 				self.time=self.player.time()
 		self.player.stop()
+		if self.cookies:
+			os.unlink(self.cookies)
 
 	def set_rate(self,rate):
 		if not self.player.up():
@@ -151,10 +155,10 @@ class Youtube:
 	# Low-level stuff.
 	def getVideoInfo(self,url):
 		# General configuration
-		cookie_file='yt-cookies'
-		jar = compat_cookiejar.MozillaCookieJar(cookie_file)
-		if os.path.isfile(cookie_file) and os.access(cookie_file, os.R_OK):
-			jar.load()
+		tf=tempfile.NamedTemporaryFile(delete=False)
+		tf.close()
+		self.cookies=tf.name
+		jar = compat_cookiejar.MozillaCookieJar(self.cookies)
 		cookie_processor = compat_urllib_request.HTTPCookieProcessor(jar)
 		proxies = compat_urllib_request.getproxies()
 		proxy_handler = compat_urllib_request.ProxyHandler(proxies)
@@ -173,6 +177,8 @@ class Youtube:
 			self.queue.removeMeAsync(self.uid) # Remove if possible
 			self.ready.release()
 			return False
+
+		jar.save()
 
 		vinfo=info['entries'][0]
 		if 'title' in vinfo:
