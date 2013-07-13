@@ -59,7 +59,6 @@ class Youtube:
 		return self.vid
 
 	def play(self):
-		self.status='loading'
 		self.show_loading_screen()
 		self.ready.acquire()
 		if self.status=='invalid':
@@ -85,8 +84,8 @@ class Youtube:
 	def stop(self):
 		if self.status == 'stopped':
 			return
-		if self.status != 'playing' and self.status != 'paused':
-			raise Exception("Video is not playing nor paused")
+		if self.status != 'playing' and self.status != 'paused' and self.status != 'loading':
+			raise Exception("Video is not up")
 		self.vlc_mp.stop()
 		self.status='stopped'
 
@@ -109,8 +108,10 @@ class Youtube:
 
 		self.vlc_mp.play()
 
+		self.status='loading'
+
 		# Loop continuously, getting output and setting titles
-		while self.vlc_mp.get_state() not in [vlc.State.Ended,vlc.State.Stopped]:
+		while self.vlc_mp.get_state() not in [vlc.State.Ended,vlc.State.Stopped,vlc.State.Error]:
 			time.sleep(0.1)
 			duration=self.vlc_mp.get_length()
 			if duration>0:
