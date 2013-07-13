@@ -5,7 +5,7 @@ import cgi
 import hashlib
 import hmac
 import json
-import queue
+import mzqueue
 
 HOST_NAME = ''
 PORT_NUMBER = 9000
@@ -20,8 +20,8 @@ import statics.volume
 mm=ModuleManager([modules.youtube.Youtube,modules.text.Text])
 sm=StaticManager([statics.volume.Volume()])
 
-q=queue.MZQueue(mm,sm)
-qm=queue.MZQueueManager(q)
+q=mzqueue.MZQueue(mm,sm)
+qm=mzqueue.MZQueueManager(q)
 qm.start()
 
 from SocketServer import ThreadingMixIn
@@ -62,7 +62,7 @@ class MZHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         s.send_response(200)
         s.send_header("Content-type", "text/json")
         s.end_headers()
-        s.wfile.write(queue.errorPacket(error))
+        s.wfile.write(mzqueue.errorPacket(error))
 
     def do_POST(s):
         """
