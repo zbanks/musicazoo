@@ -3,6 +3,14 @@ import Tkinter
 import time
 import vlc
 
+
+COLORS = {
+    "bg" : "#406873",
+    "fg" : "#F3FDE1"
+}
+PADY=30
+PADX=50
+
 class TextAndSound(graphics.FullScreenGraphics):
 	def __init__(self,text):
 		graphics.FullScreenGraphics.__init__(self)
@@ -58,3 +66,6 @@ class Splash(TextAndSound):
 		(x,y) = self.center()
 		self.textbox=self.c.create_text((x,y), text=self.text.textToShow, fill="white", justify=Tkinter.CENTER, font=("Helvetica",72), width=self.width)
 
+class Email(TextAndSound):
+    def init(self):
+        pass
