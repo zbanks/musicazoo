@@ -20,6 +20,7 @@ class MusicazooShellCommandModule(object):
     subprocess = None
     running = False
     killed = False
+    template = "shellcmd"
     
     @staticmethod
     def match(input_str):
@@ -77,6 +78,7 @@ class MusicazooShellCommandModule(object):
         output["title"] = self.title
         output["queue_html"] = self.queue_html
         output["playing_html"] = self.playing_html
+        output["ko_template"] = self.template
 
         if not self.queue_html:
             output["queue_html"] = self.title
