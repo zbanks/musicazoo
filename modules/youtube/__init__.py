@@ -2,7 +2,7 @@ import time
 
 import youtube_dl
 from youtube_dl.utils import *
-import vlc
+import vlc_player_compat as player
 import threading
 import os
 import loading
@@ -11,6 +11,7 @@ class Youtube:
 	TYPE_STRING='youtube'
 
 	def __init__(self,queue,uid,url):
+		self.player=player.Player()
 		self.queue=queue
 		self.uid=uid
 		self.url=url
@@ -59,12 +60,11 @@ class Youtube:
 		return self.vid
 
 	def play(self):
-		self.status='loading'
 		self.show_loading_screen()
 		self.ready.acquire()
 		if self.status=='invalid':
 			return
-		self.vlcPlay()
+		self.vidPlay()
 		self.status='finishing'
 
 	def show_loading_screen(self):
@@ -79,15 +79,15 @@ class Youtube:
 			return
 		if self.status != 'playing':
 			raise Exception("Video is not playing")
-		self.vlc_mp.pause()
+		self.player.pause()
 		self.status='paused'
 
 	def stop(self):
 		if self.status == 'stopped':
 			return
-		if self.status != 'playing' and self.status != 'paused':
-			raise Exception("Video is not playing nor paused")
-		self.vlc_mp.stop()
+		if not self.player.up():
+			raise Exception("Video is not up")
+		self.player.stop()
 		self.status='stopped'
 
 	def resume(self):
@@ -95,37 +95,35 @@ class Youtube:
 			return
 		if self.status != 'paused':
 			raise Exception("Video is not paused")
-		self.vlc_mp.play()
+		self.player.play()
 		self.status='playing'
 
-	def vlcPlay(self):
-		os.environ["DISPLAY"] = ":0"
-		self.vlc_i = vlc.Instance(['-f','--no-video-title-show'])
-		self.vlc_mp = self.vlc_i.media_player_new()
-		vlc_media=self.vlc_i.media_new_location(self.media)
-		self.vlc_mp.set_media(vlc_media)
-		self.vlc_mp.set_xwindow(0)
-		self.vlc_mp.set_fullscreen(True)
+	def vidPlay(self):
+		self.player.load(self.media)
 
-		self.vlc_mp.play()
+		self.status='loading'
 
 		# Loop continuously, getting output and setting titles
-		while self.vlc_mp.get_state() not in [vlc.State.Ended,vlc.State.Stopped]:
+		while self.player.up():
 			time.sleep(0.1)
-			duration=self.vlc_mp.get_length()
-			if duration>0:
+			duration=self.player.length()
+			if duration is not None:
 				if self.status=='loading':
 					self.hide_loading_screen()
 					self.status='playing'
-				self.duration=float(duration)/1000
-				self.time=float(self.vlc_mp.get_time())/1000
-		self.vlc_mp.stop()
+				self.duration=duration
+				self.time=self.player.time()
+		self.player.stop()
 
 	def set_rate(self,rate):
-		self.vlc_mp.set_rate(rate)
+		if not self.player.up():
+			raise Exception("Cannot set rate of video that is not playing")
+		self.player.set_rate(rate)
 
 	def get_rate(self):
-		return self.vlc_mp.get_rate()
+		if not self.player.up():
+			return None
+		return self.player.get_rate()
 
 	# Class variables
 
