@@ -3,13 +3,11 @@
 	http://web.mit.edu/~vinitlee/Public/mz-new.css
 */
 
-/*
-@font-face { font-family: DINPro; font-weight: 200; src: url('http://musicazoo.mit.edu/static/fonts/DINPro-Light.otf'); }
-@font-face { font-family: DINPro; font-weight: 400; src: url('http://musicazoo.mit.edu/static/fonts/DINPro-Regular.otf'); }
-@font-face { font-family: DINPro; font-weight: 500; src: url('http://musicazoo.mit.edu/static/fonts/DINPro-Medium.otf'); }
-@font-face { font-family: DINPro; font-weight: 600; src: url('http://musicazoo.mit.edu/static/fonts/DINPro-Bold.otf'); }
-@font-face { font-family: DINPro; font-weight: 800; src: url('http://musicazoo.mit.edu/static/fonts/DINPro-Black.otf'); }
-*/
+@font-face { font-family: DINPro; font-weight: 200; src: url('/assets/DINPro-Light.otf'); }
+@font-face { font-family: DINPro; font-weight: 400; src: url('/assets/DINPro-Regular.otf'); }
+@font-face { font-family: DINPro; font-weight: 500; src: url('/assets/DINPro-Medium.otf'); }
+@font-face { font-family: DINPro; font-weight: 600; src: url('/assets/DINPro-Bold.otf'); }
+@font-face { font-family: DINPro; font-weight: 800; src: url('/assets/DINPro-Black.otf'); }
 
 html {
 	font-family: DINPro, Sans;

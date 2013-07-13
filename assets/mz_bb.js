@@ -281,10 +281,10 @@ $(document).ready(function(){
     $("#queueform").submit(function(e){
         e.preventDefault();
         var query = $(".addtxt").val();
+        $(".addtxt").val("");
         if(!query){
             return false;
         }
-        $(".addtxt").val("");
         command_match(COMMANDS, query, function(args){
             deferQuery({cmd: "add", args: args}, refreshPlaylist);
         });
@@ -675,4 +675,5 @@ authenticate(function(capabilities){
     refreshPlaylist(true);
     // Refresh playlist every 1 seconds
     setInterval(refreshPlaylist, 5000);
+
 });

@@ -3,6 +3,11 @@ import re
 def no_preprocessor(text):
 	return text
 
+def pronounce_email(text):
+    text = pronounciation(text)
+    text = "Email {}".format(text) #Email From:...
+    return text
+
 def pronounciation(text):
     subs = (
         (r'mit\.edu', " mit dot edju "),
