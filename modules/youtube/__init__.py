@@ -122,9 +122,13 @@ class Youtube:
 		self.vlc_mp.stop()
 
 	def set_rate(self,rate):
+		if self.status!='playing' and self.status!='paused':
+			raise Exception("Cannot set rate of video that is not playing")
 		self.vlc_mp.set_rate(rate)
 
 	def get_rate(self):
+		if self.status!='playing' and self.status!='paused':
+			return None
 		return self.vlc_mp.get_rate()
 
 	# Class variables
