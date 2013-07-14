@@ -39,14 +39,14 @@ class FullScreenGraphics(Tkinter.Tk,threading.Thread):
 		self.join()
 
 	def show(self):
-		self.after(0,show_sync)
+		self.after(0,self.show_sync)
 
 	def show_sync(self):
 		self.deiconify()
 		self.update()
 
 	def hide(self):
-		self.after(0,hide_sync)
+		self.after(0,self.hide_sync)
 
 	def hide_sync(self):
 		self.withdraw()
