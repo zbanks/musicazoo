@@ -25,6 +25,7 @@ class Youtube:
 		self.time=None
 		self.vid=None
 		self.cookies=None
+		self.rate=None
 		self.status='added'
 		self.ready=threading.Semaphore(0)
 		t=threading.Thread(target=self.getVideoInfo, args=[url])
@@ -119,10 +120,13 @@ class Youtube:
 					self.status='playing'
 				self.time=t
 				self.duration=self.player.length()
-		self.player.stop()
+				self.rate=self.player.get_rate()
 
 		if self.status=='loading':
 			self.hide_loading_screen()
+
+		self.rate=None
+		self.player.stop()
 
 		if self.cookies:
 			os.unlink(self.cookies)
@@ -133,9 +137,7 @@ class Youtube:
 		self.player.set_rate(rate)
 
 	def get_rate(self):
-		if not self.player.up():
-			return None
-		return self.player.get_rate()
+		return self.rate
 
 	# Class variables
 
