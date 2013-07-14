@@ -27,23 +27,24 @@ class VLC(object):
     killed = False
     vlc_i = None
     button_list = [("pause", "pause"),
-                   ("pausing_keep seek 0 1", "restart"),
-                   ("speed_set 0.67", "slow"),
-                   ("speed_set 1", "normal speed"),
-                   ("speed_set 1.33", "fast" ),
-                   ("seek 30 0", "+0:30"),
-                   ("seek -30 0", "-0:30")
+                   ("seek 0", "restart"),
+#("speed 0.67", "slow"),
+#("speed 1", "normal speed"),
+#("speed 1.33", "fast" ),
+                   ("seek_rel 30", "+0:30"),
+                   ("seek_rel -30", "-0:30")
                   ]
     
-    @staticmethod
-    def match(input_str):
-        return False
-
     def __init__(self, json):
         self.status_dict = {} #possibly causing issues? 
         self._initialize(json)
         self.filepath = json["arg"]
         self.title = "(VLC)"
+
+    @staticmethod
+    def match(input_str):
+        return False
+
 
     def _initialize(self, json):
         self.json = json
@@ -85,6 +86,7 @@ class VLC(object):
         output["title"] = self.title
         output["queue_html"] = self.queue_html
         output["playing_html"] = self.playing_html
+        output["template"] = "vlc-max" if self.running else "vlc-queue"
 
         if not self.queue_html:
             output["queue_html"] = self.title
@@ -93,15 +95,50 @@ class VLC(object):
         return output
     
     def message(self,json):
-        pass
+        cmd, _sep, _args = json["command"].partition(' ')
+        args = _args.split(' ')
+
+        if cmd == 'pause':
+            if not args[0]:
+                self.vlc_mp.pause() # Toggles
+            elif args[0] == 'pause':
+                self.vlc_mp.set_pause(True)
+            else:
+                self.vlc_mp.set_pause(False)
+        elif cmd == 'play':
+            self.vlc_mp.play()
+        elif cmd == 'speed':
+            if args and args[0]:
+                try:
+                    speed = float(args[0])
+                except:
+                    return
+                self.vlc_mp.set_rate(speed)
+        elif cmd == 'seek':
+            if args and args[0]:
+                try:
+                    pos = float(args[0]) * 1000
+                except:
+                    return
+                self.vlc_mp.set_time(int(pos))
+        elif cmd == 'seek_rel':
+            if args and args[0]:
+                try:
+                    pos = float(args[0])  * 1000
+                except:
+                    return
+                pos += self.vlc_mp.get_time()
+                self.vlc_mp.set_time(int(pos)) # Probably *1000
 
     def _run(self,cb):
         os.environ["DISPLAY"] = ":0"
-        self.vlc_i = vlc.Instance('--fullscreen')
+        self.vlc_i = vlc.Instance('--fullscreen', "--width", "1024", "--height", "768", "--no-video-title-show")
         self.vlc_mp = self.vlc_i.media_player_new()
         media = self.vlc_i.media_new(self.filepath)
+        self.vlc_mp.set_fullscreen(True)
         self.vlc_mp.set_media(media)
         self.vlc_mp.set_fullscreen(True)
+        print self.vlc_mp.get_fullscreen(), "fullscreen"
 
         print "Loaded, playing", self.duration
         self.vlc_mp.play()

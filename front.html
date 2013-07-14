@@ -43,7 +43,36 @@
         <a href="{{ url }}"> (Loading youtube video...) </a>
         {{/if_eq}}
         <!-- ({{ status }}:{{ site }}) -->
-
+    </script>
+    <script class="netvid-active-template" type="text/x-handlebars-template">
+        {{#if_eq status neq='added'}}
+            <a href="{{ url }}"> Uploaded Video </a>
+            - [{{ minutes time }}/{{ minutes duration }}]
+            {{#if_eq status eq='loading' }}
+                - (Loading...)
+            {{/if_eq}}
+            {{#if_eq status eq='playing' }}
+                <a href="#" class="action-set" data-property="status" data-value="paused">pause</a>
+            {{/if_eq}}
+            {{#if_eq status eq='paused' }}
+                <a href="#" class="action-set" data-property="status" data-value="playing">resume</a>
+            {{/if_eq}}
+            {{#if_eq status neq='stopped' }}
+                <a href="#" class="action-set" data-property="status" data-value="stopped">stop</a>
+            {{/if_eq}}
+        {{else}}
+        <a href="{{ url }}"> (Loading video...) </a>
+        {{/if_eq}}
+        <!-- ({{ status }}) -->
+    </script>
+    <script class="netvid-template" type="text/x-handlebars-template">
+        {{#if_eq status neq='added'}}
+        <a href="{{ url }}"> Uploaded Video </a>
+        - [{{ minutes duration }}]
+        {{else}}
+        <a href="{{ url }}"> (Loading video...) </a>
+        {{/if_eq}}
+        <!-- ({{ status }}) -->
     </script>
     <script class="text-active-template" type="text/x-handlebars-template">
         {{ long_description }}
@@ -76,9 +105,12 @@
         
         <div class="queue">
             <h2>Add</h2>
-            <form action="#" method="GET" autocomplete="off" enctype="multipart/form-data" id="queueform">
+            <form action="#" method="GET" autocomplete="off" id="queueform">
                 <input type="text" name="addtxt" class="addtxt" id="addtxt"> <input type="submit" class="addsubmit" id="addsubmit">
+            </form>
+
             <h2>Upload</h2>
+            <form action="#" method="POST" autocomplete="off" enctype="multipart/form-data" id="uploadform">
                 <input type="file" name="uploadfile" class="uploadfile"><input type="submit" class="addsubmit" id="addsubmit_upload">
             </form>
         </div>

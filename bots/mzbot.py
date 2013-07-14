@@ -1,22 +1,17 @@
 # A simple bot framework
 
-import httplib
+import requests
 import json
 
-class MZBot:
-	def __init__(self,server='localhost',port=9000,path=''):
-		self.server=server
-		self.port=port
-		self.path=path
+class MZBot(object):
+	def __init__(self, endpoint):
+		self.endpoint = endpoint
 
-	def doCommands(self,cmdlist):
-		cmdlist_json=json.dumps(cmdlist)
-		h=httplib.HTTPConnection(self.server,self.port)
+	def doCommands(self, cmd_list):
+		json_data = json.dumps(cmd_list)
 		headers = {"Content-type": "text/json"}
-		h.request("POST", '/'+self.path, cmdlist_json, headers)
-		response_json=h.getresponse().read()
-		response=json.loads(response_json)
-		return response
+		resp = requests.post(self.endpoint, data=json_data, headers=headers)
+		return resp.json()
 
 	def assert_success(self,result):
 		if isinstance(result,dict):
@@ -32,5 +27,7 @@ class MZBot:
 		raise Exception('Bad response type from server')
 
 if __name__=='__main__':
-	b=MZBot('localhost','9000')
+	import sys
+	endpoint = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:9000/"
+	b = MZBot(endpoint)
 	print b.doCommands([{'cmd':'static_capabilities'}])
