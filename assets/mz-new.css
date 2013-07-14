@@ -80,7 +80,7 @@ form#queueform:before {
 	position: absolute;
 }
 
-input#addsubmit.addsubmit {
+input.addsubmit {
 	background: transparent;
 	border: none;
 	font-family: inherit;
@@ -97,7 +97,7 @@ input#addsubmit.addsubmit {
 	*/
 }
 
-input#addsubmit.addsubmit:hover {
+input.addsubmit:hover {
 	opacity: 0.8;
 }
 

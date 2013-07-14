@@ -314,6 +314,9 @@ $(document).ready(function(){
         // Super hacky, but works cross-browser
         var fparent = $('input.uploadfile').parent();
         fparent.html(fparent.html());
+        $this.hide();
+        var $progbar = $('div.upload-progress-bar')
+        $progbar.css('width', '3%');
 
         $.ajax({
             url: $this.attr('action'),  //server script to process data
@@ -323,8 +326,9 @@ $(document).ready(function(){
                 if(myXhr.upload){ // check if upload property exists
                     myXhr.upload.addEventListener('progress',function(pe){
                             if(pe.lengthComputable){
-                                $('div.upload-progress').show();
-                                $('div.upload-progress-bar').css('width', 100 * (pe.loaded / pe.total) + '%');
+                                var progress = (pe.loaded / pe.total);
+                                $progbar.parent().show();
+                                $progbar.animate({width: $progbar.parent().width() * progress + '%'});
                             };
                         }, false); // for handling the progress of the upload
                 }
@@ -335,10 +339,12 @@ $(document).ready(function(){
             success: function(){
                 refreshPlaylist();
                 $('div.upload-progress').hide();
+                $this.show();
             },
             error: function(){
                 lostConnection();
                 $('div.upload-progress').hide();
+                $this.show();
             },
             // Form data
             data: formData,
