@@ -3,9 +3,10 @@ import Tkinter
 import time
 import vlc
 
-COLORS = graphics.COLORS
 PADY=10
 PADX=10
+
+COLORS={'bg':'#406873','fg':'#F3FDE1'}
 
 class TextAndSound(graphics.FullScreenGraphics):
 	def __init__(self,text):
