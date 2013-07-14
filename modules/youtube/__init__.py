@@ -90,6 +90,10 @@ class Youtube:
 		if not self.player.up():
 			raise Exception("Video is not up")
 		self.player.stop()
+
+		if self.status=='loading':
+			self.hide_loading_screen()
+
 		self.status='stopped'
 
 	def resume(self):
@@ -108,14 +112,18 @@ class Youtube:
 		# Loop continuously, getting output and setting titles
 		while self.player.up():
 			time.sleep(0.1)
-			duration=self.player.length()
-			if duration is not None:
+			t=self.player.time()
+			if t is not None:
 				if self.status=='loading':
 					self.hide_loading_screen()
 					self.status='playing'
-				self.duration=duration
-				self.time=self.player.time()
+				self.time=t
+				self.duration=self.player.length()
 		self.player.stop()
+
+		if self.status=='loading':
+			self.hide_loading_screen()
+
 		if self.cookies:
 			os.unlink(self.cookies)
 
