@@ -126,7 +126,7 @@ class ULHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 	# End class ULHandler
 
-uploader=UploadManager('http://192.168.0.7:9001','http://192.168.0.10/cmd')
+uploader=UploadManager('http://192.168.0.10/upload','http://192.168.0.10/cmd')
 
 if __name__ == '__main__':
 	server_class = MultiThreadedHTTPServer
