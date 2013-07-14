@@ -34,7 +34,7 @@ class NetVid:
 		return self.time
 
 	def get_status(self):
-		return self.time
+		return self.status
 
 	def get_short_description(self):
 		return self.short_description
