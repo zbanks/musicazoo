@@ -68,7 +68,7 @@ class Splash(TextAndSound):
 
 class MonoParagraph(TextAndSound):
     def init(self):
-        self.textbox = Tkinter.Text(self, font=("Mono",36), **COLORS)
+        self.textbox = Tkinter.Text(self, font=("Mono",36), wrap=Tkinter.WORD, **COLORS)
         self.textbox.insert(Tkinter.END, self.text.textToShow)
         self.textbox.pack(side=Tkinter.TOP, fill=Tkinter.BOTH, padx=PADX)
 
