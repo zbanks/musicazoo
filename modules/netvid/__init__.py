@@ -17,6 +17,7 @@ class NetVid:
 		self.duration=None
 		self.time=None
 		self.status='added'
+		self.rate=None
 
 		self.short_description=short_description
 		if long_description is not None:
@@ -40,7 +41,7 @@ class NetVid:
 		return self.short_description
 
 	def get_long_description(self):
-		return self.short_description
+		return self.long_description
 
 	def play(self):
 		self.show_loading_screen()
@@ -88,13 +89,19 @@ class NetVid:
 		# Loop continuously, getting output and setting titles
 		while self.player.up():
 			time.sleep(0.1)
-			duration=self.player.length()
-			if duration is not None:
+			time=self.player.time()
+			if time is not None:
 				if self.status=='loading':
 					self.hide_loading_screen()
 					self.status='playing'
-				self.duration=duration
-				self.time=self.player.time()
+				self.duration=time
+				self.duration=self.player.length()
+				self.rate=self.player.get_rate()
+
+		if self.status=='loading':
+			self.hide_loading_screen()
+
+		self.rate=None
 		self.player.stop()
 
 	def set_rate(self,rate):
@@ -103,9 +110,7 @@ class NetVid:
 		self.player.set_rate(rate)
 
 	def get_rate(self):
-		if not self.player.up():
-			return None
-		return self.player.get_rate()
+		return self.rate
 
 	# Class variables
 

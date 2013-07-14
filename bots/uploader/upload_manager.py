@@ -56,6 +56,7 @@ class UploadedFile(threading.Thread,mzbot.MZBot):
 		arglist={'url':url,'short_description':'Upload'}
 		if self.nicefilename:
 			arglist['long_description']=self.nicefilename+' (Upload)'
+		print arglist
 		result=self.doCommands([{'cmd':'add','args':{'type':'netvid','args':arglist}}])[0]
 		self.assert_success(result)
 		added_uid=result['result']['uid']
