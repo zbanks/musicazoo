@@ -1,0 +1,1 @@
+../vlc_player_compat.py
