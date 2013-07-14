@@ -8,8 +8,8 @@ COLORS = {
     "bg" : "#406873",
     "fg" : "#F3FDE1"
 }
-PADY=30
-PADX=50
+PADY=10
+PADX=10
 
 class TextAndSound(graphics.FullScreenGraphics):
 	def __init__(self,text):
@@ -65,6 +65,12 @@ class Splash(TextAndSound):
 		self.c.pack()
 		(x,y) = self.center()
 		self.textbox=self.c.create_text((x,y), text=self.text.textToShow, fill=COLORS['fg'], justify=Tkinter.CENTER, font=("Arial",72), width=self.width)
+
+class MonoParagraph(TextAndSound):
+    def init(self):
+        self.textbox = Tkinter.Text(self, font=("Mono",36), **COLORS)
+        self.textbox.insert(Tkinter.END, self.text.textToShow)
+        self.textbox.pack(side=Tkinter.TOP, fill=Tkinter.BOTH, padx=PADX)
 
 class Email(TextAndSound):
     def init(self):
