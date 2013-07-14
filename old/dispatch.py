@@ -158,7 +158,7 @@ class PlaybackInterface:
                 self.queue.remove(act)
                 self.run(act)
                 self.refresh()
-            elif self.state.available_over_persistent(status["resources"]):
+            elif self.state.available_over_persistent(status["resources"]) and not status["persistent"]:
                 print status
                 pause_ids = self.state.use_over_persistent(status["resources"], status["id"], status["persistent"]) 
                 print pause_ids
@@ -294,8 +294,24 @@ class PlaybackInterface:
         return {"success": True, "error": ""}
 
     def mv_cmd(self, json):
-        #TODO: Move things around
-        return {"success": False, "error": "Not implemented"}
+        if "ordering" not in json:
+            return
+        print >> sys.stderr, "Attempting move"
+        queue_dict = {}
+        for act in self.queue:
+            try:
+                queue_dict[act.status()["id"]] = act
+            except Exception, err:
+                print >> sys.stderr, "Error getting status"
+                print >> sys.stderr, err
+
+        order = json["ordering"].split(';')
+        for actid in order:
+            if actid in queue_dict:
+                act = queue_dict[actid]
+                self.queue.remove(act)
+                self.queue.appendleft(act)
+        return {"success": True, "error": ""}
 
     def status_cmd(self, json):
         return {"success": True, "error": "", "playing": self.playing(), "queue": self.queued()}  
@@ -321,7 +337,6 @@ class Dispatch:
     modules = {}
     def __init__(self,interface=None):
         self.load_modules()
-        self.load_modules() # Reload twice to resolve imports
         self.interface = interface or PlaybackInterface()
 
     def from_data(self, json_data):
@@ -340,7 +355,6 @@ class Dispatch:
                 return output
             if queue_cmd == "reload":
                 self.load_modules()
-                self.load_modules() # Reload twice to resolve things
                 return {"success": True, "error": ""}
         elif "module" in json_data:
             json_data["module"] = json_data["module"].lower()
