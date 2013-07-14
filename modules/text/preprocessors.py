@@ -53,4 +53,4 @@ def parse_mit_numbers(text):
 	return text
 
 if __name__=='__main__':
-	print prnounciation('16-0010 2.007 1-010 3.091 6.01 54-100 1.100 54-1800 6-120 6.131 6.00 10-4')
+	print pronunciation('16-0010 2.007 1-010 3.091 6.01 54-100 1.100 54-1800 6-120 6.131 6.00 10-4')
