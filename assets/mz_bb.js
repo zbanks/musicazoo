@@ -208,6 +208,7 @@ function runQueries(cb){
             dataType: 'json',
             type: 'POST',
             success: function(resp){
+                regainConnection();
                 if(resp.length != datas.length){ 
                     console.error("Did not recieve correct number of responses from server!");
                     return;
@@ -227,8 +228,9 @@ function runQueries(cb){
                 _runquery_timeout = window.setTimeout(runQueries, 0); // Defer
             },
             error: function(){
-                _.each(errs, function(x){ x(); });
                 lostConnection();
+                _.each(errs, function(x){ x(); });
+                _runquery_timeout = window.setTimeout(runQueries, 500); // Connection dropped?
             }
         });
     }else{
@@ -237,8 +239,15 @@ function runQueries(cb){
     _query_queue = [];
 }
 
+function regainConnection(){
+    $(".disconnect-hide").show();
+    $(".disconnect-show").hide();
+}
+
 function lostConnection(){
     console.log("Lost connection");
+    $(".disconnect-show").show();
+    $(".disconnect-hide").hide();
 }
 
 function authenticate(cb){
@@ -416,7 +425,7 @@ authenticate(function(capabilities){
         sync: function(method, model, options){
             if(method == "read"){
                 if(this.active){
-                    deferQuery({cmd: "cur", args: {parameters: module_capabilities}}, options.success);
+                    deferQuery({cmd: "cur", args: {parameters: module_capabilities}}, options.success, options.error);
                 }else{
                     console.error("Unable to sync queue item");
                 }
@@ -425,10 +434,10 @@ authenticate(function(capabilities){
                 if(this.active){
                     //deferQuery
                     // Eh, try anyways
-                    deferQuery({cmd: "rm", args: {uids: [model.id]}}, options.success);
+                    deferQuery({cmd: "rm", args: {uids: [model.id]}}, options.success, options.error);
                     //deferQuery({cmd: "tell_module", args: {uid: model.id, cmd: "stop"}});
                 }else{
-                    deferQuery({cmd: "rm", args: {uids: [model.id]}}, options.success);
+                    deferQuery({cmd: "rm", args: {uids: [model.id]}}, options.success, options.error);
                 }
             }else{
                 console.log("ERROR:", "Unable to perform action on queue item:" + method);
@@ -467,7 +476,7 @@ authenticate(function(capabilities){
                 console.error("Can only read from Queue");
                 return;
             }
-            deferQuery({cmd: "queue", args: {parameters: module_capabilities}}, options.success);
+            deferQuery({cmd: "queue", args: {parameters: module_capabilities}}, options.success, options.error);
         }
     });
 
@@ -503,7 +512,7 @@ authenticate(function(capabilities){
                 console.error("Can only read from StaticSet");
                 return;
             }
-            deferQuery({cmd: "statics", args: {parameters: static_capabilities}}, options.success);
+            deferQuery({cmd: "statics", args: {parameters: static_capabilities}}, options.success, options.error);
         }
 
     });
