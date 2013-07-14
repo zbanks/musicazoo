@@ -98,7 +98,7 @@ class NetVid:
 				if self.status=='loading':
 					self.hide_loading_screen()
 					self.status='playing'
-				self.duration=t
+				self.time=t
 				self.duration=self.player.length()
 				self.rate=self.player.get_rate()
 
