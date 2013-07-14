@@ -8,6 +8,16 @@ def pronounce_email(text):
     text = "Email {}".format(text) #Email From:...
     return text
 
+def pronounce_fortune(text):
+    text = pronounciation(text)
+    subs = (
+        (r'^Q:', 'Question: '),
+        (r'^A:', 'Answer: '),
+    )
+    for reg, repl in subs:
+        text = re.sub(reg, repl, text, flags=re.IGNORECASE)
+    return text
+
 def pronounciation(text):
     subs = (
         (r'mit\.edu', " mit dot edju "),

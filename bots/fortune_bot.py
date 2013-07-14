@@ -12,9 +12,9 @@ class FortuneBot(MZBot):
                         'args': {
                             'text': fortune_text,
                             'text_preprocessor': 'none',
-                            'speech_preprocessor': 'pronounciation',
+                            'speech_preprocessor': 'pronounce_fortune',
                             'text2speech': 'google',
-                            'renderer': 'splash', #FIXME
+                            'renderer': 'mono_paragraph',
                             'duration': 5,
                             'short_description': "Fortune",
                             'long_description': fortune_text
