@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 import BaseHTTPServer
 import cgi
@@ -112,7 +112,7 @@ class MZHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 if __name__ == '__main__':
     server_class = MultiThreadedHTTPServer
     httpd = server_class((HOST_NAME, PORT_NUMBER), MZHandler)
-    faulthanlder.enable()
+    faulthandler.enable()
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
