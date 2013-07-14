@@ -8,8 +8,7 @@ class UploadManager:
 	def __init__(self,my_url,mz_url):
 		self.uid=0
 		self.served_media={}
-		self.magic=magic.open(magic.MAGIC_MIME)
-		self.magic.load()
+		self.magic=magic.Magic(flags=magic.MAGIC_MIME)
 		self.my_url=my_url
 		self.mz_url=mz_url
 
@@ -20,7 +19,7 @@ class UploadManager:
 
 	def add(self,tempfilename,nicefilename=None):
 		uid=self.getUID()
-		mime=self.magic.file(tempfilename)
+		mime=self.magic.id_filename(tempfilename)
 		uf=UploadedFile(self,uid,tempfilename,nicefilename,finished_hook=lambda:self.rm(uid),mime_type=mime)
 		self.served_media[uid]=uf
 

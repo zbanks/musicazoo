@@ -31,22 +31,22 @@
                 <a href="#" class="action-set" data-property="status" data-value="stopped">stop</a>
             {{/if_eq}}
         {{else}}
-        <a href="{{ url }}"> (Loading youtube video...) </a>
+            <a href="{{ url }}"> (Loading youtube video...) </a>
         {{/if_eq}}
         <!-- ({{ status }}:{{ site }}) -->
     </script>
     <script class="youtube-template" type="text/x-handlebars-template">
         {{#if_eq status neq='added'}}
-        <a href="{{ url }}"> {{ title }} </a>
-        - [{{ minutes duration }}]
+            <a href="{{ url }}"> {{ title }} </a>
+            - [{{ minutes duration }}]
         {{else}}
-        <a href="{{ url }}"> (Loading youtube video...) </a>
+            <a href="{{ url }}"> (Loading youtube video...) </a>
         {{/if_eq}}
         <!-- ({{ status }}:{{ site }}) -->
     </script>
     <script class="netvid-active-template" type="text/x-handlebars-template">
         {{#if_eq status neq='added'}}
-            <a href="{{ url }}"> Uploaded Video </a>
+            <a href="{{ url }}"> {{ long_description }} </a>
             - [{{ minutes time }}/{{ minutes duration }}]
             {{#if_eq status eq='loading' }}
                 - (Loading...)
@@ -61,16 +61,16 @@
                 <a href="#" class="action-set" data-property="status" data-value="stopped">stop</a>
             {{/if_eq}}
         {{else}}
-        <a href="{{ url }}"> (Loading video...) </a>
+            <a href="{{ url }}"> (Loading video...) </a>
         {{/if_eq}}
         <!-- ({{ status }}) -->
     </script>
     <script class="netvid-template" type="text/x-handlebars-template">
         {{#if_eq status neq='added'}}
-        <a href="{{ url }}"> Uploaded Video </a>
-        - [{{ minutes duration }}]
+            <a href="{{ url }}"> {{ short_description }} </a>
+            - [{{ minutes duration }}]
         {{else}}
-        <a href="{{ url }}"> (Loading video...) </a>
+            <a href="{{ url }}"> (Loading video...) </a>
         {{/if_eq}}
         <!-- ({{ status }}) -->
     </script>
@@ -110,8 +110,11 @@
             </form>
 
             <h2>Upload</h2>
-            <form action="#" method="POST" autocomplete="off" enctype="multipart/form-data" id="uploadform">
-                <input type="file" name="uploadfile" class="uploadfile"><input type="submit" class="addsubmit" id="addsubmit_upload">
+            <form action="/upload/api" method="POST" autocomplete="off" enctype="multipart/form-data" id="uploadform">
+                <input type="file" name="upfile" class="uploadfile"><input type="submit" class="addsubmit" id="addsubmit_upload">
+                <div class="upload-progress">
+                    <div class="upload-progress-bar">
+                </div>
             </form>
         </div>
 

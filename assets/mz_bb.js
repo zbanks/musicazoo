@@ -306,6 +306,40 @@ $(document).ready(function(){
         return false; // Prevent form submitting
     });
 
+    $("#uploadform").submit(function(e){
+        var $this = $("#uploadform");
+        e.preventDefault();
+        var formData = new FormData($this[0]);
+        $.ajax({
+            url: $this.attr('action'),  //server script to process data
+            type: 'POST',
+            xhr: function() {  // custom xhr
+                var myXhr = $.ajaxSettings.xhr();
+                if(myXhr.upload){ // check if upload property exists
+                    myXhr.upload.addEventListener('progress',function(pe){
+                            if(pe.lengthComputable){
+                                $('div.upload-progress').show();
+                                $('div.upload-progress-bar').css('width', 100 * (pe.loaded / pe.total) + '%');
+                                console.log(pe.loaded, pe.total);
+                            };
+                        }, false); // for handling the progress of the upload
+                }
+                return myXhr;
+            },
+            //Ajax events
+            //beforeSend: beforeSendHandler,
+            success: refreshPlaylist,
+            error: lostConnection,
+            // Form data
+            data: formData,
+            //Options to tell JQuery not to process data or worry about content-type
+            cache: false,
+            contentType: false,
+            processData: false
+        });
+        return false; // Prevent form submitting
+    });
+
     $(".results").delegate("a.push", "click", function(){
         var $this = $(this);
         $(".addtxt").val($this.attr("content"));

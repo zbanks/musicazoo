@@ -182,3 +182,15 @@ a.related, a.rm, a.btn, a.cmd, a.action-set {
 a.related:hover, a.rm:hover {
 	background: rgba(0,30,60,0.8);
 }
+
+div.upload-progress {
+    display: none;
+    width: 400px;
+    height: 10px;
+    background-color: #111;
+}
+
+div.upload-progress-bar {
+    height: 100%;
+    background-color: #eee;
+}
