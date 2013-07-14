@@ -46,13 +46,14 @@ class MZQueue:
 			d['parameters']=self.backgrounds.get_multiple_parameters(obj,parameters[obj.TYPE_STRING])
 		return d
 
-	def set_bg(self,parameters={}):
+	def set_bg(self,type,args={}):
 		uid=self.backgrounds.get_uid()
-		mod_inst=self.backgrounds.instantiate(type,self,uid,args)
+		mod_inst=self.backgrounds.instantiate(type,args)
 		if self.bg is not None:
 			(bg_uid,bg_obj)=self.bg
 			bg_obj.close()
 		self.bg=(uid,mod_inst)
+		self.bg_visible=False
 		self.update_bg()
 		return {'uid':uid}
 
@@ -63,15 +64,15 @@ class MZQueue:
 		(bg_uid,bg_obj)=self.bg
 		if self.cur is None:
 			if not self.bg_visible:
-				bg_uid.show()
+				bg_obj.show()
 				self.bg_visible=True
 		else:
 			if self.bg_visible:
-				bg_uid.hide()
+				bg_obj.hide()
 				self.bg_visible=False
 
 	# add command
-	def add(self,type,args):
+	def add(self,type,args={}):
 		uid=self.modules.get_uid()
 		mod_inst=self.modules.instantiate(type,self,uid,args)
 		self.queue.append((uid,mod_inst))
@@ -112,7 +113,7 @@ class MZQueue:
 			raise Exception("Module identifier not in queue or cur")
 		return self.modules.tell(d[uid],cmd,args)
 
-	def tell_bg(self,uid,cmd,args={}):
+	def tell_background(self,uid,cmd,args={}):
 		uid=int(uid)
 		if self.bg is None:
 			raise Exception("No background")
@@ -133,7 +134,7 @@ class MZQueue:
 			raise Exception("Module identifier not in queue or cur")
 		return self.modules.get_multiple_parameters(d[uid],parameters)
 
-	def ask_bg(self,uid,parameters):
+	def ask_background(self,uid,parameters):
 		uid=int(uid)
 		if self.bg is None:
 			raise Exception("No background")
@@ -142,7 +143,7 @@ class MZQueue:
 			raise Exception("Bad background")
 		return self.modules.get_multiple_parameters(bg_obj,parameters)
 
-	def tell_static(self,uid,cmd,args):
+	def tell_static(self,uid,cmd,args={}):
 		uid=int(uid)
 		return self.statics.tell(uid,cmd,args)
 
@@ -216,11 +217,16 @@ class MZQueue:
 		'queue':get_queue,
 		'cur':get_cur,
 		'statics':get_statics,
+		'bg':get_bg,
+		'set_bg':set_bg,
 		'static_capabilities':static_capabilities,
 		'module_capabilities':module_capabilities,
+		'background_capabilities':background_capabilities,
 		'tell_module':tell_module,
 		'tell_static':tell_static,
+		'tell_background':tell_background,
 		'ask_module':ask_module,
+		'ask_background':ask_background,
 	}
 
 # End class MZQueue
