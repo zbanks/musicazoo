@@ -57,6 +57,7 @@ class ULHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 				self.send_response(200)
 				self.send_header("Content-type",f.mime_type)
 				self.content_length(infile)
+				self.send_header("Content-disposition","attachment; filename="+f.nicefilename)
 				self.end_headers()
 				self.chunked_write(infile,self.wfile)
 				infile.close()
@@ -105,7 +106,7 @@ class ULHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 	# End class ULHandler
 
-uploader=UploadManager(('192.168.0.7',9001,''),('192.168.0.10',80,'cmd'))
+uploader=UploadManager('http://192.168.0.7:9001','http://192.168.0.10/cmd')
 
 if __name__ == '__main__':
 	server_class = MultiThreadedHTTPServer

@@ -9,7 +9,7 @@ import tempfile
 class NetVid:
 	TYPE_STRING='netvid'
 
-	def __init__(self,queue,uid,url):
+	def __init__(self,queue,uid,url,short_description=None,long_description=None):
 		self.player=player.Player()
 		self.queue=queue
 		self.uid=uid
@@ -17,6 +17,12 @@ class NetVid:
 		self.duration=None
 		self.time=None
 		self.status='added'
+
+		self.short_description=short_description
+		if long_description is not None:
+			self.long_description=long_description
+		else:
+			self.long_description=short_description
 
 	def get_url(self):
 		return self.url
@@ -29,6 +35,12 @@ class NetVid:
 
 	def get_status(self):
 		return self.time
+
+	def get_short_description(self):
+		return self.short_description
+
+	def get_long_description(self):
+		return self.short_description
 
 	def play(self):
 		self.show_loading_screen()
@@ -110,5 +122,7 @@ class NetVid:
 		'status':get_status,
 		'time':get_time,
 		'rate':get_rate,
+		'short_description':get_short_description,
+		'long_description':get_long_description,
 	}
 

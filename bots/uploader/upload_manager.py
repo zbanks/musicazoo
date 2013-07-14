@@ -2,6 +2,7 @@ import threading
 import magic
 import mzbot
 import time
+import os
 
 class UploadManager:
 	def __init__(self,my_url,mz_url):
@@ -33,7 +34,7 @@ class UploadManager:
 			return
 		uf=self.served_media[uid]
 		os.unlink(uf.tempfilename)
-		self.served_media.delete(uid)
+		del self.served_media[uid]
 
 class UploadedFile(threading.Thread,mzbot.MZBot):
 	def __init__(self,manager,uid,tempfilename,nicefilename=None,finished_hook=None,mime_type=None):
@@ -44,7 +45,7 @@ class UploadedFile(threading.Thread,mzbot.MZBot):
 		self.finished_hook=finished_hook
 		self.mime_type=mime_type
 
-		mzbot.MZBot.__init__(self,*manager.mz_url)
+		mzbot.MZBot.__init__(self,manager.mz_url)
 		threading.Thread.__init__(self)
 
 		self.daemon=True
@@ -52,7 +53,10 @@ class UploadedFile(threading.Thread,mzbot.MZBot):
 
 	def run(self):
 		url=self.getURL()
-		result=self.doCommands([{'cmd':'add','args':{'type':'netvid','args':{'url':url}}}])
+		arglist={'url':url,'short_description':'Upload'}
+		if self.nicefilename:
+			arglist['long_description']=self.nicefilename+' (Upload)'
+		result=self.doCommands([{'cmd':'add','args':{'type':'netvid','args':arglist}}])[0]
 		self.assert_success(result)
 		added_uid=result['result']['uid']
 		while True:
@@ -69,15 +73,12 @@ class UploadedFile(threading.Thread,mzbot.MZBot):
 					still_playing=True
 			if not still_playing:
 				break
-			time.sleep(3)
-			print "Video over"
+			time.sleep(10)
+		print "Video over"
 
 		#time.sleep(3600) # sleep for an hour before deleting video
-		finished_hook()
+		self.finished_hook()
 
 	def getURL(self):
-		(addr,port,path)=self.manager.my_url
-		if path:
-			path='/'+self.manager.my_url[2]
-		return "http://"+self.manager.my_url[0]+":"+str(self.manager.my_url[1])+path+"/media/"+str(self.uid)
+		return self.manager.my_url+"/media/"+str(self.uid)
 
