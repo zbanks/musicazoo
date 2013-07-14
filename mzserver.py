@@ -1,5 +1,10 @@
 #!/usr/bin/env python
 
+import sys,os
+mypath=os.path.dirname(__file__)
+libpath=os.path.join(mypath,'lib/')
+sys.path.append(libpath)
+
 import BaseHTTPServer
 import cgi
 import faulthandler
@@ -21,8 +26,9 @@ import statics.volume
 
 mm=ModuleManager([modules.youtube.Youtube,modules.text.Text,modules.netvid.NetVid])
 sm=StaticManager([statics.volume.Volume()])
+bm=BackgroundManager([])
 
-q=mzqueue.MZQueue(mm,sm)
+q=mzqueue.MZQueue(mm,sm,bm)
 qm=mzqueue.MZQueueManager(q)
 qm.start()
 
