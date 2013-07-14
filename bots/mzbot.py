@@ -3,7 +3,7 @@
 import requests
 import json
 
-class MZBot:
+class MZBot(object):
     def __init__(self, endpoint):
         self.endpoint = endpoint
 

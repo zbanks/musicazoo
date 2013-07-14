@@ -70,25 +70,19 @@ Handlebars.registerHelper('if_eq', function(x, options){
 // Handlebars templates
 
 var TEMPLATE_NAMES = {
-    "youtube": {
-        queue: "youtube",
-        active: "youtube_active"
-    },
-    "text": {
-        queue: "text",
-        active: "text_active"
-    }
 };
 
 var TEMPLATES = _.objectMap({
-    "youtube": $("script.youtube-template").html(),
-    "youtube_active": $("script.youtube-active-template").html(),
-    "text": $("script.text-template").html(),
-    "text_active": $("script.text-active-template").html(),
     "unknown": '(Unknown)',
     "empty": '',
     "nothing": '(Nothing)',
 }, Handlebars.compile);
+
+_.each(["youtube", "text", "netvid"], function(n){
+    TEMPLATES[n] = Handlebars.compile($("script." + n + "-template").html());
+    TEMPLATES[n + "_active"] = Handlebars.compile($("script." + n + "-active-template").html());
+    TEMPLATE_NAMES[n] = {queue: n, active: n + "_active"};
+});
 
 // NLP Constants
 
@@ -275,7 +269,6 @@ var command_match = function(commands, text, cb){
     }
     return false;
 }
-
 
 $(document).ready(function(){
     $("#queueform").submit(function(e){
@@ -663,17 +656,17 @@ authenticate(function(capabilities){
     });
 
     mz = new Musicazoo();
-    qv = new QueueView({collection: mz.get('queue'), el: $("ol.playlist")});
-    cv = new ActiveView({model: mz.get('active'), el: $("ol.current")});
-    ssv = new StaticSetView({collection: mz.get('statics')});
+    var qv = new QueueView({collection: mz.get('queue'), el: $("ol.playlist")});
+    var cv = new ActiveView({model: mz.get('active'), el: $("ol.current")});
+    var ssv = new StaticSetView({collection: mz.get('statics')});
     mz.fetch();
 
-    refreshPlaylist = function(firstTime){
+    refreshPlaylist = function(){
         mz.fetch();
     }
 
-    refreshPlaylist(true);
+    refreshPlaylist();
     // Refresh playlist every 1 seconds
-    setInterval(refreshPlaylist, 5000);
+    setInterval(refreshPlaylist, 2000);
 
 });
