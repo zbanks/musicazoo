@@ -84,8 +84,6 @@ class NetVid:
 				self.duration=duration
 				self.time=self.player.time()
 		self.player.stop()
-		if self.cookies:
-			os.unlink(self.cookies)
 
 	def set_rate(self,rate):
 		if not self.player.up():

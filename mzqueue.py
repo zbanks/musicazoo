@@ -39,10 +39,12 @@ class MZQueue:
 
 	# add command
 	def add(self,type,args):
-		mod_inst=self.modules.instantiate(type,self,self.uid,args)
-		self.queue.append((self.uid,mod_inst))
+		uid=self.uid
+		mod_inst=self.modules.instantiate(type,self,uid,args)
+		self.queue.append((uid,mod_inst))
 		self.wakeup.release()
 		self.updateUID()
+		return {'uid':uid}
 
 	def rm(self,uids):
 		self.queue=[(uid,obj) for (uid,obj) in self.queue if uid not in [int(uid) for uid in uids]]
