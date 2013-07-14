@@ -106,7 +106,7 @@
         <div class="queue">
             <h2>Add</h2>
             <form action="#" method="GET" autocomplete="off" id="queueform">
-                <input type="text" name="addtxt" class="addtxt" id="addtxt"> <input type="submit" class="addsubmit" id="addsubmit">
+                <input type="text" name="addtxt" class="addtxt" id="addtxt"> <input type="submit" class="addsubmit disconnect-hide" id="addsubmit">
             </form>
 
             <h2>Upload</h2>
@@ -115,7 +115,12 @@
             </form>
         </div>
 
-        <div class="playlist">
+        <div class="reconnecting disconnect-show" style="display: none;">
+            <h2>Lost connection!</h2>
+            Uh oh! Hang tight while we try to reconnect...
+        </div>
+
+        <div class="playlist disconnect-hide">
             <h2>Playlist</h2>
             <div id="video"></div>
 
