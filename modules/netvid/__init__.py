@@ -116,6 +116,16 @@ class NetVid:
 	def get_rate(self):
 		return self.rate
 
+	def seek_rel(self,offset):
+		if not self.player.up():
+			raise Exception("Video is not up")
+		self.player.seek_rel(offset)
+
+	def seek_abs(self,position):
+		if not self.player.up():
+			raise Exception("Video is not up")
+		self.player.seek_abs(position)
+
 	# Class variables
 
 	commands={
@@ -123,6 +133,8 @@ class NetVid:
 		'resume':resume,
 		'stop':stop,
 		'set_rate':set_rate,
+		'seek_rel':seek_rel,
+		'seek_abs':seek_abs,
 	}
 
 	parameters={
