@@ -80,7 +80,7 @@ form#queueform:before {
 	position: absolute;
 }
 
-input#addsubmit.addsubmit {
+input.addsubmit {
 	background: transparent;
 	border: none;
 	font-family: inherit;
@@ -97,7 +97,7 @@ input#addsubmit.addsubmit {
 	*/
 }
 
-input#addsubmit.addsubmit:hover {
+input.addsubmit:hover {
 	opacity: 0.8;
 }
 
@@ -187,10 +187,10 @@ div.upload-progress {
     display: none;
     width: 400px;
     height: 10px;
-    background-color: #111;
+    background-color: rgba(0,30,60,0.8);
 }
 
 div.upload-progress-bar {
     height: 100%;
-    background-color: #eee;
+    background-color: #F3FDE1;
 }
