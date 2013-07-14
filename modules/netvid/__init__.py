@@ -71,6 +71,10 @@ class NetVid:
 		if not self.player.up():
 			raise Exception("Video is not up")
 		self.player.stop()
+
+		if self.status=='loading':
+			self.hide_loading_screen()
+
 		self.status='stopped'
 
 	def resume(self):
@@ -89,12 +93,12 @@ class NetVid:
 		# Loop continuously, getting output and setting titles
 		while self.player.up():
 			time.sleep(0.1)
-			time=self.player.time()
-			if time is not None:
+			t=self.player.time()
+			if t is not None:
 				if self.status=='loading':
 					self.hide_loading_screen()
 					self.status='playing'
-				self.duration=time
+				self.duration=t
 				self.duration=self.player.length()
 				self.rate=self.player.get_rate()
 

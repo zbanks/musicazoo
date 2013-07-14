@@ -46,4 +46,6 @@ class Player:
 
 	def time(self):	
 		t=self.vlc_mp.get_time()
+		if t<=0:
+			return None
 		return float(t)/1000
