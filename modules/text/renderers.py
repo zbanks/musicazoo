@@ -3,11 +3,7 @@ import Tkinter
 import time
 import vlc
 
-
-COLORS = {
-    "bg" : "#406873",
-    "fg" : "#F3FDE1"
-}
+COLORS = graphics.COLORS
 PADY=10
 PADX=10
 
@@ -68,7 +64,12 @@ class Splash(TextAndSound):
 
 class MonoParagraph(TextAndSound):
     def init(self):
-        self.textbox = Tkinter.Text(self, font=("Mono",36), wrap=Tkinter.WORD, **COLORS)
+        self.textbox = Tkinter.Text(self,
+                                    font=("Mono", 32),
+                                    wrap=Tkinter.WORD,
+                                    highlightthickness=0,
+                                    relief=Tkinter.FLAT,
+                                    **COLORS)
         self.textbox.insert(Tkinter.END, self.text.textToShow)
         self.textbox.pack(side=Tkinter.TOP, fill=Tkinter.BOTH, padx=PADX)
 
@@ -78,7 +79,6 @@ class Email(TextAndSound):
         send_line, _, text = text.partition('\n')
         subject_line, _, text = text.partition('\n')
 
-        self.configure(background=COLORS['bg'])
         s_width = self.winfo_screenwidth() - 1
         s_height = self.winfo_screenheight() - 1
         self.geometry("{0}x{1}+0+0".format(s_width, s_height))
@@ -100,10 +100,9 @@ class Email(TextAndSound):
 
         self.w = Tkinter.Text(self,
                               font=("Arial", 36),
-                              bg=COLORS['bg'],
-                              fg=COLORS['fg'],
                               wrap=Tkinter.WORD,
                               highlightthickness=0,
-                              relief=Tkinter.FLAT)
+                              relief=Tkinter.FLAT,
+                              **COLORS)
         self.w.insert(Tkinter.END, text)
         self.w.pack(side=Tkinter.TOP, fill=Tkinter.BOTH, padx=PADX)

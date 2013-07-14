@@ -2,6 +2,11 @@ import Tkinter
 import threading
 import time
 
+COLORS = {
+    "bg" : "#406873",
+    "fg" : "#F3FDE1"
+}
+
 class FullScreenGraphics(Tkinter.Tk,threading.Thread):
 	def __init__(self):
 		threading.Thread.__init__(self)
@@ -12,6 +17,7 @@ class FullScreenGraphics(Tkinter.Tk,threading.Thread):
 
 	def run(self):
 		Tkinter.Tk.__init__(self)
+		self.configure(background=COLORS['bg'])
 		self.withdraw()
 		self.width,self.height=self.winfo_screenwidth(),self.winfo_screenheight()
 		self.attributes('-fullscreen', True)
@@ -43,7 +49,7 @@ class FullScreenGraphics(Tkinter.Tk,threading.Thread):
 if __name__=='__main__':
 	fsg=FullScreenGraphics()
 
-	c=Tkinter.Canvas(fsg,width=fsg.width,height=fsg.height,bg='black',highlightthickness=0)
+	c=Tkinter.Canvas(fsg,width=fsg.width,height=fsg.height,highlightthickness=0,**COLORS)
 	c.pack()
 
 	coord = fsg.center()
