@@ -23,7 +23,7 @@ class FullScreenGraphics(Tkinter.Tk,threading.Thread):
 		self.attributes('-fullscreen', True)
 		self.bind("<Escape>", self.over)
 		self.finished=False
-		self.ready.release()
+		self.after(0,lambda:self.ready.release())
 		self.mainloop()
 		self.finished=True
 
