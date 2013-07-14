@@ -2,11 +2,13 @@
 
 import BaseHTTPServer
 import cgi
-from upload_manager import UploadManager
+import faulthandler
+import json
+import os
 import re
 import tempfile
-import os
-import json
+
+from upload_manager import UploadManager
 
 HOST_NAME = ''
 PORT_NUMBER = 9001
@@ -134,6 +136,7 @@ uploader=UploadManager('http://192.168.0.10/upload','http://192.168.0.10/cmd')
 if __name__ == '__main__':
 	server_class = MultiThreadedHTTPServer
 	httpd = server_class((HOST_NAME, PORT_NUMBER), ULHandler)
+	faulthandler.enable()
 	try:
 		httpd.serve_forever()
 	except KeyboardInterrupt:
