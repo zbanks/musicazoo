@@ -189,7 +189,6 @@ var _runquery_timeout;
 var BASE_URL = "/cmd";
 
 function deferQuery(data, cb, err){
-    //TODO: err does nothing
     _query_queue.push({"data": data, "cb": cb, "err": err});
 }
 
@@ -204,28 +203,42 @@ function runQueries(cb){
         var cbs = _.pluck(_query_queue, "cb");
         var errs = _.pluck(_query_queue, "cb");
         var datas = _.pluck(_query_queue, "data");
-        $.post(BASE_URL, JSON.stringify(datas), function(resp){
-            if(resp.length != datas.length){ 
-                console.error("Did not recieve correct number of responses from server!");
-                return;
-            }
-            for(var i = 0; i < resp.length; i++){
-                var r = resp[i];
-                if(!r.success){
-                    console.error("Server Error:", r.error);
-                }else if(cbs[i]){
-                    cbs[i](r.result);
+        $.ajax(BASE_URL, {
+            data: JSON.stringify(datas),
+            dataType: 'json',
+            type: 'POST',
+            success: function(resp){
+                if(resp.length != datas.length){ 
+                    console.error("Did not recieve correct number of responses from server!");
+                    return;
                 }
+                for(var i = 0; i < resp.length; i++){
+                    var r = resp[i];
+                    if(!r.success){
+                        console.error("Server Error:", r.error);
+                        errs[i]();
+                    }else if(cbs[i]){
+                        cbs[i](r.result);
+                    }
+                }
+                if(cb){
+                    cb();
+                }
+                _runquery_timeout = window.setTimeout(runQueries, 0); // Defer
+            },
+            error: function(){
+                _.each(errs, function(x){ x(); });
+                lostConnection();
             }
-            if(cb){
-                cb();
-            }
-            _runquery_timeout = window.setTimeout(runQueries, 0); // Defer
-        }, 'json');
+        });
     }else{
         _runquery_timeout = window.setTimeout(runQueries, 50);
     }
     _query_queue = [];
+}
+
+function lostConnection(){
+    console.log("Lost connection");
 }
 
 function authenticate(cb){
@@ -233,10 +246,10 @@ function authenticate(cb){
     var caps = {};
     deferQuery({cmd: "module_capabilities"}, function(mcap){
         caps.modules = mcap;
-    });
+    }, lostConnection);
     deferQuery({cmd: "static_capabilities"}, function(scap){
-        caps.statics = scap;  
-    });
+        caps.statics = scap;
+    }, lostConnection);
     runQueries(function(){
         cb(caps);
     });
@@ -279,7 +292,7 @@ $(document).ready(function(){
             return false;
         }
         command_match(COMMANDS, query, function(args){
-            deferQuery({cmd: "add", args: args}, refreshPlaylist);
+            deferQuery({cmd: "add", args: args}, refreshPlaylist, lostConnection);
         });
         return false; // Prevent form submitting
     });
