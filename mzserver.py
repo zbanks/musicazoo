@@ -15,9 +15,10 @@ from staticmanager import *
 
 import modules.youtube
 import modules.text
+import modules.netvid
 import statics.volume
 
-mm=ModuleManager([modules.youtube.Youtube,modules.text.Text])
+mm=ModuleManager([modules.youtube.Youtube,modules.text.Text,modules.netvid.NetVid])
 sm=StaticManager([statics.volume.Volume()])
 
 q=mzqueue.MZQueue(mm,sm)

@@ -27,6 +27,9 @@ class NetVid:
 	def get_time(self):
 		return self.time
 
+	def get_status(self):
+		return self.time
+
 	def play(self):
 		self.show_loading_screen()
 		if self.status=='invalid':
