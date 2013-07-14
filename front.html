@@ -45,33 +45,28 @@
         <!-- ({{ status }}:{{ site }}) -->
     </script>
     <script class="netvid-active-template" type="text/x-handlebars-template">
-        {{#if_eq status neq='added'}}
-            <a href="{{ url }}"> {{ long_description }} </a>
+        <a href="{{ url }}"> {{ long_description }} </a>
+        {{#if duration }}
             - [{{ minutes time }}/{{ minutes duration }}]
-            {{#if_eq status eq='loading' }}
-                - (Loading...)
-            {{/if_eq}}
-            {{#if_eq status eq='playing' }}
-                <a href="#" class="action-set" data-property="status" data-value="paused">pause</a>
-            {{/if_eq}}
-            {{#if_eq status eq='paused' }}
-                <a href="#" class="action-set" data-property="status" data-value="playing">resume</a>
-            {{/if_eq}}
-            {{#if_eq status neq='stopped' }}
-                <a href="#" class="action-set" data-property="status" data-value="stopped">stop</a>
-            {{/if_eq}}
         {{else}}
-            <a href="{{ url }}"> (Loading video...) </a>
+            - [{{ minutes time }}]
+        {{/if}}
+        {{#if_eq status eq='playing' }}
+            <a href="#" class="action-set" data-property="status" data-value="paused">pause</a>
+        {{/if_eq}}
+        {{#if_eq status eq='paused' }}
+            <a href="#" class="action-set" data-property="status" data-value="playing">resume</a>
+        {{/if_eq}}
+        {{#if_eq status neq='stopped' }}
+            <a href="#" class="action-set" data-property="status" data-value="stopped">stop</a>
         {{/if_eq}}
         <!-- ({{ status }}) -->
     </script>
     <script class="netvid-template" type="text/x-handlebars-template">
-        {{#if_eq status neq='added'}}
-            <a href="{{ url }}"> {{ short_description }} </a>
+        <a href="{{ url }}"> {{ short_description }} </a>
+        {{#if duration }}
             - [{{ minutes duration }}]
-        {{else}}
-            <a href="{{ url }}"> (Loading video...) </a>
-        {{/if_eq}}
+        {{/if}}
         <!-- ({{ status }}) -->
     </script>
     <script class="text-active-template" type="text/x-handlebars-template">
@@ -111,7 +106,8 @@
 
             <h2>Upload</h2>
             <form action="/upload/api" method="POST" autocomplete="off" enctype="multipart/form-data" id="uploadform">
-                <input type="file" name="upfile" class="uploadfile"><input type="submit" class="addsubmit" id="addsubmit_upload">
+                <span> <input type="file" name="upfile" class="uploadfile" multiple> </span> <!-- Need div to replace file input -->
+                <input type="submit" class="addsubmit" id="addsubmit_upload">
                 <div class="upload-progress">
                     <div class="upload-progress-bar">
                 </div>

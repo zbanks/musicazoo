@@ -102,27 +102,30 @@ class ULHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 
 	def upload_file(self):
-		ctype, pdict = cgi.parse_header(self.headers.getheader('content-type'))     
+		ctype, pdict = cgi.parse_header(self.headers.getheader('content-type'))	 
 		if ctype == 'multipart/form-data':
 			fs = cgi.FieldStorage( fp = self.rfile, 
 				headers = self.headers, # headers_, 
-				environ={ 'REQUEST_METHOD':'POST' } # all the rest will come from the 'headers' object,     
-				# but as the FieldStorage object was designed for CGI, absense of 'POST' value in environ     
-				# will prevent the object from using the 'fp' argument !     
+				environ={ 'REQUEST_METHOD':'POST' } # all the rest will come from the 'headers' object,	 
+				# but as the FieldStorage object was designed for CGI, absense of 'POST' value in environ	 
+				# will prevent the object from using the 'fp' argument !	 
 			)
 
 		else:
 			raise Exception('Unexpected post request')
 
-		fs_up = fs['upfile']
-		if not fs_up.filename:
-			raise Exception('No file sent.')
-		tf=tempfile.NamedTemporaryFile(delete=False)
-		self.chunked_write(fs_up.file,tf)
-		fs_up.file.close()
-		tf.close()
+		fs_ups = fs['upfile']
+		if not isinstance(fs_ups, list):
+			fs_ups = [fs_ups]
+		for fs_up in fs_ups:
+			if not fs_up.filename:
+				raise Exception('No file sent.')
+			tf=tempfile.NamedTemporaryFile(delete=False)
+			self.chunked_write(fs_up.file,tf)
+			fs_up.file.close()
+			tf.close()
 
-		uploader.add(tf.name,nicefilename = os.path.split(fs_up.filename)[1])
+			uploader.add(tf.name,nicefilename = os.path.split(fs_up.filename)[1])
 
 	# End class ULHandler
 

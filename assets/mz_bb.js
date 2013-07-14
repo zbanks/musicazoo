@@ -310,6 +310,11 @@ $(document).ready(function(){
         var $this = $("#uploadform");
         e.preventDefault();
         var formData = new FormData($this[0]);
+        // Clear out the old file by replacing the DOM element.
+        // Super hacky, but works cross-browser
+        var fparent = $('input.uploadfile').parent();
+        fparent.html(fparent.html());
+
         $.ajax({
             url: $this.attr('action'),  //server script to process data
             type: 'POST',
@@ -320,7 +325,6 @@ $(document).ready(function(){
                             if(pe.lengthComputable){
                                 $('div.upload-progress').show();
                                 $('div.upload-progress-bar').css('width', 100 * (pe.loaded / pe.total) + '%');
-                                console.log(pe.loaded, pe.total);
                             };
                         }, false); // for handling the progress of the upload
                 }
@@ -328,8 +332,14 @@ $(document).ready(function(){
             },
             //Ajax events
             //beforeSend: beforeSendHandler,
-            success: refreshPlaylist,
-            error: lostConnection,
+            success: function(){
+                refreshPlaylist();
+                $('div.upload-progress').hide();
+            },
+            error: function(){
+                lostConnection();
+                $('div.upload-progress').hide();
+            },
             // Form data
             data: formData,
             //Options to tell JQuery not to process data or worry about content-type
@@ -356,6 +366,11 @@ $(document).ready(function(){
         }
         var ytrequrl = "http://gdata.youtube.com/feeds/api/videos?v=2&orderby=relevance&alt=jsonc&q=" + encodeURIComponent(query) + "&max-results=5&callback=?"
         $.getJSON(ytrequrl, function(data){
+            if(!$(".addtxt").val()){
+                // If all the text from query box has been deleted, hide this box
+                $results.html("");
+                return;
+            }
             var list = $("<ol class='suggest'></ol>");
             var tmpl = Handlebars.compile("<a class='push' href='#' content='http://youtube.com/watch?v={{{ id }}}'><li>{{ title }} - [{{ minutes duration }}] </li></a>");
 
