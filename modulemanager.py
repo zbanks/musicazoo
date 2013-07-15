@@ -9,6 +9,13 @@ class ModuleManager:
 			'str':str
 		}
 
+		self.uid=0
+
+	def get_uid(self):
+		uid=self.uid
+		self.uid+=1
+		return uid
+
 	def get_capabilities(self):
 		cap=dict([(
 			module.TYPE_STRING,

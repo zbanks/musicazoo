@@ -9,9 +9,10 @@ class Text:
 
 	preprocessing_engines={
 		'none':preprocessors.no_preprocessor,
-		'pronounciation':preprocessors.pronounciation,
+		'pronunciation':preprocessors.pronunciation,
 		'pronounce_email':preprocessors.pronounce_email,
-		'email':preprocessors.no_preprocessor, #TODO
+		'pronounce_fortune':preprocessors.pronounce_fortune,
+		'email':preprocessors.pronounce_email, #TODO
 		'remove_urls':preprocessors.remove_urls,
 	}
 
@@ -23,9 +24,10 @@ class Text:
 	rendering_engines={
 		'splash':renderers.Splash,
 		'email':renderers.Email,
+		'mono_paragraph':renderers.MonoParagraph,
 	}
 
-	def __init__(self,queue,uid,text,short_description=None,long_description=None,text_preprocessor='none',speech_preprocessor='pronounciation',text2speech='google',renderer='splash',duration=0,speed=1.0):
+	def __init__(self,queue,uid,text,short_description=None,long_description=None,text_preprocessor='none',speech_preprocessor='pronunciation',text2speech='google',renderer='splash',duration=0,speed=1.0):
 		self.queue=queue
 		self.uid=uid
 

@@ -14,40 +14,66 @@
         window.no_autorefresh = false;
     </script>
     <script class="youtube-active-template" type="text/x-handlebars-template">
-        {{#if_eq status neq='added'}}
-            <!-- <div id="youtube-video"> </div> -->
-            <a href="{{ url }}"> {{ title }} </a>
-            - [{{ minutes time }}/{{ minutes duration }}]
-            {{#if_eq status eq='loading' }}
-                - (Loading...)
+        {{#if_eq status neq='stopped' }}
+            {{#if_eq status neq='added'}}
+                <!-- <div id="youtube-video"> </div> -->
+                <a href="{{ url }}"> {{ title }} </a>
+                - [{{ minutes time }}/{{ minutes duration }}]
+                {{#if_eq status eq='loading' }}
+                    - (Loading...)
+                {{/if_eq}}
+                {{#if_eq status eq='playing' }}
+                    <a href="#" class="action-set" data-property="status" data-value="paused">pause</a>
+                {{/if_eq}}
+                {{#if_eq status eq='paused' }}
+                    <a href="#" class="action-set" data-property="status" data-value="playing">resume</a>
+                {{/if_eq}}
+                <a href="#" class="action-set" data-property="status" data-value="stopped">stop</a>
+                <!-- <a href="http://musicazoo.mit.edu/add?addtxt={{ url }}" class="action-set">fwd</a> -->
+
+            {{else}}
+                <a href="{{ url }}"> (Loading youtube video...) </a>
             {{/if_eq}}
+        {{/if_eq}}
+        <!-- ({{ status }}:{{ site }}) -->
+    </script>
+    <script class="youtube-template" type="text/x-handlebars-template">
+        {{#if_eq status neq='added'}}
+            <a href="{{ url }}"> {{ title }} </a>
+            - [{{ minutes duration }}]
+        {{else}}
+            <a href="{{ url }}"> (Loading youtube video...) </a>
+        {{/if_eq}}
+        <!-- ({{ status }}:{{ site }}) -->
+    </script>
+    <script class="netvid-active-template" type="text/x-handlebars-template">
+        {{#if_eq status neq='stopped' }}
+            <a href="{{ url }}"> {{ long_description }} </a>
+            {{#if duration }}
+                - [{{ minutes time }}/{{ minutes duration }}]
+            {{else}}
+                - [{{ minutes time }}]
+            {{/if}}
             {{#if_eq status eq='playing' }}
                 <a href="#" class="action-set" data-property="status" data-value="paused">pause</a>
             {{/if_eq}}
             {{#if_eq status eq='paused' }}
                 <a href="#" class="action-set" data-property="status" data-value="playing">resume</a>
             {{/if_eq}}
-            {{#if_eq status neq='stopped' }}
                 <a href="#" class="action-set" data-property="status" data-value="stopped">stop</a>
-            {{/if_eq}}
-        {{else}}
-        <a href="{{ url }}"> (Loading youtube video...) </a>
         {{/if_eq}}
-        <!-- ({{ status }}:{{ site }}) -->
+        <!-- ({{ status }}) -->
     </script>
-    <script class="youtube-template" type="text/x-handlebars-template">
-        {{#if_eq status neq='added'}}
-        <a href="{{ url }}"> {{ title }} </a>
-        - [{{ minutes duration }}]
-        {{else}}
-        <a href="{{ url }}"> (Loading youtube video...) </a>
-        {{/if_eq}}
-        <!-- ({{ status }}:{{ site }}) -->
-
+    <script class="netvid-template" type="text/x-handlebars-template">
+        <a href="{{ url }}"> {{ short_description }} </a>
+        {{#if duration }}
+            - [{{ minutes duration }}]
+        {{/if}}
+        <!-- ({{ status }}) -->
     </script>
     <script class="text-active-template" type="text/x-handlebars-template">
-        {{ long_description }}
         {{#if_eq status neq='stopped' }}
+            {{ long_description }}
             <a href="#" class="action-set" data-property="status" data-value="stopped">stop</a>
         {{/if_eq}}
         <!-- {{ status }} -->
@@ -65,7 +91,7 @@
 </head>
 <body>
     <div class="content">
-        <h1>Musicazoo</h1>
+        <h1>Party Palace</h1>
 
         <div class="controls">
             <!-- <a href="/help" id="help">Help</a> -->
@@ -76,14 +102,26 @@
         
         <div class="queue">
             <h2>Add</h2>
-            <form action="#" method="GET" autocomplete="off" enctype="multipart/form-data" id="queueform">
-                <input type="text" name="addtxt" class="addtxt" id="addtxt"> <input type="submit" class="addsubmit" id="addsubmit">
-            <h2>Upload</h2>
-                <input type="file" name="uploadfile" class="uploadfile"><input type="submit" class="addsubmit" id="addsubmit_upload">
+            <form action="#" method="GET" autocomplete="off" id="queueform">
+                <input type="text" name="addtxt" class="addtxt" id="addtxt"> <input type="submit" class="addsubmit disconnect-hide" id="addsubmit">
             </form>
+
+            <h2>Upload</h2>
+            <form action="/upload/api" method="POST" autocomplete="off" enctype="multipart/form-data" id="uploadform">
+                <span> <input type="file" name="upfile" class="uploadfile" multiple> </span> <!-- Need div to replace file input -->
+                <input type="submit" class="notquite-addsubmit disconnect-hide" id="addsubmit_upload">
+            </form>
+            <div class="upload-progress">
+                <div class="upload-progress-bar">
+            </div>
         </div>
 
-        <div class="playlist">
+        <div class="reconnecting disconnect-show" style="display: none;">
+            <h2>Lost connection!</h2>
+            Uh oh! Hang tight while we try to reconnect...
+        </div>
+
+        <div class="playlist disconnect-hide">
             <h2>Playlist</h2>
             <div id="video"></div>
 

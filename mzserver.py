@@ -1,7 +1,13 @@
-#!/usr/bin/python
+#!/usr/bin/env python
+
+import sys,os
+mypath=os.path.dirname(__file__)
+libpath=os.path.join(mypath,'lib/')
+sys.path.append(libpath)
 
 import BaseHTTPServer
 import cgi
+import faulthandler
 import hashlib
 import hmac
 import json
@@ -12,16 +18,20 @@ PORT_NUMBER = 9000
 
 from modulemanager import *
 from staticmanager import *
+from backgroundmanager import *
 
 import modules.youtube
 import modules.text
 import modules.netvid
 import statics.volume
+import backgrounds.logo
+import backgrounds.image
 
 mm=ModuleManager([modules.youtube.Youtube,modules.text.Text,modules.netvid.NetVid])
 sm=StaticManager([statics.volume.Volume()])
+bm=BackgroundManager([backgrounds.logo.Logo,backgrounds.image.ImageBG])
 
-q=mzqueue.MZQueue(mm,sm)
+q=mzqueue.MZQueue(mm,sm,bm)
 qm=mzqueue.MZQueueManager(q)
 qm.start()
 
@@ -111,6 +121,7 @@ class MZHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 if __name__ == '__main__':
     server_class = MultiThreadedHTTPServer
     httpd = server_class((HOST_NAME, PORT_NUMBER), MZHandler)
+    faulthandler.enable()
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:

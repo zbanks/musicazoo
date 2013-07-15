@@ -9,7 +9,7 @@ import tempfile
 class NetVid:
 	TYPE_STRING='netvid'
 
-	def __init__(self,queue,uid,url):
+	def __init__(self,queue,uid,url,short_description=None,long_description=None):
 		self.player=player.Player()
 		self.queue=queue
 		self.uid=uid
@@ -17,6 +17,13 @@ class NetVid:
 		self.duration=None
 		self.time=None
 		self.status='added'
+		self.rate=None
+
+		self.short_description=short_description
+		if long_description is not None:
+			self.long_description=long_description
+		else:
+			self.long_description=short_description
 
 	def get_url(self):
 		return self.url
@@ -28,7 +35,13 @@ class NetVid:
 		return self.time
 
 	def get_status(self):
-		return self.time
+		return self.status
+
+	def get_short_description(self):
+		return self.short_description
+
+	def get_long_description(self):
+		return self.long_description
 
 	def play(self):
 		self.show_loading_screen()
@@ -58,6 +71,10 @@ class NetVid:
 		if not self.player.up():
 			raise Exception("Video is not up")
 		self.player.stop()
+
+		if self.status=='loading':
+			self.hide_loading_screen()
+
 		self.status='stopped'
 
 	def resume(self):
@@ -76,16 +93,20 @@ class NetVid:
 		# Loop continuously, getting output and setting titles
 		while self.player.up():
 			time.sleep(0.1)
-			duration=self.player.length()
-			if duration is not None:
+			t=self.player.time()
+			if t is not None:
 				if self.status=='loading':
 					self.hide_loading_screen()
 					self.status='playing'
-				self.duration=duration
-				self.time=self.player.time()
+				self.time=t
+				self.duration=self.player.length()
+				self.rate=self.player.get_rate()
+
+		if self.status=='loading':
+			self.hide_loading_screen()
+
+		self.rate=None
 		self.player.stop()
-		if self.cookies:
-			os.unlink(self.cookies)
 
 	def set_rate(self,rate):
 		if not self.player.up():
@@ -93,9 +114,17 @@ class NetVid:
 		self.player.set_rate(rate)
 
 	def get_rate(self):
+		return self.rate
+
+	def seek_rel(self,offset):
 		if not self.player.up():
-			return None
-		return self.player.get_rate()
+			raise Exception("Video is not up")
+		self.player.seek_rel(offset)
+
+	def seek_abs(self,position):
+		if not self.player.up():
+			raise Exception("Video is not up")
+		self.player.seek_abs(position)
 
 	# Class variables
 
@@ -104,6 +133,8 @@ class NetVid:
 		'resume':resume,
 		'stop':stop,
 		'set_rate':set_rate,
+		'seek_rel':seek_rel,
+		'seek_abs':seek_abs,
 	}
 
 	parameters={
@@ -112,5 +143,7 @@ class NetVid:
 		'status':get_status,
 		'time':get_time,
 		'rate':get_rate,
+		'short_description':get_short_description,
+		'long_description':get_long_description,
 	}
 

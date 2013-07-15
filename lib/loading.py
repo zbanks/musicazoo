@@ -7,7 +7,7 @@ class LoadingScreen(FullScreenGraphics):
 		self.c=Tkinter.Canvas(self,width=self.width,height=self.height,bg='black',highlightthickness=0)
 		self.c.pack()
 		(x,y) = self.center()
-		self.text=self.c.create_text((x-250,y), fill="white", justify=Tkinter.CENTER,anchor='w', font=("Helvetica",72))
+		self.text=self.c.create_text((x-250,y), fill='white', justify=Tkinter.CENTER,anchor='w', font=("Helvetica",72))
 
 	def show(self):
 		self.animate(0)

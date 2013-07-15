@@ -17,7 +17,7 @@ class FullScreenGraphics(Tkinter.Tk,threading.Thread):
 		self.attributes('-fullscreen', True)
 		self.bind("<Escape>", self.over)
 		self.finished=False
-		self.ready.release()
+		self.after(0,lambda:self.ready.release())
 		self.mainloop()
 		self.finished=True
 
@@ -33,17 +33,23 @@ class FullScreenGraphics(Tkinter.Tk,threading.Thread):
 		self.join()
 
 	def show(self):
+		self.after(0,self.show_sync)
+
+	def show_sync(self):
 		self.deiconify()
 		self.update()
 
 	def hide(self):
+		self.after(0,self.hide_sync)
+
+	def hide_sync(self):
 		self.withdraw()
 		self.update()
 
 if __name__=='__main__':
 	fsg=FullScreenGraphics()
 
-	c=Tkinter.Canvas(fsg,width=fsg.width,height=fsg.height,bg='black',highlightthickness=0)
+	c=Tkinter.Canvas(fsg,width=fsg.width,height=fsg.height,highlightthickness=0,**COLORS)
 	c.pack()
 
 	coord = fsg.center()

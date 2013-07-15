@@ -2,10 +2,13 @@
 
 import BaseHTTPServer
 import cgi
-from upload_manager import UploadManager
+import faulthandler
+import json
+import os
 import re
 import tempfile
-import os
+
+from upload_manager import UploadManager
 
 HOST_NAME = ''
 PORT_NUMBER = 9001
@@ -57,6 +60,7 @@ class ULHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 				self.send_response(200)
 				self.send_header("Content-type",f.mime_type)
 				self.content_length(infile)
+				self.send_header("Content-disposition","attachment; filename="+f.nicefilename)
 				self.end_headers()
 				self.chunked_write(infile,self.wfile)
 				infile.close()
@@ -66,30 +70,14 @@ class ULHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 		self.send_error(404,'Bad request.')
 
-	def do_POST(self):
-		try:
-			ctype, pdict = cgi.parse_header(self.headers.getheader('content-type'))     
-			if ctype == 'multipart/form-data':
-				fs = cgi.FieldStorage( fp = self.rfile, 
-					headers = self.headers, # headers_, 
-					environ={ 'REQUEST_METHOD':'POST' } # all the rest will come from the 'headers' object,     
-					# but as the FieldStorage object was designed for CGI, absense of 'POST' value in environ     
-					# will prevent the object from using the 'fp' argument !     
-				)
-
-			else:
-				raise Exception("Unexpected POST request")
-
-			fs_up = fs['upfile']
-			if not fs_up.filename:
-				self.send_error(500,'No file sent.')
+	def do_POST(self):	
+		if self.path == '/':
+			try:
+				self.upload_file()
+			except Exception as e:
+				self.send_error(500,str(e))
 				return
-			tf=tempfile.NamedTemporaryFile(delete=False)
-			self.chunked_write(fs_up.file,tf)
-			fs_up.file.close()
-			tf.close()
 
-			uploader.add(tf.name,nicefilename = os.path.split(fs_up.filename)[1])
 			infile=open('success.html')
 			self.send_response(200)
 			self.send_header("Content-type", "text/html")
@@ -97,19 +85,58 @@ class ULHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 			self.end_headers()
 			self.chunked_write(infile,self.wfile)
 			infile.close()
-			return
+		elif self.path=='/api':
+			try:
+				self.upload_file()
+			except Exception as e:
+				self.send_response(200)
+				self.send_header("Content-type", "text/json")
+				self.end_headers()
+				self.wfile.write(json.dumps({'success':False,'error':str(e)}))
+				return
 
-		except Exception as e:
-			self.send_error(500,str(e))
-			raise
+			self.send_response(200)
+			self.send_header("Content-type", "text/json")
+			self.end_headers()
+			self.wfile.write(json.dumps({'success':True}))
+		else:
+			self.send_error(404,'Unexpected post request')
+
+
+	def upload_file(self):
+		ctype, pdict = cgi.parse_header(self.headers.getheader('content-type'))	 
+		if ctype == 'multipart/form-data':
+			fs = cgi.FieldStorage( fp = self.rfile, 
+				headers = self.headers, # headers_, 
+				environ={ 'REQUEST_METHOD':'POST' } # all the rest will come from the 'headers' object,	 
+				# but as the FieldStorage object was designed for CGI, absense of 'POST' value in environ	 
+				# will prevent the object from using the 'fp' argument !	 
+			)
+
+		else:
+			raise Exception('Unexpected post request')
+
+		fs_ups = fs['upfile']
+		if not isinstance(fs_ups, list):
+			fs_ups = [fs_ups]
+		for fs_up in fs_ups:
+			if not fs_up.filename:
+				raise Exception('No file sent.')
+			tf=tempfile.NamedTemporaryFile(delete=False)
+			self.chunked_write(fs_up.file,tf)
+			fs_up.file.close()
+			tf.close()
+
+			uploader.add(tf.name,nicefilename = os.path.split(fs_up.filename)[1])
 
 	# End class ULHandler
 
-uploader=UploadManager(('localhost',9001),('localhost',9000))
+uploader=UploadManager('http://192.168.0.10/upload','http://192.168.0.10/cmd')
 
 if __name__ == '__main__':
 	server_class = MultiThreadedHTTPServer
 	httpd = server_class((HOST_NAME, PORT_NUMBER), ULHandler)
+	faulthandler.enable()
 	try:
 		httpd.serve_forever()
 	except KeyboardInterrupt:

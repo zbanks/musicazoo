@@ -70,25 +70,19 @@ Handlebars.registerHelper('if_eq', function(x, options){
 // Handlebars templates
 
 var TEMPLATE_NAMES = {
-    "youtube": {
-        queue: "youtube",
-        active: "youtube_active"
-    },
-    "text": {
-        queue: "text",
-        active: "text_active"
-    }
 };
 
 var TEMPLATES = _.objectMap({
-    "youtube": $("script.youtube-template").html(),
-    "youtube_active": $("script.youtube-active-template").html(),
-    "text": $("script.text-template").html(),
-    "text_active": $("script.text-active-template").html(),
     "unknown": '(Unknown)',
     "empty": '',
     "nothing": '(Nothing)',
 }, Handlebars.compile);
+
+_.each(["youtube", "text", "netvid"], function(n){
+    TEMPLATES[n] = Handlebars.compile($("script." + n + "-template").html());
+    TEMPLATES[n + "_active"] = Handlebars.compile($("script." + n + "-active-template").html());
+    TEMPLATE_NAMES[n] = {queue: n, active: n + "_active"};
+});
 
 // NLP Constants
 
@@ -100,7 +94,7 @@ var COMMANDS = [
             cb({
                 text: match,
                 text_preprocessor: "none",
-                speech_preprocessor: "pronounciation",
+                speech_preprocessor: "pronunciation",
                 text2speech: "google",
                 renderer: "splash",
                 duration: 1,
@@ -195,7 +189,6 @@ var _runquery_timeout;
 var BASE_URL = "/cmd";
 
 function deferQuery(data, cb, err){
-    //TODO: err does nothing
     _query_queue.push({"data": data, "cb": cb, "err": err});
 }
 
@@ -210,28 +203,53 @@ function runQueries(cb){
         var cbs = _.pluck(_query_queue, "cb");
         var errs = _.pluck(_query_queue, "cb");
         var datas = _.pluck(_query_queue, "data");
-        $.post(BASE_URL, JSON.stringify(datas), function(resp){
-            if(resp.length != datas.length){ 
-                console.error("Did not recieve correct number of responses from server!");
-                return;
-            }
-            for(var i = 0; i < resp.length; i++){
-                var r = resp[i];
-                if(!r.success){
-                    console.error("Server Error:", r.error);
-                }else if(cbs[i]){
-                    cbs[i](r.result);
+        $.ajax(BASE_URL, {
+            data: JSON.stringify(datas),
+            dataType: 'json',
+            type: 'POST',
+            success: function(resp){
+                regainConnection();
+                if(resp.length != datas.length){ 
+                    console.error("Did not recieve correct number of responses from server!");
+                    return;
                 }
+                for(var i = 0; i < resp.length; i++){
+                    var r = resp[i];
+                    if(!r.success){
+                        console.error("Server Error:", r.error);
+                        if(errs[i]){
+                            errs[i]();
+                        }
+                    }else if(cbs[i]){
+                        cbs[i](r.result);
+                    }
+                }
+                if(cb){
+                    cb();
+                }
+                _runquery_timeout = window.setTimeout(runQueries, 0); // Defer
+            },
+            error: function(){
+                lostConnection();
+                _.each(errs, function(x){ if(x){ x(); } });
+                _runquery_timeout = window.setTimeout(runQueries, 500); // Connection dropped?
             }
-            if(cb){
-                cb();
-            }
-            _runquery_timeout = window.setTimeout(runQueries, 0); // Defer
-        }, 'json');
+        });
     }else{
         _runquery_timeout = window.setTimeout(runQueries, 50);
     }
     _query_queue = [];
+}
+
+function regainConnection(){
+    $(".disconnect-hide").show();
+    $(".disconnect-show").hide();
+}
+
+function lostConnection(){
+    console.log("Lost connection");
+    $(".disconnect-show").show();
+    $(".disconnect-hide").hide();
 }
 
 function authenticate(cb){
@@ -239,10 +257,10 @@ function authenticate(cb){
     var caps = {};
     deferQuery({cmd: "module_capabilities"}, function(mcap){
         caps.modules = mcap;
-    });
+    }, lostConnection);
     deferQuery({cmd: "static_capabilities"}, function(scap){
-        caps.statics = scap;  
-    });
+        caps.statics = scap;
+    }, lostConnection);
     runQueries(function(){
         cb(caps);
     });
@@ -276,6 +294,7 @@ var command_match = function(commands, text, cb){
     return false;
 }
 
+var refreshPlaylist = function(){}; // Don't do anything, until we connect to the backend
 
 $(document).ready(function(){
     $("#queueform").submit(function(e){
@@ -286,7 +305,57 @@ $(document).ready(function(){
             return false;
         }
         command_match(COMMANDS, query, function(args){
-            deferQuery({cmd: "add", args: args}, refreshPlaylist);
+            deferQuery({cmd: "add", args: args}, refreshPlaylist, lostConnection);
+        });
+        return false; // Prevent form submitting
+    });
+
+    $("#uploadform").submit(function(e){
+        var $this = $("#uploadform");
+        e.preventDefault();
+        var formData = new FormData($this[0]);
+        // Clear out the old file by replacing the DOM element.
+        // Super hacky, but works cross-browser
+        var fparent = $('input.uploadfile').parent();
+        fparent.html(fparent.html());
+        $this.hide();
+        var $progbar = $('div.upload-progress-bar')
+        $progbar.css('width', '3%');
+
+        $.ajax({
+            url: $this.attr('action'),  //server script to process data
+            type: 'POST',
+            xhr: function() {  // custom xhr
+                var myXhr = $.ajaxSettings.xhr();
+                if(myXhr.upload){ // check if upload property exists
+                    myXhr.upload.addEventListener('progress',function(pe){
+                            if(pe.lengthComputable){
+                                var progress = (pe.loaded / pe.total);
+                                $progbar.parent().show();
+                                $progbar.animate({width: $progbar.parent().width() * progress + '%'});
+                            };
+                        }, false); // for handling the progress of the upload
+                }
+                return myXhr;
+            },
+            //Ajax events
+            //beforeSend: beforeSendHandler,
+            success: function(){
+                refreshPlaylist();
+                $('div.upload-progress').hide();
+                $this.show();
+            },
+            error: function(){
+                lostConnection();
+                $('div.upload-progress').hide();
+                $this.show();
+            },
+            // Form data
+            data: formData,
+            //Options to tell JQuery not to process data or worry about content-type
+            cache: false,
+            contentType: false,
+            processData: false
         });
         return false; // Prevent form submitting
     });
@@ -307,6 +376,11 @@ $(document).ready(function(){
         }
         var ytrequrl = "http://gdata.youtube.com/feeds/api/videos?v=2&orderby=relevance&alt=jsonc&q=" + encodeURIComponent(query) + "&max-results=5&callback=?"
         $.getJSON(ytrequrl, function(data){
+            if(!$(".addtxt").val()){
+                // If all the text from query box has been deleted, hide this box
+                $results.html("");
+                return;
+            }
             var list = $("<ol class='suggest'></ol>");
             var tmpl = Handlebars.compile("<a class='push' href='#' content='http://youtube.com/watch?v={{{ id }}}'><li>{{ title }} - [{{ minutes duration }}] </li></a>");
 
@@ -326,7 +400,7 @@ $(document).ready(function(){
 
 });
 
-authenticate(function(capabilities){
+var authCallback = _.once(function(capabilities){
     var modules = _.objectMap(capabilities.modules.specifics, function(x){ 
         x.commands = x.commands.concat(capabilities.modules.commands); 
         x.parameters = x.parameters.concat(capabilities.modules.parameters); 
@@ -410,7 +484,7 @@ authenticate(function(capabilities){
         sync: function(method, model, options){
             if(method == "read"){
                 if(this.active){
-                    deferQuery({cmd: "cur", args: {parameters: module_capabilities}}, options.success);
+                    deferQuery({cmd: "cur", args: {parameters: module_capabilities}}, options.success, options.error);
                 }else{
                     console.error("Unable to sync queue item");
                 }
@@ -419,10 +493,10 @@ authenticate(function(capabilities){
                 if(this.active){
                     //deferQuery
                     // Eh, try anyways
-                    deferQuery({cmd: "rm", args: {uids: [model.id]}}, options.success);
+                    deferQuery({cmd: "rm", args: {uids: [model.id]}}, options.success, options.error);
                     //deferQuery({cmd: "tell_module", args: {uid: model.id, cmd: "stop"}});
                 }else{
-                    deferQuery({cmd: "rm", args: {uids: [model.id]}}, options.success);
+                    deferQuery({cmd: "rm", args: {uids: [model.id]}}, options.success, options.error);
                 }
             }else{
                 console.log("ERROR:", "Unable to perform action on queue item:" + method);
@@ -461,7 +535,7 @@ authenticate(function(capabilities){
                 console.error("Can only read from Queue");
                 return;
             }
-            deferQuery({cmd: "queue", args: {parameters: module_capabilities}}, options.success);
+            deferQuery({cmd: "queue", args: {parameters: module_capabilities}}, options.success, options.error);
         }
     });
 
@@ -497,7 +571,7 @@ authenticate(function(capabilities){
                 console.error("Can only read from StaticSet");
                 return;
             }
-            deferQuery({cmd: "statics", args: {parameters: static_capabilities}}, options.success);
+            deferQuery({cmd: "statics", args: {parameters: static_capabilities}}, options.success, options.error);
         }
 
     });
@@ -663,17 +737,18 @@ authenticate(function(capabilities){
     });
 
     mz = new Musicazoo();
-    qv = new QueueView({collection: mz.get('queue'), el: $("ol.playlist")});
-    cv = new ActiveView({model: mz.get('active'), el: $("ol.current")});
-    ssv = new StaticSetView({collection: mz.get('statics')});
+    var qv = new QueueView({collection: mz.get('queue'), el: $("ol.playlist")});
+    var cv = new ActiveView({model: mz.get('active'), el: $("ol.current")});
+    var ssv = new StaticSetView({collection: mz.get('statics')});
     mz.fetch();
 
-    refreshPlaylist = function(firstTime){
+    refreshPlaylist = function(){
         mz.fetch();
     }
 
-    refreshPlaylist(true);
+    refreshPlaylist();
     // Refresh playlist every 1 seconds
-    setInterval(refreshPlaylist, 5000);
-
+    setInterval(refreshPlaylist, 2000);
 });
+
+authenticate(authCallback);

@@ -38,6 +38,15 @@ class Player:
 	def get_rate(self):
 		return self.vlc_mp.get_rate()
 
+	def seek_rel(self,offset):
+		cur_time=self.vlc_mp.get_time()
+		if cur_time<0:
+			return
+		self.vlc_mp.set_time(cur_time+int(offset*1000))
+
+	def seek_abs(self,position):
+		self.vlc_mp.set_time(int(position*1000))
+
 	def length(self):
 		l=self.vlc_mp.get_length()
 		if l<=0:
@@ -46,4 +55,6 @@ class Player:
 
 	def time(self):	
 		t=self.vlc_mp.get_time()
+		if t<=0:
+			return None
 		return float(t)/1000
