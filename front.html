@@ -28,7 +28,9 @@
                 {{#if_eq status eq='paused' }}
                     <a href="#" class="action-set" data-property="status" data-value="playing">resume</a>
                 {{/if_eq}}
-                    <a href="#" class="action-set" data-property="status" data-value="stopped">stop</a>
+                <a href="#" class="action-set" data-property="status" data-value="stopped">stop</a>
+                <!-- <a href="http://musicazoo.mit.edu/add?addtxt={{ url }}" class="action-set">fwd</a> -->
+
             {{else}}
                 <a href="{{ url }}"> (Loading youtube video...) </a>
             {{/if_eq}}
@@ -89,7 +91,7 @@
 </head>
 <body>
     <div class="content">
-        <h1>Musicazoo</h1>
+        <h1>Party Palace</h1>
 
         <div class="controls">
             <!-- <a href="/help" id="help">Help</a> -->

@@ -94,7 +94,7 @@ var COMMANDS = [
             cb({
                 text: match,
                 text_preprocessor: "none",
-                speech_preprocessor: "pronounciation",
+                speech_preprocessor: "pronunciation",
                 text2speech: "google",
                 renderer: "splash",
                 duration: 1,
@@ -217,7 +217,9 @@ function runQueries(cb){
                     var r = resp[i];
                     if(!r.success){
                         console.error("Server Error:", r.error);
-                        errs[i]();
+                        if(errs[i]){
+                            errs[i]();
+                        }
                     }else if(cbs[i]){
                         cbs[i](r.result);
                     }
@@ -229,7 +231,7 @@ function runQueries(cb){
             },
             error: function(){
                 lostConnection();
-                _.each(errs, function(x){ x(); });
+                _.each(errs, function(x){ if(x){ x(); } });
                 _runquery_timeout = window.setTimeout(runQueries, 500); // Connection dropped?
             }
         });
@@ -291,6 +293,8 @@ var command_match = function(commands, text, cb){
     }
     return false;
 }
+
+var refreshPlaylist = function(){}; // Don't do anything, until we connect to the backend
 
 $(document).ready(function(){
     $("#queueform").submit(function(e){
@@ -396,7 +400,7 @@ $(document).ready(function(){
 
 });
 
-authenticate(function(capabilities){
+var authCallback = _.once(function(capabilities){
     var modules = _.objectMap(capabilities.modules.specifics, function(x){ 
         x.commands = x.commands.concat(capabilities.modules.commands); 
         x.parameters = x.parameters.concat(capabilities.modules.parameters); 
@@ -745,5 +749,6 @@ authenticate(function(capabilities){
     refreshPlaylist();
     // Refresh playlist every 1 seconds
     setInterval(refreshPlaylist, 2000);
-
 });
+
+authenticate(authCallback);
