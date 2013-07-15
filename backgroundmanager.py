@@ -36,9 +36,11 @@ class BackgroundManager:
 	def get_multiple_parameters(self,background,parameter_list):
 		return dict([(parameter,self.get_parameter(background,parameter)) for parameter in parameter_list])
 
-	def instantiate(self,name,args):
+	def instantiate(self,name,queue,uid,args):
+		if 'queue' in args or 'uid' in args:
+			raise Exception('arg list cannot contain queue or uid')
 		bg_class=dict([(bg.TYPE_STRING,bg) for bg in self.backgrounds])[name] # optimize me maybe
-		return bg_class(**args)
+		return bg_class(queue,uid,**args)
 
 	def tell(self,background,cmd,args):
 		if cmd in self.universal_commands:

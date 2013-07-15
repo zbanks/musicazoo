@@ -48,7 +48,7 @@ class MZQueue:
 
 	def set_bg(self,type,args={}):
 		uid=self.backgrounds.get_uid()
-		mod_inst=self.backgrounds.instantiate(type,args)
+		mod_inst=self.backgrounds.instantiate(type,self,uid,args)
 		if self.bg is not None:
 			(bg_uid,bg_obj)=self.bg
 			bg_obj.close()
