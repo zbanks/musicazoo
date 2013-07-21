@@ -12,6 +12,9 @@ def pronounce_email(text):
 		sender=m.groups()[0]
 
 	subject=text['subject']
+	subject=re.sub(r'^re:',r'reply to ',subject,re.IGNORECASE)
+	subject=re.sub(r'^fwd:',r'forward ',subject,re.IGNORECASE)
+
 	body=text['body']
 	speech="Email from {0} . Subject: {1} . {2}".format(sender,subject,body)
 	speech = pronunciation(speech)
@@ -29,15 +32,20 @@ def pronounce_fortune(text):
 
 def pronunciation(text):
     subs = (
-        (r'mit\.edu', " mit dot edju "),
-        (r'<3', " wub "),
-        (r'zbanks', " z banks "),
-        (r'#([A-Za-z])',r'hash tag \1'),
+        (r'mit\.edu', " mit dot edju ",re.IGNORECASE),
+        (r'<3', " wub ",None),
+        (r'zbanks', " z banks ",re.IGNORECASE),
+        (r'#([A-Za-z])',r'hash tag \1',re.IGNORECASE),
+        (r'MIT',r' M I T ',None),
+        (r'[\*\~\^\<\>\[\]]',r'',None),
     )
     text = remove_urls(text)
     text = parse_mit_numbers(text)
-    for reg, repl in subs:
-        text = re.sub(reg, repl, text, flags=re.IGNORECASE)
+    for reg, repl, flags in subs:
+	if flags:
+	        text = re.sub(reg, repl, text, flags=flags)
+	else:
+	        text = re.sub(reg, repl, text)
     return text
 
 def remove_urls(text):
@@ -69,4 +77,4 @@ def display_email(text):
 	return {'sender':sender,'subject':subject,'body':body}
 
 if __name__=='__main__':
-	print pronunciation('16-0010 2.007 1-010 3.091 6.01 54-100 1.100 54-1800 6-120 6.131 6.00 10-4')
+	print pronunciation('MIT is a universty')

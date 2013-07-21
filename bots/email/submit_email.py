@@ -19,15 +19,20 @@ class EmailParser:
 			if part.get_content_type() == "text/plain":
 				msg=part.get_payload()
 				msg=self.strip_reply(msg)
+				msg=self.concatenate_equals(msg)
 				self.body=msg
 				self.find_extra(msg)
+
+	def concatenate_equals(self,msgtxt):
+		msgtxt=re.sub(r'=\n',r'',msgtxt)
+		return msgtxt
 
 	def strip_reply(self,msgtxt):
 		delims = (
 			r"-- ?\n",
 			r"-----Original Message-----",
 			r"________________________________",
-			r"\nOn [^\n]+ wrote:\n",
+			r"\nOn [^\n]+wrote:\n",
 			r"Sent from my iPhone",
 			r"sent from my BlackBerry",
 			r"\n>"
@@ -37,7 +42,7 @@ class EmailParser:
 		return msgtxt
 
 	def find_extra(self,msg):
-		ytm=re.findall("youtube\.com\/watch\?v=([^& ]+)",msg)
+		ytm=re.findall("youtube\.com\/watch\?v=([^&\s]+)",msg)
 		for yt in ytm:
 			self.extra.append({
 				'cmd': 'add',
@@ -54,6 +59,10 @@ class EmailParser:
 
 def queue_email(f, queue="http://musicazoo.mit.edu/cmd"):
 	ep = EmailParser(f)
+	if len(ep.extra):
+		duration=3
+	else:
+		duration=15
 	commands = [{
 		'cmd': 'add',
 		'args': {
@@ -68,8 +77,8 @@ def queue_email(f, queue="http://musicazoo.mit.edu/cmd"):
 					'speech_preprocessor': "pronounce_email",
 				'text2speech': "google",
 				'renderer': "email",
-				'duration': 20,
-				'speed': 1,
+				'duration': duration,
+				'speed': 1.5,
 				'short_description': "Email from {}".format(ep.sender),
 				'long_description': "Email from {}".format(ep.sender),
 			}
