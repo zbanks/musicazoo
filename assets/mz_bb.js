@@ -60,6 +60,17 @@ Handlebars.registerHelper('add', function(x, options){
     return v;
 });
 
+Handlebars.registerHelper('percent', function(x, options){
+    var of = parseInt(options.hash.of);
+    x = parseInt(x);
+    console.log(x, of, x / of * 100);
+    if(of && x){
+        return Math.floor(x / of * 100);
+    }else{
+        return 0;
+    }
+});
+
 Handlebars.registerHelper('if_eq', function(x, options){
     if(options.hash.eq){
         if(x == options.hash.eq){
@@ -434,7 +445,7 @@ $(document).ready(function(){
                 $results.html("");
                 return;
             }
-            var list = $("<ol class='suggest'></ol>");
+            var list = $("<ol class='suggest suggestions'></ol>");
             var tmpl = Handlebars.compile("<a class='push' href='#' content='http://youtube.com/watch?v={{{ id }}}'><li>{{ title }} - [{{ minutes duration }}] </li></a>");
 
             if(!data.data.items){
@@ -691,6 +702,8 @@ var authCallback = _.once(function(capabilities){
             "click .rm": "remove",
             "click .cmd": "cmd",
             "click .action-set": "actionSet",
+            "click .video-progress": "setProgress",
+            "click .video-progress-bar": "setProgress",
         },
         initialize: function(){
             this.listenTo(this.model, "change", this.render);
@@ -717,6 +730,12 @@ var authCallback = _.once(function(capabilities){
                 value = parseFloat(value);
             }
             this.model.set(property, value);
+        },
+        setProgress: function(ev){
+            var seekTo = Math.floor(ev.offsetX / this.$(".video-progress").width() * this.model.get("duration"));
+            console.log("seek to:", seekTo, this.model.get("duration"));
+            this.$(".video-progress-bar").css("width", ev.offsetX + "px");
+            this.model.set("time", seekTo);
         },
     });
     var ActiveView = ActionView.extend({

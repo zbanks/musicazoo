@@ -39,6 +39,9 @@
             {{else}}
                 <a href="{{ url }}"> (Loading youtube video...) </a>
             {{/if_eq}}
+        <div class="video-progress">
+            <div class="video-progress-bar" style="width: {{percent time of=duration}}%"></div>
+        </div>
         {{/if_eq}}
         <!-- ({{ status }}:{{ site }}) -->
     </script>
@@ -67,6 +70,9 @@
             {{/if_eq}}
                 <a href="#" class="action-set" data-property="status" data-value="stopped">stop</a>
         {{/if_eq}}
+        <div class="video-progress">
+            <div class="video-progress-bar" style="width: {{percent time of=duration}}%"></div>
+        </div>
         <!-- ({{ status }}) -->
     </script>
     <script class="netvid-template" type="text/x-handlebars-template">

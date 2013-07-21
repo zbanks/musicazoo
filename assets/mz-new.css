@@ -183,14 +183,21 @@ a.related:hover, a.rm:hover {
 	background: rgba(0,30,60,0.8);
 }
 
-div.upload-progress {
+div.video-progress {
+    margin-top: 1em;
+    margin-bottom: 1em;
+    display: block !important;
+}
+
+div.upload-progress, div.video-progress {
     display: none;
     width: 400px;
     height: 10px;
     background-color: rgba(0,30,60,0.8);
 }
 
-div.upload-progress-bar {
+div.upload-progress-bar, div.video-progress-bar {
     height: 100%;
     background-color: #F3FDE1;
 }
+
