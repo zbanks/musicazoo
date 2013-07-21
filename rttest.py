@@ -57,7 +57,7 @@ print q.doCommand({'cmd':'add','args':{'type':'text','args':{'text':'hello','spe
 spin({'cmd':'cur','args':{'parameters':{'text':['status','text']}}},5,2)
 #print q.doCommand({'cmd':'add','args':{'type':'youtube','args':{'url':'http://www.youtube.com/watch?v=F57P9C4SAW4'}}})
 
-#spin({'cmd':'cur','args':{'parameters':{'text':['status','text']}}},15,2)
+spin({'cmd':'cur','args':{'parameters':{'text':['status','text']}}},15,2)
 
 #print q.doCommand({'cmd':'tell_module','args':{'uid':1,'cmd':'stop'}})
 #spin({'cmd':'cur','args':{'parameters':{'text':['status','text']}}},15,2)
