@@ -24,11 +24,12 @@ import modules.youtube
 import modules.text
 import modules.netvid
 import statics.volume
+import statics.identity
 import backgrounds.logo
 import backgrounds.image
 
 mm=ModuleManager([modules.youtube.Youtube,modules.text.Text,modules.netvid.NetVid])
-sm=StaticManager([statics.volume.Volume()])
+sm=StaticManager([statics.volume.Volume(),statics.identity.Identity(name='Musicazoo',location='glounge')])
 bm=BackgroundManager([backgrounds.logo.Logo,backgrounds.image.ImageBG])
 
 q=mzqueue.MZQueue(mm,sm,bm)
