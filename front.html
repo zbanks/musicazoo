@@ -109,12 +109,12 @@
         <h1>Party Palace</h1>
 
         <div class="controls">
-            <!-- <a href="/help" id="help">Help</a> -->
+            <a href="#" >Help</a>
             <a href="#" >Kill</a>
             <a href="#" >Clear</a>
             <a class="nohover">Volume:</a>
         </div>
-        
+
         <div class="queue">
             <h2>Add</h2>
             <form action="#" method="GET" autocomplete="off" id="queueform">
@@ -123,34 +123,26 @@
 
             <h2>Upload</h2>
             <form action="/upload/api" method="POST" autocomplete="off" enctype="multipart/form-data" id="uploadform">
-                <span> <input type="file" name="upfile" class="uploadfile" multiple> </span> <!-- Need div to replace file input -->
+                <span> <input type="file" name="upfile" class="uploadfile" multiple> </span> <!-- Need span to reset file input! -->
                 <input type="submit" class="notquite-addsubmit disconnect-hide" id="addsubmit_upload">
             </form>
             <div class="upload-progress">
                 <div class="upload-progress-bar">
             </div>
         </div>
+        <!-- Search results -->
+        <div class="results disconnect-hide"> </div>
 
+        <!-- Disconnect notification -->
         <div class="reconnecting disconnect-show" style="display: none;">
             <h2>Lost connection!</h2>
             Uh oh! Hang tight while we try to reconnect...
         </div>
 
+        <!-- Playlist/Queue -->
         <div class="playlist disconnect-hide">
             <h2>Playlist</h2>
             <div id="video"></div>
-
-            <!--
-            <span><a class="rm" href="/msg?queue_cmd=rm&all=all">Clear All</a></span>
-            <script type="text/html" id="youtube">
-                <span data-bind="text: url"></span>
-                <a class="rm" href="/msg?queue_cmd=rm&id=">rm</a>
-            </script>
-            <script type="text/html" id="youtube_act">
-                <span data-bind="text:url"></span> - Playing
-                <a class="rm" href="/msg?queue_cmd=rm&id=">rm</a>
-            </script>
-            -->
             <ol class="current">
             </ol>
             <ol class="background">
@@ -158,13 +150,9 @@
             <ol class="playlist">
             </ol>
         </div>
-        <div class="results"> </div>
-        <div class="error"> </div>
-        <div class="vol-slider"></div>
 
-        <div class="sounds">
-            <ul> </ul>
-        </div>
+        <!-- Volume -->
+        <div class="vol-slider"></div>
     </div>
 </body>
 </html>

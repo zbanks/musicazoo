@@ -295,20 +295,27 @@ function lostConnection(){
 }
 
 function authenticate(cb){
-    // Auth & get capabilities
-    var caps = {};
-    deferQuery({cmd: "module_capabilities"}, function(mcap){
-        caps.modules = mcap;
-    });
-    deferQuery({cmd: "static_capabilities"}, function(scap){
-        caps.statics = scap;
-    });
-    deferQuery({cmd: "background_capabilities"}, function(bcap){
-        caps.backgrounds = bcap;
-    });
-    runQueries(function(){
-        cb(caps);
-    });
+    var doAuth = function(){
+        // Auth & get capabilities
+        console.log("trying to auth");
+        var caps = {};
+        deferQuery({cmd: "module_capabilities"}, function(mcap){
+            caps.modules = mcap;
+        });
+        deferQuery({cmd: "static_capabilities"}, function(scap){
+            caps.statics = scap;
+        });
+        deferQuery({cmd: "background_capabilities"}, function(bcap){
+            caps.backgrounds = bcap;
+        });
+        runQueries(function(){
+            cb(caps);
+        }, function(){
+            console.log("unable to auth");
+            window.setTimeout(doAuth, 2000);
+        });
+    };
+    doAuth();
 }
 
 var command_match = function(commands, text, cb){
@@ -715,11 +722,6 @@ var authCallback = _.once(function(capabilities){
             }
             this.model.set(property, value);
         },
-        cmd: function(ev){
-            var action = $(ev.target).attr("data-action");
-            console.log("DEPRICATED 'cmd'");
-            deferQuery({cmd: "tell_module", args: {uid: this.model.id, cmd: action}});
-        },
     });
     var ActiveView = ActionView.extend({
         act_template: Handlebars.compile("{{{ html }}}"),
@@ -733,9 +735,6 @@ var authCallback = _.once(function(capabilities){
         }
     });
     var BackgroundView = ActiveView.extend({
-        cmd: function(){
-            console.log('ERROR; cmd is depricated and isn\'t supported for backgrounds');
-        }
     });
 
     var QueueView = Backbone.View.extend({
