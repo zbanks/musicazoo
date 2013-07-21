@@ -19,4 +19,4 @@ class LoadingScreen(FullScreenGraphics):
 		state+=1
 		if state>3:
 			state=0
-		self.after(300,lambda:self.animate(state))
+		self.defer(300,lambda:self.animate(state))

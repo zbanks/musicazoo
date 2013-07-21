@@ -39,7 +39,7 @@ class ImageBG(FullScreenGraphics):
 			raise
 		
 	def updateImage(self):
-		self.after(0,lambda:self.c.itemconfig(self.tkimg,image=self.image))
+		self.c.itemconfig(self.tkimg,image=self.image)
 
 	def get_status(self):
 		return self.status

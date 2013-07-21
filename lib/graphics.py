@@ -7,8 +7,22 @@ class FullScreenGraphics(Tkinter.Tk,threading.Thread):
 		threading.Thread.__init__(self)
 		self.daemon=True
 		self.ready=threading.Semaphore(0)
+		self.defer_lock=threading.Semaphore()
+		self.deferred_commands=set()
 		self.start()
 		self.ready.acquire()
+
+	def defer(self,wait,command):
+		def _deferred():
+			self.defer_lock.acquire()
+			self.deferred_commands.remove(handle)
+			self.defer_lock.release()
+			command()
+
+		self.defer_lock.acquire()
+		handle=self.after(wait, _deferred)
+		self.deferred_commands.add(handle)
+		self.defer_lock.release()
 
 	def run(self):
 		Tkinter.Tk.__init__(self)
@@ -17,7 +31,7 @@ class FullScreenGraphics(Tkinter.Tk,threading.Thread):
 		self.attributes('-fullscreen', True)
 		self.bind("<Escape>", self.over)
 		self.finished=False
-		self.after(0,lambda:self.ready.release())
+		self.defer(0,lambda:self.ready.release())
 		self.mainloop()
 		self.finished=True
 
@@ -25,26 +39,31 @@ class FullScreenGraphics(Tkinter.Tk,threading.Thread):
 		return (self.width/2,self.height/2)
 
 	def over(self,event=None):
+		self.defer_lock.acquire()
+		for after_handle in self.deferred_commands:
+			self.after_cancel(after_handle)
 		self.destroy()
 
 	def close(self):
 		if not self.finished:
-			self.after(0,self.over)
+			self.defer(0,self.over)
 		self.join()
-
-	def show(self):
-		self.after(0,self.show_sync)
 
 	def show_sync(self):
 		self.deiconify()
 		self.update()
 
-	def hide(self):
-		self.after(0,self.hide_sync)
+	def show(self):
+		if not self.finished:
+			self.defer(0,self.show_sync)
 
 	def hide_sync(self):
 		self.withdraw()
 		self.update()
+
+	def hide(self):
+		if not self.finished:
+			self.defer(0,self.hide_sync)
 
 if __name__=='__main__':
 	fsg=FullScreenGraphics()
