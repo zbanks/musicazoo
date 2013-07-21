@@ -686,7 +686,7 @@ var authCallback = _.once(function(capabilities){
     });
 
     var ActionView = Backbone.View.extend({
-        act_template: Handlebars.compile("{{{ html }}} <a href='#' class='rm'>rm</a>"),
+        act_template: Handlebars.compile("<a href='#' class='rm de-only'></a>{{{ html }}}<a href='#' class='rm bb-only'>rm</a>"),
         events: {
             "click .rm": "remove",
             "click .cmd": "cmd",
@@ -762,7 +762,7 @@ var authCallback = _.once(function(capabilities){
             return this;
         },
         addOne: function(model){
-            var $v_el = $("<li></li>").attr("data-view-id", model.id);
+            var $v_el = $("<li class='entry'></li>").attr("data-view-id", model.id);
             var view = new ActionView({model: model, el: $v_el});
             this.subviews[model.id] = view;
             this.render();
@@ -802,21 +802,38 @@ var authCallback = _.once(function(capabilities){
             var setVal = _.debounce(function(x){
                 self.model.set('vol', x);
             }, 500);
-            $("div.vol-slider").slider({
-                orientation: "horizontal",
-                range: "min",
-                min: 0,
-                max: 100,
-                value: window.volume,
-                slide: function(ev, ui) {
-                    self.updateSlider(ui.value);
-                    setVal(ui.value); // debounced
-                }
-            });
+            if(!DE){
+                $("div.vol-slider").slider({
+                    orientation: "horizontal",
+                    range: "min",
+                    min: 0,
+                    max: 100,
+                    value: window.volume,
+                    slide: function(ev, ui) {
+                        self.updateSlider(ui.value);
+                        setVal(ui.value); // debounced
+                    }
+                });
+            }else{
+                $("div.volume").slider({ //TODO: Why doesn't this update?
+                    orientation: "horizontal",
+                    range: "min",
+                    min: 0,
+                    max: 100,
+                    value: window.volume,
+                    slide: function(ev, ui) {
+                        self.updateSlider(ui.value);
+                        setVal(ui.value); // debounced
+                    }
+                });
+            }
         }),
         updateSlider : function(value){
+            console.log(value);
             $("div.vol-slider").slider("option", "value", value);
-            $(".ui-slider-range").html("<span>" + value + "</span>");
+            if(!DE){
+                $(".ui-slider-range").html("<span>" + value + "</span>");
+            }
         },
         render: function(v){
             //var vol = this.collection.findWhere({"class": "volume"});
@@ -831,6 +848,7 @@ var authCallback = _.once(function(capabilities){
         },
         render: function(v){
             $("h1.title").text(this.model.get("name"));
+            $("html").css("background", this.model.get("colors")['bg']);
         }
     });
 

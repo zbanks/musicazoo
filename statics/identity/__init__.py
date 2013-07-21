@@ -1,23 +1,18 @@
 class Identity(object):
 
-	def __init__(self,name=None,location=None):
-		self.name=name
-		self.location=location
+    def __init__(self,**kwargs):
+        def g(k):
+            return lambda s: s.kwargs[k]
 
-	def get_name(self):
-		return self.name
+        self.kwargs = kwargs
+        for k in self.kwargs:
+            self.parameters[k] = g(k)
 
-	def get_location(self):
-		return self.location
+    commands = {
+    }
 
-	commands={
-	}
+    parameters = {}
 
-	parameters={
-		'name':get_name,
-		'location':get_location,
-	}
-
-	constants={
-		'class':'identity'
-	}
+    constants={
+        'class':'identity'
+    }

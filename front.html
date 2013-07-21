@@ -1,17 +1,16 @@
 <html>
 <head>
     <title>Musicazoo!</title>
-    <script type="text/javascript" src="https://www.youtube.com/iframe_api"></script>
     <script type="text/javascript" src="./assets/underscore.js"></script>
     <script type="text/javascript" src="./assets/underscore.string.min.js"></script>
     <script type="text/javascript" src="./assets/jquery.min.js"></script>
     <script type="text/javascript" src="./assets/jquery-ui.js"></script>
     <script type="text/javascript" src="./assets/backbone.js"></script>
     <script type="text/javascript" src="./assets/handlebars.js"></script>
-    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/swfobject/2.2/swfobject.js"></script>
     <script type="text/javascript">
         window.volume = 45;
         window.no_autorefresh = false;
+        window.DE = false;
     </script>
     <script class="youtube-active-template" type="text/x-handlebars-template">
         {{#if_eq status neq='stopped' }}
@@ -102,6 +101,7 @@
     <link rel="stylesheet" href="http://jqueryui.com/themes/base/jquery.ui.all.css">
     -->
     <link rel="stylesheet" href="./assets/mz-new.css">
+    <style type="text/css">.de-only { display: none; }</style>
 
 </head>
 <body>

@@ -1,5 +1,5 @@
 NAME = "Party Palace"
-LOCATION = "Party Palace"
+LOCATION = "Party Palace Location"
 COLORS={'bg':'#406873','fg':'#F3FDE1'}
 
 
@@ -21,7 +21,7 @@ MODULES = [
 
 STATICS = [
     musicazoo.statics.volume.Volume(),
-    musicazoo.statics.identity.Identity(name=NAME, location=LOCATION)
+    musicazoo.statics.identity.Identity(name=NAME, location=LOCATION, colors=COLORS)
 ]
 
 BACKGROUNDS = [
