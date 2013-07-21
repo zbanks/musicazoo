@@ -1,3 +1,8 @@
+NAME = "Party Palace"
+LOCATION = "Party Palace"
+COLORS={'bg':'#406873','fg':'#F3FDE1'}
+
+
 import musicazoo.backgrounds.image
 import musicazoo.backgrounds.logo
 
@@ -7,10 +12,6 @@ import musicazoo.modules.youtube
 
 import musicazoo.statics.identity
 import musicazoo.statics.volume
-
-
-NAME = "Party Palace"
-LOCATION = "Party Palace"
 
 MODULES = [
     musicazoo.modules.youtube.Youtube,

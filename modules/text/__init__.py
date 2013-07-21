@@ -1,6 +1,8 @@
 import tempfile
 import threading
 
+import time
+
 from musicazoo.modules.text import preprocessors, text2speech, renderers
 
 class Text:
@@ -42,7 +44,8 @@ class Text:
 		self.speech_preprocessor=self.preprocessing_engines[speech_preprocessor]
 		self.text2speech=self.text2speech_engines[text2speech]
 
-		self.sndfile=tempfile.NamedTemporaryFile()
+		self.sndfile=tempfile.NamedTemporaryFile(delete=False)
+		print "TEMPFILE ",self.sndfile.name
 
 		self.renderer=self.rendering_engines[renderer]
 		self.duration=duration
@@ -92,6 +95,8 @@ class Text:
 		if self.status != 'ready':
 			return
 		self.status='playing'
+		print "PLAYING"
+		time.sleep(3)
 		self.display.play()
 		self.status='finishing'
 		self.sndfile.close()

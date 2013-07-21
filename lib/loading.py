@@ -1,13 +1,14 @@
 import Tkinter
-from graphics import *
+from musicazoo.lib.graphics import FullScreenGraphics
+from musicazoo.settings import COLORS
 
 class LoadingScreen(FullScreenGraphics):
 	def __init__(self):
-		FullScreenGraphics.__init__(self)
-		self.c=Tkinter.Canvas(self,width=self.width,height=self.height,bg='black',highlightthickness=0)
+		super(LoadingScreen, self).__init__()
+		self.c=Tkinter.Canvas(self,width=self.width,height=self.height,highlightthickness=0,bg=COLORS['bg'])
 		self.c.pack()
 		(x,y) = self.center()
-		self.text=self.c.create_text((x-250,y), fill='white', justify=Tkinter.CENTER,anchor='w', font=("Helvetica",72))
+		self.text=self.c.create_text((x-250,y), fill=COLORS['fg'], justify=Tkinter.CENTER,anchor='w', font=("Helvetica",72))
 
 	def show(self):
 		self.animate(0)

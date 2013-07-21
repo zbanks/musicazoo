@@ -68,7 +68,7 @@ class FullScreenGraphics(Tkinter.Tk,threading.Thread):
 if __name__=='__main__':
 	fsg=FullScreenGraphics()
 
-	c=Tkinter.Canvas(fsg,width=fsg.width,height=fsg.height,highlightthickness=0,**COLORS)
+	c=Tkinter.Canvas(fsg,width=fsg.width,height=fsg.height,highlightthickness=0)
 	c.pack()
 
 	coord = fsg.center()

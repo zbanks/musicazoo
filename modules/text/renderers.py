@@ -1,13 +1,13 @@
 import Tkinter
 import time
 
+from musicazoo.settings import COLORS
 from musicazoo.lib import vlc
 from musicazoo.lib.graphics import FullScreenGraphics
 
 PADY=10
 PADX=10
 
-COLORS={'bg':'#406873','fg':'#F3FDE1'}
 
 class TextAndSound(FullScreenGraphics):
 	def __init__(self,text):

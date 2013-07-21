@@ -33,9 +33,11 @@ def google(obj):
 		opener = urllib2.build_opener()
 		mp3=opener.open(request).read()
 		obj.sndfile.write(mp3)
+		print "WROTE CHUNK"
 
 	obj.sndfile.flush()
 	os.fsync(obj.sndfile)
+	print "FLUSHED"
 	return True
 
 def no_text2speech(obj):
