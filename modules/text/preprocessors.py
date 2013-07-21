@@ -12,13 +12,20 @@ def pronounce_email(text):
 		sender=m.groups()[0]
 
 	subject=text['subject']
-	subject=re.sub(r'^re:',r'reply to ',subject,re.IGNORECASE)
-	subject=re.sub(r'^fwd:',r'forward ',subject,re.IGNORECASE)
+	subject=re.sub(r'^re:',r'reply to ',subject,flags=re.IGNORECASE)
+	subject=re.sub(r' re:',r' reply to ',subject,flags=re.IGNORECASE)
+	subject=re.sub(r'^fwd:',r'forward, ',subject,flags=re.IGNORECASE)
+	subject=re.sub(r' fwd:',r' forward, ',subject,flags=re.IGNORECASE)
 
 	body=text['body']
+	body=clean_email(body)
 	speech=u"Email from {0} . Subject: {1} . {2}".format(sender,subject,body)
 	speech = pronunciation(speech)
 	return speech
+
+def clean_email(text):
+	text=re.sub(r'--+ Forwarded message --+\n[\s\S]+?\n\n',r'',text,flags=re.IGNORECASE)
+	return text
 
 def pronounce_fortune(text):
     text = pronunciation(text)
@@ -73,6 +80,7 @@ def display_email(text):
 	sender=text['sender']
 	subject=text['subject']
 	body=text['body']
+	body=clean_email(body)
 	# Optionally modify the text that is shown here
 	return {'sender':sender,'subject':subject,'body':body}
 

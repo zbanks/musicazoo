@@ -28,13 +28,13 @@ class EmailParser:
 
 	def strip_reply(self,msgtxt):
 		delims = (
-			r"-- ?\n",
+			#r"-- ?\n",
 			r"-----Original Message-----",
 			r"________________________________",
-			r"\nOn [^\n]+wrote:\n",
-			r"Sent from my iPhone",
-			r"sent from my BlackBerry",
-			r"\n>"
+			r"\nOn [\s\S]+?wrote:\n",
+			#r"Sent from my iPhone",
+			#r"sent from my BlackBerry",
+			#r"\n>"
 			)
 		for dlm in delims:
 			msgtxt = re.split(dlm, msgtxt, 1)[0]
@@ -77,7 +77,7 @@ def queue_email(f, queue="http://musicazoo.mit.edu/cmd"):
 				'text2speech': "google",
 				'renderer': "email",
 				'duration': duration,
-				'speed': 1.5,
+				'speed': 1.0,
 				'short_description': "Email from {}".format(ep.sender),
 				'long_description': "Email from {}".format(ep.sender),
 			}
