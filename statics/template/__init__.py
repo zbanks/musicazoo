@@ -1,4 +1,4 @@
-class Template:
+class Template(object):
 	commands={
 	}
 

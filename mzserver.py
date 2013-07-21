@@ -1,45 +1,31 @@
 #!/usr/bin/env python
-
-import sys,os
-mypath=os.path.dirname(__file__)
-libpath=os.path.join(mypath,'lib/')
-sys.path.append(libpath)
-
 import BaseHTTPServer
 import cgi
 import faulthandler
 import hashlib
 import hmac
 import json
-import mzqueue
+
+import musicazoo.settings as settings
+
+from BaseHTTPServer import HTTPServer
+from SocketServer import ThreadingMixIn
+
+from musicazoo.backgroundmanager import BackgroundManager
+from musicazoo.modulemanager import ModuleManager
+from musicazoo.mzqueue import MZQueue, MZQueueManager
+from musicazoo.staticmanager import StaticManager
 
 HOST_NAME = ''
 PORT_NUMBER = 9000
 
-from modulemanager import *
-from staticmanager import *
-from backgroundmanager import *
+mm=ModuleManager(settings.MODULES)
+sm=StaticManager(settings.STATICS)
+bm=BackgroundManager(settings.BACKGROUNDS)
 
-import modules.youtube
-import modules.text
-import modules.netvid
-import statics.volume
-import statics.identity
-import backgrounds.logo
-import backgrounds.image
-
-mm=ModuleManager([modules.youtube.Youtube,modules.text.Text,modules.netvid.NetVid])
-sm=StaticManager([statics.volume.Volume(),statics.identity.Identity(name='Musicazoo',location='glounge')])
-bm=BackgroundManager([backgrounds.logo.Logo,backgrounds.image.ImageBG])
-
-q=mzqueue.MZQueue(mm,sm,bm)
-qm=mzqueue.MZQueueManager(q)
+q = MZQueue(mm,sm,bm)
+qm = MZQueueManager(q)
 qm.start()
-
-from SocketServer import ThreadingMixIn
-from BaseHTTPServer import HTTPServer
-
-API_KEYS = {"zbanks": "asdf"}
 
 class MultiThreadedHTTPServer(ThreadingMixIn,HTTPServer):
     pass
@@ -58,8 +44,6 @@ class MZHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         #s.giveError("Please POST a command.")
         s.send_response(200)
         s.send_header("Content-type", "text/html")
-        s.send_header("Access-Control-Allow-Origin", "*")
-#s.send_header("Access-Control-Allow-Headers", s.headers.getheader("Access-Control-Request-Headers"))
         s.end_headers()
         try:
             print s.path

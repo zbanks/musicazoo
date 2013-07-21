@@ -1,14 +1,15 @@
 import Tkinter
 import cStringIO
 import urllib
-from graphics import *
+
 from PIL import Image, ImageTk
+from musicazoo.lib.graphics import *
 
 class ImageBG(FullScreenGraphics):
 	TYPE_STRING='image'
 
 	def __init__(self,queue,uid,image):
-		FullScreenGraphics.__init__(self)
+		super(ImageBG, self).__init__()
 		self.c=Tkinter.Canvas(self,width=self.width,height=self.height,bg='black',highlightthickness=0)
 		self.c.pack()
 		self.url=image
@@ -29,7 +30,7 @@ class ImageBG(FullScreenGraphics):
 			i=Image.open(f)
 			#print "Scaling Image..."
 			i.thumbnail((self.width,self.height),Image.ANTIALIAS)
-			self.image=ImageTk.PhotoImage(i)
+			self.image=ImageTk.PhotoImage(i, master=self)
 			self.updateImage()
 			#print "Done."
 			self.status='ready'

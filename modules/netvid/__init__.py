@@ -1,10 +1,10 @@
+import os
+import tempfile
+import threading
 import time
 
-import vlc_player_compat as player
-import threading
-import os
-import loading
-import tempfile
+import musicazoo.lib.vlc_player_compat as player
+from musicazoo.lib.loading import LoadingScreen
 
 class NetVid:
 	TYPE_STRING='netvid'

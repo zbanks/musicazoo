@@ -1,18 +1,18 @@
-import time
-
-import youtube_dl
-from youtube_dl.utils import *
-import vlc_player_compat as player
-import threading
 import os
-import loading
 import tempfile
+import threading
+import time
+import youtube_dl
+
+from youtube_dl.utils import compat_cookiejar, compat_urllib_request, make_HTTPS_handler, YoutubeDLHandler
+from musicazoo.lib.vlc_player_compat import Player
+from musicazoo.lib.loading import LoadingScreen
 
 class Youtube:
 	TYPE_STRING='youtube'
 
 	def __init__(self,queue,uid,url):
-		self.player=player.Player()
+		self.player=Player()
 		self.queue=queue
 		self.uid=uid
 		self.url=url
@@ -71,7 +71,7 @@ class Youtube:
 		self.status='finishing'
 
 	def show_loading_screen(self):
-		self.loading_screen=loading.LoadingScreen()
+		self.loading_screen=LoadingScreen()
 		self.loading_screen.show()
 
 	def hide_loading_screen(self):
@@ -187,7 +187,6 @@ class Youtube:
 		https_handler = make_HTTPS_handler(None)
 		opener = compat_urllib_request.build_opener(https_handler, proxy_handler, cookie_processor, YoutubeDLHandler())
 		compat_urllib_request.install_opener(opener)
-		socket.setdefaulttimeout(300) # 5 minutes should be enough (famous last words)
 
 		y=youtube_dl.YoutubeDL({'outtmpl':'','format':'18'}) # empty outtmpl needed due to weird issue in youtube-dl
 		y.add_default_info_extractors()

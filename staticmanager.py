@@ -1,4 +1,4 @@
-class StaticManager:
+class StaticManager(object):
 	def __init__(self,statics=[]):
 		uid=0
 		self.statics={}

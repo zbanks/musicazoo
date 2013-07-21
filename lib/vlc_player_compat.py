@@ -1,7 +1,8 @@
-import vlc
 import os
 
-class Player:
+import musicazoo.lib.vlc as vlc
+
+class Player(object):
 	def __init__(self):
 		self.loaded=False
 

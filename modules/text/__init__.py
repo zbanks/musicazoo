@@ -1,8 +1,7 @@
-import preprocessors
-import text2speech
-import renderers
-import threading
 import tempfile
+import threading
+
+from musicazoo.modules.text import preprocessors, text2speech, renderers
 
 class Text:
 	TYPE_STRING='text'

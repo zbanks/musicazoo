@@ -2,13 +2,14 @@ try:
     import alsaaudio
 except:
     alsaaudio = None
+
 try:
     import osax
 except:
     osax = None
 
 
-class Volume:
+class Volume(object):
     def __init__(self):
         if alsaaudio:
             self.mixer=alsaaudio.Mixer()

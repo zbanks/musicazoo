@@ -1,4 +1,4 @@
-class ModuleManager:
+class ModuleManager(object):
 	def __init__(self,modules=[]):
 		self.modules=modules
 

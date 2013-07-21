@@ -1,4 +1,4 @@
-class BackgroundManager:
+class BackgroundManager(object):
 	def __init__(self,backgrounds=[]):
 		self.backgrounds=backgrounds
 

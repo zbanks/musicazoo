@@ -1,4 +1,4 @@
-class Identity:
+class Identity(object):
 
 	def __init__(self,name=None,location=None):
 		self.name=name

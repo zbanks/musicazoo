@@ -1,7 +1,7 @@
 import threading
 import time
 
-class MZQueue:
+class MZQueue(object):
 	def __init__(self,module_manager,static_manager,background_manager):
 		self.queue=[]
 		self.cur=None

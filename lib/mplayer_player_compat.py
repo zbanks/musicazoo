@@ -2,7 +2,7 @@ import mplayer
 import os
 import time
 
-class Player:
+class Player(object):
 	def __init__(self):
 		self.loaded=False
 		self.l=None

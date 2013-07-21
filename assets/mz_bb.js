@@ -830,7 +830,7 @@ var authCallback = _.once(function(capabilities){
             this.render();
         },
         render: function(v){
-            console.log(this.model);
+            $("h1.title").text(this.model.get("name"));
         }
     });
 

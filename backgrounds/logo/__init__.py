@@ -1,5 +1,5 @@
 import Tkinter
-from graphics import *
+from musicazoo.lib.graphics import FullScreenGraphics
 
 class Logo(FullScreenGraphics):
 	TYPE_STRING='logo'

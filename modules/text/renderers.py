@@ -1,16 +1,17 @@
-import graphics
 import Tkinter
 import time
-import vlc
+
+from musicazoo.lib import vlc
+from musicazoo.lib.graphics import FullScreenGraphics
 
 PADY=10
 PADX=10
 
 COLORS={'bg':'#406873','fg':'#F3FDE1'}
 
-class TextAndSound(graphics.FullScreenGraphics):
+class TextAndSound(FullScreenGraphics):
 	def __init__(self,text):
-		graphics.FullScreenGraphics.__init__(self)
+		super(TextAndSound, self).__init__()
 
 		self.text=text
 		self.stopped=False
@@ -43,7 +44,7 @@ class TextAndSound(graphics.FullScreenGraphics):
 
 	def close(self):
 		self.stopped=True
-		graphics.FullScreenGraphics.close(self)
+		super(TextAndSound, self).close()
 
 	def stop(self):
 		if self.text.hasSound:
