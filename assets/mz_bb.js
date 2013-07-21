@@ -52,6 +52,14 @@ Handlebars.registerHelper('minutes', function(seconds){
     }
 });
 
+Handlebars.registerHelper('add', function(x, options){
+    var v = x + parseInt(options.hash.v);
+    if(!v || v < 0){
+        return 0;
+    }
+    return v;
+});
+
 Handlebars.registerHelper('if_eq', function(x, options){
     if(options.hash.eq){
         if(x == options.hash.eq){
@@ -83,6 +91,13 @@ _.each(["youtube", "text", "netvid"], function(n){
     TEMPLATES[n + "_active"] = Handlebars.compile($("script." + n + "-active-template").html());
     TEMPLATE_NAMES[n] = {queue: n, active: n + "_active"};
 });
+
+_.each(["image", "logo"], function(n){
+    //TEMPLATES[n] = Handlebars.compile($("script." + n + "-template").html());
+    TEMPLATES[n] = Handlebars.compile($("script." + n + "-template").html());
+    TEMPLATE_NAMES[n] = {queue: n, active: n };
+});
+
 
 // NLP Constants
 
@@ -154,12 +169,36 @@ var COMMANDS = [
             });
         }
     },
+    { // Network video
+        keywords: ["netvid"],
+        module: "netvid",
+        args: function(match, cb){
+            cb({url: match, short_description: 'Network Video', long_description: match});
+        }
+    },
     { // Youtube
         keywords: ["youtube"],
         regex: /.*youtube.com.*watch.*v.*/, 
         module: "youtube",
         args: function(match, cb){
             cb({url: match});
+        }
+    },
+    { // Images
+        keywords: ["image"],
+        regex: /http.*(gif|jpe?g|png|bmp)/, 
+        module: "image",
+        background: true,
+        args: function(match, cb){
+            cb({image: match});
+        }
+    },
+    { // Images
+        keywords: ["logo"],
+        module: "logo",
+        background: true,
+        args: function(match, cb){
+            cb(null);
         }
     },
     // Playlist
@@ -261,6 +300,9 @@ function authenticate(cb){
     deferQuery({cmd: "static_capabilities"}, function(scap){
         caps.statics = scap;
     }, lostConnection);
+    deferQuery({cmd: "background_capabilities"}, function(bcap){
+        caps.backgrounds = bcap;
+    }, lostConnection);
     runQueries(function(){
         cb(caps);
     });
@@ -273,6 +315,7 @@ var command_match = function(commands, text, cb){
     var match = null;
     for(var i = 0; i < commands.length; i++){
         var cmd = commands[i];
+        var add_cmd = cmd.background ? 'set_bg' : 'add';
         if(cmd.keywords){
             if(_.contains(cmd.keywords, kw)){
                 match = rest;
@@ -286,7 +329,11 @@ var command_match = function(commands, text, cb){
         }
         if(match){
             cmd.args(match, function(args){
-                cb({type: cmd.module, args: args});
+                if(args){
+                    cb({cmd: add_cmd, args: {type: cmd.module, args: args}});
+                }else{
+                    cb({cmd: add_cmd, args: {type: cmd.module}});
+                }
             }, kw);
             return true;
         }
@@ -305,7 +352,7 @@ $(document).ready(function(){
             return false;
         }
         command_match(COMMANDS, query, function(args){
-            deferQuery({cmd: "add", args: args}, refreshPlaylist, lostConnection);
+            deferQuery(args, refreshPlaylist, lostConnection);
         });
         return false; // Prevent form submitting
     });
@@ -332,7 +379,7 @@ $(document).ready(function(){
                             if(pe.lengthComputable){
                                 var progress = (pe.loaded / pe.total);
                                 $progbar.parent().show();
-                                $progbar.animate({width: $progbar.parent().width() * progress + '%'});
+                                $progbar.animate({width: $progbar.parent().width() * progress + 'px'});
                             };
                         }, false); // for handling the progress of the upload
                 }
@@ -404,12 +451,21 @@ var authCallback = _.once(function(capabilities){
     var modules = _.objectMap(capabilities.modules.specifics, function(x){ 
         x.commands = x.commands.concat(capabilities.modules.commands); 
         x.parameters = x.parameters.concat(capabilities.modules.parameters); 
+        x.background = false;
+        return x;
+    });
+    var backgrounds = _.objectMap(capabilities.backgrounds.specifics, function(x){ 
+        x.commands = x.commands.concat(capabilities.backgrounds.commands); 
+        x.parameters = x.parameters.concat(capabilities.backgrounds.parameters); 
+        x.background = true;
         return x;
     });
     var statics = capabilities.statics;
-    var static_capabilities = _.objectMap(statics, function(x){ return x.parameters });
     var module_capabilities = _.objectMap(modules, function(x){ return x.parameters });
+    var background_capabilities = _.objectMap(backgrounds, function(x){ return x.parameters });
+    var static_capabilities = _.objectMap(statics, function(x){ return x.parameters });
     var commands = _.filter(COMMANDS, function(x){ return  _.contains(_.keys(modules), x.module); });
+    _.extend(modules, backgrounds);
     console.log("Modules:", modules);
     console.log("Statics:", statics);
     console.log("Commands:", commands);
@@ -438,13 +494,21 @@ var authCallback = _.once(function(capabilities){
                     this.template_active = "unknown";
                 }
             }else{
-                this.template_queue = "empty";
-                this.template_active = "nothing";
+                if(this.background){
+                    this.template_queue = "empty";
+                    this.template_active = "empty";
+                }else{
+                    this.template_queue = "empty";
+                    this.template_active = "nothing";
+                }
             }
 
             if(modules[type]){
                 this.parameters = modules[type].parameters;
                 this.commands = modules[type].commands;
+                if(this.background != modules[type].background){
+                    console.log("Background object on queue?", this);    
+                }
             }else{
                 this.parameters = [];
                 this.commands = [];
@@ -475,6 +539,17 @@ var authCallback = _.once(function(capabilities){
                     }
                 }, this);
             }
+
+            // Seek
+            this.off("change:time"); // Reset events
+            if(this.hasParameter("time") && this.hasCommand("seek_abs")){
+                this.on("change:time", function(model, time, options){
+                    if(!options.parse){ // Not a server update
+                        var prev_time = this.previous('time');
+                        deferQuery({cmd: "tell_module", args: {uid: this.id, cmd: "seek_abs", args: {position: time}}});
+                    }
+                }, this);
+            }
         },
         initialize: function(params, options, x){
             this.on("change:type", this.updateType, this);
@@ -483,14 +558,20 @@ var authCallback = _.once(function(capabilities){
         },
         sync: function(method, model, options){
             if(method == "read"){
-                if(this.active){
+                if(this.background){
+                    deferQuery({cmd: "bg", args: {parameters: background_capabilities}}, options.success, options.error);
+                }else if(this.active){
                     deferQuery({cmd: "cur", args: {parameters: module_capabilities}}, options.success, options.error);
                 }else{
                     console.error("Unable to sync queue item");
                 }
             }else if(method == "delete"){
                 console.log("deleting", model)
-                if(this.active){
+                if(this.background){
+                    //TODO - You can't actually delete backgrounds
+                    console.error("How do I delete a background!?");
+                    deferQuery({cmd: "rm", args: {uids: [model.id]}}, options.success, options.error);
+                }else if(this.active){
                     //deferQuery
                     // Eh, try anyways
                     deferQuery({cmd: "rm", args: {uids: [model.id]}}, options.success, options.error);
@@ -517,11 +598,16 @@ var authCallback = _.once(function(capabilities){
         hasCommand: function(p){ return _.contains(this.commands, p); },
         template_queue: "unknown",
         template_active: "unknown",
-        active: false
+        active: false,
+        background: false
     });
 
     var CurrentAction = Action.extend({
         active: true
+    });
+
+    var Background = CurrentAction.extend({
+        background: true
     });
 
     var Queue = Backbone.Collection.extend({
@@ -581,13 +667,15 @@ var authCallback = _.once(function(capabilities){
             return {
                 queue: new Queue(),
                 statics: new StaticSet(),
-                active: new CurrentAction()
+                active: new CurrentAction(),
+                background: new Background(),
             };
         },
         fetch: function(){
             this.get('queue').fetch();
             this.get('statics').fetch();
             this.get('active').fetch();
+            this.get('background').fetch();
         }
     });
 
@@ -610,7 +698,6 @@ var authCallback = _.once(function(capabilities){
                 model: this.model
             }));
             return this;
-
         },
         remove: function(){
             this.model.destroy();
@@ -619,6 +706,10 @@ var authCallback = _.once(function(capabilities){
             var $t = $(ev.target);
             var property = $t.attr('data-property');
             var value = $t.attr('data-value');
+            var old_val = this.model.get(property);
+            if(_.isNumber(old_val)){
+                value = parseFloat(value);
+            }
             this.model.set(property, value);
         },
         cmd: function(ev){
@@ -636,6 +727,11 @@ var authCallback = _.once(function(capabilities){
             });
             this.render();
             return this;
+        }
+    });
+    var BackgroundView = ActiveView.extend({
+        cmd: function(){
+            console.log('ERROR; cmd is depricated and isn\'t supported for backgrounds');
         }
     });
 
@@ -739,6 +835,7 @@ var authCallback = _.once(function(capabilities){
     mz = new Musicazoo();
     var qv = new QueueView({collection: mz.get('queue'), el: $("ol.playlist")});
     var cv = new ActiveView({model: mz.get('active'), el: $("ol.current")});
+    var bv = new BackgroundView({model: mz.get('background'), el: $("ol.background")});
     var ssv = new StaticSetView({collection: mz.get('statics')});
     mz.fetch();
 
@@ -748,7 +845,7 @@ var authCallback = _.once(function(capabilities){
 
     refreshPlaylist();
     // Refresh playlist every 1 seconds
-    setInterval(refreshPlaylist, 2000);
+    setInterval(refreshPlaylist, 1000);
 });
 
 authenticate(authCallback);

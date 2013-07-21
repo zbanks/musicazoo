@@ -24,9 +24,15 @@
                 {{/if_eq}}
                 {{#if_eq status eq='playing' }}
                     <a href="#" class="action-set" data-property="status" data-value="paused">pause</a>
+                    <a href="#" class="action-set" data-property="time" data-value="0">restart</a>
+                    <a href="#" class="action-set" data-property="time" data-value="{{ add time v=30 }}">+0:30</a>
+                    <a href="#" class="action-set" data-property="time" data-value="{{ add time v=-30 }}">-0:30</a>
                 {{/if_eq}}
                 {{#if_eq status eq='paused' }}
                     <a href="#" class="action-set" data-property="status" data-value="playing">resume</a>
+                    <a href="#" class="action-set" data-property="time" data-value="0">restart</a>
+                    <a href="#" class="action-set" data-property="time" data-value="{{ add time v=30 }}">+0:30</a>
+                    <a href="#" class="action-set" data-property="time" data-value="{{ add time v=-30 }}">-0:30</a>
                 {{/if_eq}}
                 <a href="#" class="action-set" data-property="status" data-value="stopped">stop</a>
                 <!-- <a href="http://musicazoo.mit.edu/add?addtxt={{ url }}" class="action-set">fwd</a> -->
@@ -81,6 +87,15 @@
     <script class="text-template" type="text/x-handlebars-template">
         {{ short_description }}
         <!-- {{ status }} -->
+    </script>
+    <script class="image-template" type="text/x-handlebars-template">
+        Image:
+        {{ url }}
+        {{ status }}
+    </script>
+    <script class="logo-template" type="text/x-handlebars-template">
+        Logo
+        {{ status }}
     </script>
     <script type="text/javascript" src="./assets/mz_bb.js"></script>
     <!--
@@ -137,6 +152,8 @@
             </script>
             -->
             <ol class="current">
+            </ol>
+            <ol class="background">
             </ol>
             <ol class="playlist">
             </ol>
