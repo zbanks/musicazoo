@@ -5,6 +5,7 @@ import os
 import re
 import requests
 import sys
+import quopri
 
 class EmailParser:
 	def __init__(self,f):
@@ -17,15 +18,13 @@ class EmailParser:
 			if part.is_multipart():
 				continue
 			if part.get_content_type() == "text/plain":
+				cs=part.get_charsets()[0]
 				msg=part.get_payload()
+				msg=quopri.decodestring(msg)
 				msg=self.strip_reply(msg)
-				msg=self.concatenate_equals(msg)
-				self.body=msg
+				self.body=unicode(msg,cs)
 				self.find_extra(msg)
-
-	def concatenate_equals(self,msgtxt):
-		msgtxt=re.sub(r'=\n',r'',msgtxt)
-		return msgtxt
+				break
 
 	def strip_reply(self,msgtxt):
 		delims = (

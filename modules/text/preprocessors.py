@@ -16,7 +16,7 @@ def pronounce_email(text):
 	subject=re.sub(r'^fwd:',r'forward ',subject,re.IGNORECASE)
 
 	body=text['body']
-	speech="Email from {0} . Subject: {1} . {2}".format(sender,subject,body)
+	speech=u"Email from {0} . Subject: {1} . {2}".format(sender,subject,body)
 	speech = pronunciation(speech)
 	return speech
 
