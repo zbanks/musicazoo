@@ -1,5 +1,6 @@
 import Tkinter
 from musicazoo.lib.graphics import FullScreenGraphics
+from musicazoo.settings import COLORS
 
 class Logo(FullScreenGraphics):
 	TYPE_STRING='logo'
@@ -9,12 +10,12 @@ class Logo(FullScreenGraphics):
 		self.uid=uid
 
 		FullScreenGraphics.__init__(self)
-		self.c=Tkinter.Canvas(self,width=self.width,height=self.height,bg='black',highlightthickness=0)
+		self.c=Tkinter.Canvas(self,width=self.width,height=self.height,bg=COLORS['bg'],highlightthickness=0)
 		self.c.pack()
 
 		t=self.get_text()
 
-		self.text=self.c.create_text(self.center(), fill="white", justify=Tkinter.CENTER, font=("Helvetica",72), text=t)
+		self.text=self.c.create_text(self.center(), fill=COLORS['fg'], justify=Tkinter.CENTER, font=("Helvetica",72), text=t)
 
 	def get_text(self,default='Musicazoo'):
 		c=self.queue.static_capabilities()
