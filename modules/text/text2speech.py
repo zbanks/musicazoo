@@ -1,5 +1,5 @@
-import urllib,urllib2
 import os
+import requests
 
 def google(obj):
 	text=unicode(obj.textToSpeak)
@@ -28,11 +28,8 @@ def google(obj):
 	total=len(chunks)
 	for idx in range(total):
 		text=chunks[idx]
-		request=urllib2.Request('http://translate.google.com/translate_tts',urllib.urlencode({'q':text,'tl':'en','idx':idx,'total':total,'textlen':len(text)}))
-		request.add_header('User-Agent','Mozilla/5.0 (X11; U; Linux i686) Gecko/20071127 Firefox/2.0.0.11')
-		opener = urllib2.build_opener()
-		mp3=opener.open(request).read()
-		obj.sndfile.write(mp3)
+		mp3=requests.get('http://translate.google.com/translate_tts',params={'q':text,'tl':'en','idx':idx,'total':total,'textlen':len(text)},headers={'User-Agent':'Mozilla/5.0 (X11; U; Linux i686) Gecko/20071127 Firefox/2.0.0.11'})
+		obj.sndfile.write(mp3.content)
 	
 	f=open(os.path.join(os.path.dirname(__file__),'silence.mp3'))
 	silence=f.read()
