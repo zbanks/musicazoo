@@ -46,17 +46,17 @@ Since I think the freedom issues are centraly, I will use the term
 
 #q.doCommand({'cmd':'static_capabilities'})
 #q.doCommand({'cmd':'statics','args':{'parameters':{1:['name','location']}}})
-q.doCommand({'cmd':'set_bg','args':{'type':'logo'}})
-spin({'cmd':'cur','args':{'parameters':{'text':['status','text']}}},30,2)
+#q.doCommand({'cmd':'set_bg','args':{'type':'logo'}})
+#spin({'cmd':'cur','args':{'parameters':{'text':['status','text']}}},30,2)
 #print q.doCommand({'cmd':'background_capabilities'})
 #print q.doCommand({'cmd':'set_bg','args':{'type':'image','args':{'image':'http://www.changethethought.com/wp-content/tumblr_ljm3m8dfun1qzt4vjo1_500.gif'}}})
 #spin({'cmd':'cur','args':{'parameters':{'text':['status','text']}}},30,2)
-#print q.doCommand({'cmd':'add','args':{'type':'text','args':{'text':'text','speed':2.0,'duration':0}}})
+print q.doCommand({'cmd':'add','args':{'type':'text','args':{'text':'hello','speed':1.0,'duration':0}}})
 #print q.doCommand({'cmd':'add','args':{'type':'text','args':{'text':test,'duration':3,'speed':1.3,'text_preprocessor':'remove_urls'}}})
 #spin({'cmd':'cur','args':{'parameters':{'text':['status','text']}}},5,2)
 #print q.doCommand({'cmd':'add','args':{'type':'youtube','args':{'url':'http://www.youtube.com/watch?v=F57P9C4SAW4'}}})
 
-#spin({'cmd':'cur','args':{'parameters':{'text':['status','text']}}},15,2)
+spin({'cmd':'cur','args':{'parameters':{'text':['status','text']}}},15,2)
 
 #print q.doCommand({'cmd':'tell_module','args':{'uid':1,'cmd':'stop'}})
 #spin({'cmd':'cur','args':{'parameters':{'text':['status','text']}}},15,2)

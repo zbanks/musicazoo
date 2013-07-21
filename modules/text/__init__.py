@@ -92,6 +92,7 @@ class Text:
 		if self.status != 'ready':
 			return
 		self.status='playing'
+		print "SPEAK"
 		self.display.play()
 		self.status='finishing'
 		self.sndfile.close()
