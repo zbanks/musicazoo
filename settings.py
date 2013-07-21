@@ -9,8 +9,8 @@ import musicazoo.statics.identity
 import musicazoo.statics.volume
 
 
-NAME = "Musicazoo"
-LOCATION = "GLounge"
+NAME = "Party Palace"
+LOCATION = "Party Palace"
 
 MODULES = [
     musicazoo.modules.youtube.Youtube,
