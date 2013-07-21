@@ -236,7 +236,7 @@ function forceQuery(data, cb, err){
     runQueries();
 }
 
-function runQueries(cb){
+function runQueries(cb, err){
     window.clearTimeout(_runquery_timeout);
     if(_query_queue.length){
         var cbs = _.pluck(_query_queue, "cb");
@@ -272,6 +272,9 @@ function runQueries(cb){
                 lostConnection();
                 _.each(errs, function(x){ if(x){ x(); } });
                 _runquery_timeout = window.setTimeout(runQueries, 500); // Connection dropped?
+                if(err){
+                    err();
+                }
             }
         });
     }else{
@@ -296,13 +299,13 @@ function authenticate(cb){
     var caps = {};
     deferQuery({cmd: "module_capabilities"}, function(mcap){
         caps.modules = mcap;
-    }, lostConnection);
+    });
     deferQuery({cmd: "static_capabilities"}, function(scap){
         caps.statics = scap;
-    }, lostConnection);
+    });
     deferQuery({cmd: "background_capabilities"}, function(bcap){
         caps.backgrounds = bcap;
-    }, lostConnection);
+    });
     runQueries(function(){
         cb(caps);
     });

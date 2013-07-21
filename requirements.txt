@@ -7,4 +7,4 @@ pyalsaaudio==0.7
 requests==1.2.3
 supervisor==3.0b2
 wsgiref==0.1.2
-youtube-dl==2013.07.12
+youtube-dl==2013.07.19
