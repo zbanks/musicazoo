@@ -205,7 +205,6 @@ class MZQueue(object):
 		try:
 			result=f(self,**args)
 		except Exception as e:
-			raise
 			return errorPacket(str(e))
 
 		return goodPacket(result)

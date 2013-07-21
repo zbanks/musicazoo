@@ -12,8 +12,8 @@ class Text:
 		'none':preprocessors.no_preprocessor,
 		'pronunciation':preprocessors.pronunciation,
 		'pronounce_email':preprocessors.pronounce_email,
+		'display_email':preprocessors.display_email,
 		'pronounce_fortune':preprocessors.pronounce_fortune,
-		'email':preprocessors.pronounce_email, #TODO
 		'remove_urls':preprocessors.remove_urls,
 	}
 
@@ -44,8 +44,7 @@ class Text:
 		self.speech_preprocessor=self.preprocessing_engines[speech_preprocessor]
 		self.text2speech=self.text2speech_engines[text2speech]
 
-		self.sndfile=tempfile.NamedTemporaryFile(delete=False)
-		print "TEMPFILE ",self.sndfile.name
+		self.sndfile=tempfile.NamedTemporaryFile()
 
 		self.renderer=self.rendering_engines[renderer]
 		self.duration=duration
@@ -95,7 +94,6 @@ class Text:
 		if self.status != 'ready':
 			return
 		self.status='playing'
-		print "PLAYING"
 		time.sleep(3)
 		self.display.play()
 		self.status='finishing'

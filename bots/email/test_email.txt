@@ -37,7 +37,21 @@ Content-Type: multipart/alternative; boundary=047d7b6da2cc4c0e9004e15fb066
 --047d7b6da2cc4c0e9004e15fb066
 Content-Type: text/plain; charset=ISO-8859-1
 
-Email is fun
+> Subjectively criticizing the styles of individual speakers rather than
+objectively addressing the substance of the topic at hand doesn't get you
+very far; not just at MIT but most anywhere else you happen to go in life.
+
+You asked why there was such a big hoo-hah, and so much negativity, about
+what should be a pretty interesting, acceptable discussion. Several people
+gave (more or less) the same answer. Just because you don't like the
+answer, and it can't be proven in Mathematica, doesn't make it any less
+valid. Entire segments of society have their careers are built upon
+subjective matters of style!
+
+The best way of dealing with feelings is to talk about them, *not* to
+bottle them up and pretend to be a vulcan. When *other* people are upset,
+telling them "you shouldn't be upset, stop being so illogical or you won't
+go anywhere in life" is usually not the way to deal with it.
 
 --047d7b6da2cc4c0e9004e15fb066
 Content-Type: text/html; charset=ISO-8859-1

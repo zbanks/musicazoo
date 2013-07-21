@@ -15,6 +15,7 @@ class TextAndSound(FullScreenGraphics):
 
 		self.text=text
 		self.stopped=False
+		self.audio_duration=None
 
 		self.init()
 		
@@ -27,9 +28,13 @@ class TextAndSound(FullScreenGraphics):
 	def play(self):
 		self.vlc_mp.play()
 		self.vlc_mp.set_rate(float(self.text.speed))
-		while self.vlc_mp.get_length()==0:
+		while True:
+			d=self.vlc_mp.get_length()
+			if d>0:
+				break
 			time.sleep(0.1)
-		self.text.duration+=float(self.vlc_mp.get_length())/1000/float(self.text.speed)
+		self.audio_duration=float(d)/1000/float(self.text.speed)
+		self.text.duration+=self.audio_duration
 
 		self.animate()
 		self.show()
@@ -65,46 +70,63 @@ class Splash(TextAndSound):
 		self.textbox=self.c.create_text((x,y), text=self.text.textToShow, fill=COLORS['fg'], justify=Tkinter.CENTER, font=("Arial",72), width=self.width)
 
 class MonoParagraph(TextAndSound):
-    def init(self):
-        self.textbox = Tkinter.Text(self,
-                                    font=("Mono", 32),
-                                    wrap=Tkinter.WORD,
-                                    highlightthickness=0,
-                                    relief=Tkinter.FLAT,
-                                    **COLORS)
-        self.textbox.insert(Tkinter.END, self.text.textToShow)
-        self.textbox.pack(side=Tkinter.TOP, fill=Tkinter.BOTH, padx=PADX)
+	def init(self):
+		self.textbox = Tkinter.Text(self,
+			font=("Mono", 32),
+			wrap=Tkinter.WORD,
+			highlightthickness=0,
+			relief=Tkinter.FLAT,
+			**COLORS)
+		self.textbox.insert(Tkinter.END, self.text.textToShow)
+		self.textbox.pack(side=Tkinter.TOP, fill=Tkinter.BOTH, padx=PADX)
 
 class Email(TextAndSound):
-    def init(self):
-        text = self.text.textToShow
-        send_line, _, text = text.partition('\n')
-        subject_line, _, text = text.partition('\n')
+	def init(self):
+		sender = self.text.textToShow['sender']
+		subject = self.text.textToShow['subject']
+		body = self.text.textToShow['body']
 
-        s_width = self.winfo_screenwidth() - 1
-        s_height = self.winfo_screenheight() - 1
-        self.geometry("{0}x{1}+0+0".format(s_width, s_height))
+		self.beginning_dead_time=18
+		self.end_dead_time=-3
 
-        self.wf = Tkinter.Label(self, 
-                                font=("Arial", 48), 
-                                bg=COLORS['bg'], 
-                                fg=COLORS['fg'], 
-                                wraplength=s_width,
-                                text=send_line)
-        self.wf.pack(padx=PADX)
-        self.wt = Tkinter.Label(self, 
-                                font=("Arial", 48), 
-                                bg=COLORS['bg'], 
-                                fg=COLORS['fg'], 
-                                wraplength=s_width,
-                                text=subject_line)
-        self.wt.pack(padx=PADX)
+		self.configure(background=COLORS['bg'])
 
-        self.w = Tkinter.Text(self,
-                              font=("Arial", 36),
-                              wrap=Tkinter.WORD,
-                              highlightthickness=0,
-                              relief=Tkinter.FLAT,
-                              **COLORS)
-        self.w.insert(Tkinter.END, text)
-        self.w.pack(side=Tkinter.TOP, fill=Tkinter.BOTH, padx=PADX)
+		self.wf = Tkinter.Label(self, 
+			font=("Arial", 36), 
+			wraplength=self.width,
+			text=sender,
+			**COLORS)
+		self.wf.pack(padx=PADX)
+		self.wt = Tkinter.Label(self, 
+			font=("Arial", 48), 
+			wraplength=self.width,
+			text=subject,
+			**COLORS)
+		self.wt.pack(padx=PADX)
+
+		self.w = Tkinter.Text(self,
+			font=("Arial", 36),
+			wrap=Tkinter.WORD,
+			highlightthickness=0,
+			relief=Tkinter.FLAT,
+			**COLORS)
+
+		self.w.insert(Tkinter.END, body)
+		self.w.pack(side=Tkinter.TOP, fill=Tkinter.BOTH, padx=PADX)
+
+	def animate(self):
+		self.time_started=time.time()
+		self.scroll()
+
+	def scroll(self):
+		t=time.time()-self.time_started
+		if t<self.beginning_dead_time:
+			fraction=0
+		elif t<self.audio_duration-self.end_dead_time:
+			fraction=(t-self.beginning_dead_time)/(self.audio_duration-self.end_dead_time-self.beginning_dead_time)
+		else:
+			fraction=1
+
+		self.w.yview_moveto(fraction)
+
+		self.defer(10,self.scroll)
