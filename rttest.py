@@ -44,8 +44,10 @@ Since I think the freedom issues are centraly, I will use the term
 "free software" and shun "open source".
 '''
 
-print q.doCommand({'cmd':'static_capabilities'})
-print q.doCommand({'cmd':'statics','args':{'parameters':{1:['name','location']}}})
+#q.doCommand({'cmd':'static_capabilities'})
+#q.doCommand({'cmd':'statics','args':{'parameters':{1:['name','location']}}})
+q.doCommand({'cmd':'set_bg','args':{'type':'logo'}})
+spin({'cmd':'cur','args':{'parameters':{'text':['status','text']}}},30,2)
 #print q.doCommand({'cmd':'background_capabilities'})
 #print q.doCommand({'cmd':'set_bg','args':{'type':'image','args':{'image':'http://www.changethethought.com/wp-content/tumblr_ljm3m8dfun1qzt4vjo1_500.gif'}}})
 #spin({'cmd':'cur','args':{'parameters':{'text':['status','text']}}},30,2)
