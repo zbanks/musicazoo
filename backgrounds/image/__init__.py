@@ -1,9 +1,8 @@
-import Image
-import ImageTk
 import Tkinter
 import cStringIO
 import urllib
 from graphics import *
+from PIL import Image, ImageTk
 
 class ImageBG(FullScreenGraphics):
 	TYPE_STRING='image'
@@ -37,8 +36,9 @@ class ImageBG(FullScreenGraphics):
 		except Exception:
 			self.status='failed'
 			self.queue.removeMeAsync(self.uid)
+			raise
 		
-	def updateImage(self):	
+	def updateImage(self):
 		self.after(0,lambda:self.c.itemconfig(self.tkimg,image=self.image))
 
 	def get_status(self):
