@@ -4,7 +4,7 @@ from graphics import *
 class Logo(FullScreenGraphics):
 	TYPE_STRING='logo'
 
-	def __init__(self):
+	def __init__(self,queue,uid):
 		FullScreenGraphics.__init__(self)
 		self.c=Tkinter.Canvas(self,width=self.width,height=self.height,bg='black',highlightthickness=0)
 		self.c.pack()
