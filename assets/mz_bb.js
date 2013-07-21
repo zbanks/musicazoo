@@ -198,7 +198,7 @@ var COMMANDS = [
         module: "logo",
         background: true,
         args: function(match, cb){
-            cb(null);
+            cb({});
         }
     },
     // Playlist
@@ -339,11 +339,7 @@ var command_match = function(commands, text, cb){
         }
         if(match){
             cmd.args(match, function(args){
-                if(args){
-                    cb({cmd: add_cmd, args: {type: cmd.module, args: args}});
-                }else{
-                    cb({cmd: add_cmd, args: {type: cmd.module}});
-                }
+                cb({cmd: add_cmd, args: {type: cmd.module, args: args}});
             }, kw);
             return true;
         }
@@ -739,11 +735,12 @@ var authCallback = _.once(function(capabilities){
 
     var QueueView = Backbone.View.extend({
         initialize: function(){
+            var self = this;
             this.subviews = {};
             this.no_autorefresh = false;
             this.$el.sortable({
                 update: function(ev, ui){
-                    var ordering = $("ol.playlist li").map(function(i, e){return $(e).attr('data-view-id')}).toArray();
+                    var ordering = self.$("li").map(function(i, e){return $(e).attr('data-view-id')}).toArray();
                     // idk where this could go
                     deferQuery({cmd: "mv", args:{uids: ordering}});
                 },
@@ -753,6 +750,10 @@ var authCallback = _.once(function(capabilities){
                 stop: function(ev, ui){
                     self.no_autorefresh = false;
                 },
+            });
+
+            $("a.clear").click(function(){
+                self.collection.each(function(m){ m.destroy(); });
             });
 
             this.listenTo(this.collection, "add", this.addOne);
@@ -776,7 +777,7 @@ var authCallback = _.once(function(capabilities){
             }
             var self = this;
             if(event != "reset" && event != "sync"){
-                this.$el.html($(_.map(this.collection.models, function(model){
+                self.$el.html($(_.map(this.collection.models, function(model){
                     if(self.subviews[model.id]){ //TODO hack
                         return self.subviews[model.id].el;
                     }
@@ -824,11 +825,22 @@ var authCallback = _.once(function(capabilities){
         },
     });
 
+    var StaticIdentityView = Backbone.View.extend({
+        initialize: function(){
+            this.render();
+        },
+        render: function(v){
+            console.log(this.model);
+        }
+    });
+
     var StaticSetView = Backbone.View.extend({
         initialize: function(){
             this.listenTo(this.collection, "add", function(model){
                 if(model.get('class') == "volume"){
                     var sv = new StaticVolumeView({model: model});
+                }else if(model.get('class') == "identity"){
+                    var sv = new StaticIdentityView({model: model});
                 }
             });
         }
