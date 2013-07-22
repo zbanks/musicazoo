@@ -65,7 +65,7 @@ class Youtube:
 	def play(self):
 		self.show_loading_screen()
 		self.ready.acquire()
-		if self.status=='invalid':
+		if self.status=='invalid' or self.status=='stopped':
 			return
 		self.vidPlay()
 		self.status='finishing'
@@ -88,14 +88,14 @@ class Youtube:
 	def stop(self):
 		if self.status == 'stopped':
 			return
-		if not self.player.up():
-			raise Exception("Video is not up")
-		self.player.stop()
 
-		if self.status=='loading':
+		if self.status=='loading' or self.status=='added':
 			self.hide_loading_screen()
 
+		if self.player.up():
+			self.player.stop()
 		self.status='stopped'
+		self.ready.release()
 
 	def resume(self):
 		if self.status == 'playing':
