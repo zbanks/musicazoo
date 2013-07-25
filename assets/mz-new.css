@@ -170,7 +170,7 @@ a.nohover:hover{
 	display: none;
 }
 
-a.related, a.rm, a.btn, a.cmd, a.action-set {
+a.btn {
 	background: #F3FDE1;
 	color: #406873;
 	padding: 1px 3px;

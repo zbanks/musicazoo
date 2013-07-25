@@ -63,7 +63,6 @@ Handlebars.registerHelper('add', function(x, options){
 Handlebars.registerHelper('percent', function(x, options){
     var of = parseInt(options.hash.of);
     x = parseInt(x);
-    console.log(x, of, x / of * 100);
     if(of && x){
         return Math.floor(x / of * 100);
     }else{
@@ -370,6 +369,7 @@ $(document).ready(function(){
         }
         command_match(COMMANDS, query, function(args){
             deferQuery(args, refreshPlaylist, lostConnection);
+            refreshPlaylist();
         });
         return false; // Prevent form submitting
     });
@@ -697,16 +697,19 @@ var authCallback = _.once(function(capabilities){
     });
 
     var ActionView = Backbone.View.extend({
-        act_template: Handlebars.compile("<a href='#' class='rm de-only'></a>{{{ html }}}<a href='#' class='rm bb-only'>rm</a>"),
+        act_template: Handlebars.compile("<a href='#' class='btn rm de-only'></a>{{{ html }}}<a href='#' class='btn rm bb-only'>rm</a>"),
         events: {
             "click .rm": "remove",
             "click .cmd": "cmd",
             "click .action-set": "actionSet",
             "click .video-progress": "setProgress",
             "click .video-progress-bar": "setProgress",
+            "click .youtube-add-related": "addRelatedYoutube",
         },
         initialize: function(){
+            var self = this;
             this.listenTo(this.model, "change", this.render);
+            this.listenTo(this.model, "change:vid", function(){ self.model.unset("related"); } );
             this.render();
             return this;
         },
@@ -736,6 +739,34 @@ var authCallback = _.once(function(capabilities){
             console.log("seek to:", seekTo, this.model.get("duration"));
             this.$(".video-progress-bar").css("width", ev.offsetX + "px");
             this.model.set("time", seekTo);
+        },
+        addRelatedYoutube: function(ev){
+            var self = this;
+            var pushVideo = function(){
+                var related = self.model.get('related');
+                var rel = related.pop();
+                deferQuery({cmd: 'add', args: {type: 'youtube', args: {url: rel.url}}});
+                refreshPlaylist();
+            };
+            var vid = this.model.get('vid');
+            var related_url = "https://gdata.youtube.com/feeds/api/videos/" + vid + "/related?v=2&alt=json&callback=?";
+            if(this.model.has('related')){
+                pushVideo();
+                return;
+            }
+            $.getJSON(related_url, function(data){
+                // Did we manage to pull the related feed while waiting for this callback?
+                if(self.model.has('related')){
+                    pushVideo();
+                    return;
+                }
+                var raw_entries = data.feed.entry;
+                var entries = _.map(raw_entries, function(e){
+                    return {'title': e.title.$t, 'url': e.link[0].href};
+                });
+                self.model.set('related', entries);
+                pushVideo();
+            });
         },
     });
     var ActiveView = ActionView.extend({
@@ -848,7 +879,6 @@ var authCallback = _.once(function(capabilities){
             }
         }),
         updateSlider : function(value){
-            console.log(value);
             $("div.vol-slider").slider("option", "value", value);
             if(!DE){
                 $(".ui-slider-range").html("<span>" + value + "</span>");

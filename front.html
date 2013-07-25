@@ -22,23 +22,33 @@
                     - (Loading...)
                 {{/if_eq}}
                 {{#if_eq status eq='playing' }}
-                    <a href="#" class="action-set" data-property="status" data-value="paused">pause</a>
-                    <a href="#" class="action-set" data-property="time" data-value="0">restart</a>
-                    <a href="#" class="action-set" data-property="time" data-value="{{ add time v=30 }}">+0:30</a>
-                    <a href="#" class="action-set" data-property="time" data-value="{{ add time v=-30 }}">-0:30</a>
+                    {{#if_eq site eq='youtube'}}
+                        <a href="#" class="btn youtube-add-related">++</a>
+                    {{/if_eq}}
+                    <a href="#" class="btn action-set" data-property="status" data-value="playing">resume</a>
+                    <!--
+                    <a href="#" class="btn action-set" data-property="time" data-value="0">restart</a>
+                    <a href="#" class="btn action-set" data-property="time" data-value="{{ add time v=30 }}">+0:30</a>
+                    <a href="#" class="btn action-set" data-property="time" data-value="{{ add time v=-30 }}">-0:30</a>
+                    -->
                 {{/if_eq}}
                 {{#if_eq status eq='paused' }}
-                    <a href="#" class="action-set" data-property="status" data-value="playing">resume</a>
-                    <a href="#" class="action-set" data-property="time" data-value="0">restart</a>
-                    <a href="#" class="action-set" data-property="time" data-value="{{ add time v=30 }}">+0:30</a>
-                    <a href="#" class="action-set" data-property="time" data-value="{{ add time v=-30 }}">-0:30</a>
+                    {{#if_eq site eq='youtube'}}
+                        <a href="#" class="btn youtube-add-related">++</a>
+                    {{/if_eq}}
+                    <a href="#" class="btn action-set" data-property="status" data-value="playing">resume</a>
+                    <!--
+                    <a href="#" class="btn action-set" data-property="time" data-value="0">restart</a>
+                    <a href="#" class="btn action-set" data-property="time" data-value="{{ add time v=30 }}">+0:30</a>
+                    <a href="#" class="btn action-set" data-property="time" data-value="{{ add time v=-30 }}">-0:30</a>
+                    -->
                 {{/if_eq}}
-                <a href="#" class="action-set" data-property="status" data-value="stopped">stop</a>
-                <!-- <a href="http://musicazoo.mit.edu/add?addtxt={{ url }}" class="action-set">fwd</a> -->
+                <!-- <a href="http://musicazoo.mit.edu/add?addtxt={{ url }}" class="btn action-set">fwd</a> -->
 
             {{else}}
                 <a href="{{ url }}"> (Loading youtube video...) </a>
             {{/if_eq}}
+        <a href="#" class="btn action-set" data-property="status" data-value="stopped">stop</a>
         <div class="video-progress">
             <div class="video-progress-bar" style="width: {{percent time of=duration}}%"></div>
         </div>
@@ -49,6 +59,9 @@
         {{#if_eq status neq='added'}}
             <a href="{{ url }}"> {{ title }} </a>
             - [{{ minutes duration }}]
+            {{#if_eq site eq='youtube'}}
+                <a href="#" class="btn youtube-add-related">++</a>
+            {{/if_eq}}
         {{else}}
             <a href="{{ url }}"> (Loading youtube video...) </a>
         {{/if_eq}}
@@ -63,13 +76,13 @@
                 - [{{ minutes time }}]
             {{/if}}
             {{#if_eq status eq='playing' }}
-                <a href="#" class="action-set" data-property="status" data-value="paused">pause</a>
+                <a href="#" class="btn action-set" data-property="status" data-value="paused">pause</a>
             {{/if_eq}}
             {{#if_eq status eq='paused' }}
-                <a href="#" class="action-set" data-property="status" data-value="playing">resume</a>
+                <a href="#" class="btn action-set" data-property="status" data-value="playing">resume</a>
             {{/if_eq}}
-                <a href="#" class="action-set" data-property="status" data-value="stopped">stop</a>
         {{/if_eq}}
+        <a href="#" class="btn action-set" data-property="status" data-value="stopped">stop</a>
         <div class="video-progress">
             <div class="video-progress-bar" style="width: {{percent time of=duration}}%"></div>
         </div>
@@ -85,7 +98,9 @@
     <script class="text-active-template" type="text/x-handlebars-template">
         {{#if_eq status neq='stopped' }}
             {{ long_description }}
-            <a href="#" class="action-set" data-property="status" data-value="stopped">stop</a>
+            {{#if_eq status neq='added' }}
+                <a href="#" class="btn action-set" data-property="status" data-value="stopped">stop</a>
+            {{/if_eq}}
         {{/if_eq}}
         <!-- {{ status }} -->
     </script>
