@@ -1,5 +1,5 @@
-NAME = "Party Palace"
-LOCATION = "Party Palace Location"
+NAME = "Stormy's Laptop"
+LOCATION = "On top of Stormy's lap"
 COLORS={'bg':'#406873','fg':'#F3FDE1'}
 
 
