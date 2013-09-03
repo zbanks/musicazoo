@@ -916,9 +916,9 @@ var authCallback = _.once(function(capabilities){
     });
 
     mz = mz = new Musicazoo();
-    var qv = new QueueView({collection: mz.get('queue'), el: $(".playlist")});
-    var cv = new ActiveView({model: mz.get('active'), el: $(".current")});
-    var bv = new BackgroundView({model: mz.get('background'), el: $(".background")});
+    var qv = new QueueView({collection: mz.get('queue'), el: $("ol.playlist")});
+    var cv = new ActiveView({model: mz.get('active'), el: $("ol.current")});
+    var bv = new BackgroundView({model: mz.get('background'), el: $("ol.background")});
     var ssv = new StaticSetView({collection: mz.get('statics')});
     mz.fetch();
 
