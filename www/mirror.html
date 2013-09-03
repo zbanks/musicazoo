@@ -83,8 +83,7 @@
                 <a href="#" class="btn action-set" data-property="status" data-value="playing">resume</a>
             {{/if_eq}}
         {{/if_eq}}
-        <a href="#" class="btn action-set" data-property="status" data-value="stopped">stop</a>
-        <div class="video-progress">
+        <a href="#" class="btn action-set" data-property="status" data-value="stopped">stop</a> <div class="video-progress">
             <div class="video-progress-bar" style="width: {{percent time of=duration}}%"></div>
         </div>
         <!-- ({{ status }}) -->
@@ -112,6 +111,7 @@
     <script class="image-template" type="text/x-handlebars-template">
         Image:
         {{ url }}
+        <img src="{{ url }}">
         {{ status }}
     </script>
     <script class="logo-template" type="text/x-handlebars-template">
@@ -147,6 +147,7 @@
         </div>
 
         <!-- Playlist/Queue -->
+        <ol class="current"> </ol>
 
         <!-- Volume -->
         <div class="vol-slider"></div>

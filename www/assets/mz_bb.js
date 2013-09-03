@@ -787,7 +787,7 @@ var authCallback = _.once(function(capabilities){
 
     var QueueView = Backbone.View.extend({
         initialize: function(){
-            var self = this;
+            var sself = this;
             this.subviews = {};
             this.no_autorefresh = false;
             this.$el.sortable({
@@ -916,9 +916,9 @@ var authCallback = _.once(function(capabilities){
     });
 
     mz = mz = new Musicazoo();
-    var qv = new QueueView({collection: mz.get('queue'), el: $("ol.playlist")});
-    var cv = new ActiveView({model: mz.get('active'), el: $("ol.current")});
-    var bv = new BackgroundView({model: mz.get('background'), el: $("ol.background")});
+    var qv = new QueueView({collection: mz.get('queue'), el: $(".playlist")});
+    var cv = new ActiveView({model: mz.get('active'), el: $(".current")});
+    var bv = new BackgroundView({model: mz.get('background'), el: $(".background")});
     var ssv = new StaticSetView({collection: mz.get('statics')});
     mz.fetch();
 
@@ -929,7 +929,7 @@ var authCallback = _.once(function(capabilities){
     refreshPlaylist();
     // Refresh playlist every 1 seconds
     setInterval(refreshPlaylist, 1000);
-    if(musicazooLoaded){
+    if(typeof(musicazooLoaded) != "undefined"){
         musicazooLoaded(mz);
     }
 });
