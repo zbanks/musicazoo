@@ -7,6 +7,7 @@ import sqlite3
 class TrackerBot(mzbot.MZBot):
 	def __init__(self,url):
 		self.luid=None
+		self.db="/home/musicazoo/musicazoo/musicazoo/bots/tracker/mz.db"
 		mzbot.MZBot.__init__(self,url)
 
 	def poll(self):
@@ -24,7 +25,7 @@ class TrackerBot(mzbot.MZBot):
 			self.luid=None
 
 	def got(self,url):
-		conn=sqlite3.connect('mz.db')
+		conn=sqlite3.connect(self.db)
 		c=conn.cursor()
 		c.execute('INSERT INTO youtube_history (url) VALUES (?)',[url])
 		conn.commit()
