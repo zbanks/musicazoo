@@ -31,7 +31,7 @@ class TrackerBot(mzbot.MZBot):
 		conn.close()
 
 if __name__ == "__main__":
-	tb = TrackerBot("http://ericserv.mit.edu/musicazoo/cmd")
+	tb = TrackerBot("http://musicazoo.mit.edu/cmd")
 	while True:
 		tb.poll()
 		time.sleep(1)
