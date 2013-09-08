@@ -7,7 +7,7 @@ import sqlite3
 class TrackerBot(mzbot.MZBot):
 	def __init__(self,url):
 		self.luid=None
-		self.db="/home/musicazoo/musicazoo/musicazoo/bots/tracker/mz.db"
+		self.db="/home/musicazoo/musicazoo/musicazoo/bots/top/mz.db"
 		mzbot.MZBot.__init__(self,url)
 
 	def poll(self):
@@ -34,5 +34,5 @@ class TrackerBot(mzbot.MZBot):
 if __name__ == "__main__":
 	tb = TrackerBot("http://musicazoo.mit.edu/cmd")
 	while True:
+		time.sleep(3)
 		tb.poll()
-		time.sleep(1)
