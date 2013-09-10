@@ -51,7 +51,7 @@ class NetVid:
 		self.status='finishing'
 
 	def show_loading_screen(self):
-		self.loading_screen=loading.LoadingScreen()
+		self.loading_screen=LoadingScreen()
 		self.loading_screen.show()
 
 	def hide_loading_screen(self):

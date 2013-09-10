@@ -13,6 +13,8 @@ from upload_manager import UploadManager
 HOST_NAME = ''
 PORT_NUMBER = 9001
 
+MYPATH=os.path.dirname(__file__)
+
 from SocketServer import ThreadingMixIn
 from BaseHTTPServer import HTTPServer
 
@@ -42,7 +44,7 @@ class ULHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 	def do_GET(self):
 		if self.path == '/':
-			infile=open('upload.html')
+			infile=open(os.path.join(MYPATH,'upload.html'))
 			self.send_response(200)
 			self.send_header("Content-type", "text/html")
 			self.content_length(infile)
@@ -78,7 +80,7 @@ class ULHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 				self.send_error(500,str(e))
 				return
 
-			infile=open('success.html')
+			infile=open(os.path.join(MYPATH,'success.html'))
 			self.send_response(200)
 			self.send_header("Content-type", "text/html")
 			self.content_length(infile)
@@ -127,11 +129,11 @@ class ULHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 			fs_up.file.close()
 			tf.close()
 
-			uploader.add(tf.name,nicefilename = os.path.split(fs_up.filename)[1])
+			uploader.add(tf.name,nicefilename = os.path.split(fs_up.filename)[-1])
 
 	# End class ULHandler
 
-uploader=UploadManager('http://192.168.0.10/upload','http://192.168.0.10/cmd')
+uploader=UploadManager('http://musicazoo.mit.edu/upload','http://localhost/cmd')
 
 if __name__ == '__main__':
 	server_class = MultiThreadedHTTPServer
