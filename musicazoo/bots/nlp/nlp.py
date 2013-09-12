@@ -30,13 +30,30 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 		s.end_headers()
 
 	def parse(self,q):
-		g=r'vol (\d\d?\d?)'.match(q)
+		g=re.compile(r'vol (\d\d?\d?)').match(q)
 		if g:
 			try:
 				vol=int(g.group(1))
 				if vol>100:
 					raise Exception
-
+				scap=self.req([{'cmd':'static_capabilities'}])[0]
+				if not scap['success']:
+					raise Exception
+				vol_i=None
+				for (i,static) in scap['result'].iteritems():
+					if static['class']=='volume':
+						vol_i=i
+				if not vol_i:
+					raise Exception
+				resp=self.req([
+				{
+					"cmd": "tell_static", "args":
+					{
+						"uid": vol_i,
+						"cmd": "set_vol",
+						"args": {"vol": vol}
+					}
+				}])
 			except:
 				pass
 
@@ -71,7 +88,7 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 		s.send_response(200)
 		s.send_header("Content-type", "application/json")
 		s.end_headers()
-		s.wfile.write(resp)
+		s.wfile.write("{'success':true}")
 
 	def req(s,commands):
 		return json.loads(requests.post(MZQ_URL, json.dumps(commands)).text)
