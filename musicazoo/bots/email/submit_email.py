@@ -41,8 +41,6 @@ class EmailParser:
 		return msgtxt
 
 	def find_extra(self,msg):
-		print "MSGGGG"
-		print msg
 		ytm=re.findall("youtube\.com\/watch\?v=([^&\s]+)",msg)
 		for yt in ytm:
 			self.extra.append({
