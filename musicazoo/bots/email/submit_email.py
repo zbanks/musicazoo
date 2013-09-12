@@ -41,6 +41,8 @@ class EmailParser:
 		return msgtxt
 
 	def find_extra(self,msg):
+		print "MSGGGG"
+		print msg
 		ytm=re.findall("youtube\.com\/watch\?v=([^&\s]+)",msg)
 		for yt in ytm:
 			self.extra.append({
@@ -90,5 +92,5 @@ if __name__ == "__main__":
 	if len(sys.argv)==2:
 		queue=sys.argv[1]
 	else:
-		queue="http://192.168.0.10/cmd"
+		queue="http://localhost/cmd"
 	queue_email(sys.stdin,queue=queue) 

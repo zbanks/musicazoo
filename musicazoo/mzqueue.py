@@ -80,7 +80,7 @@ class MZQueue(object):
 		return {'uid':uid}
 
 	def rm(self,uids):
-		self.queue=[(uid,obj) for (uid,obj) in self.queue if uid not in [int(uid) for uid in uids]]
+		self.queue=[(uid,obj) for (uid,obj) in self.queue if uid not in [int(u) for u in uids]]
 
 	def mv(self,uids):
 		newqueue=[]

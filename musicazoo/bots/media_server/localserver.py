@@ -4,16 +4,17 @@ import BaseHTTPServer
 import cgi
 import faulthandler
 import json
-import os
 import re
-import tempfile
+import os
 
-from upload_manager import UploadManager
+from local_manager import LocalManager
 
 HOST_NAME = ''
-PORT_NUMBER = 9001
+PORT_NUMBER = 9004
 
 MYPATH=os.path.dirname(__file__)
+
+FILE_PATH='/home/musicazoo/'
 
 from SocketServer import ThreadingMixIn
 from BaseHTTPServer import HTTPServer
@@ -21,7 +22,7 @@ from BaseHTTPServer import HTTPServer
 class MultiThreadedHTTPServer(ThreadingMixIn,HTTPServer):
 	pass
 
-class ULHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+class FileHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 	def content_length(self,f):
 		l=os.fstat(f.fileno()).st_size
@@ -44,7 +45,7 @@ class ULHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 	def do_GET(self):
 		if self.path == '/':
-			infile=open(os.path.join(MYPATH,'upload.html'))
+			infile=open(os.path.join(MYPATH,'local.html'))
 			self.send_response(200)
 			self.send_header("Content-type", "text/html")
 			self.content_length(infile)
@@ -56,9 +57,9 @@ class ULHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 		result=re.match(r'/media/(\d+)',self.path)
 		if result:
 			uid=int(result.group(1))
-			f=uploader.get(uid)
+			f=manager.get(uid)
 			if f:
-				infile=open(f.tempfilename)
+				infile=open(f.localfilename)
 				self.send_response(200)
 				self.send_header("Content-type",f.mime_type)
 				self.content_length(infile)
@@ -75,7 +76,7 @@ class ULHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 	def do_POST(self):	
 		if self.path == '/':
 			try:
-				self.upload_file()
+				self.play_file()
 			except Exception as e:
 				self.send_error(500,str(e))
 				return
@@ -89,7 +90,7 @@ class ULHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 			infile.close()
 		elif self.path=='/api':
 			try:
-				self.upload_file()
+				self.play_file()
 			except Exception as e:
 				self.send_response(200)
 				self.send_header("Content-type", "text/json")
@@ -105,7 +106,7 @@ class ULHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 			self.send_error(404,'Unexpected post request')
 
 
-	def upload_file(self):
+	def play_file(self):
 		ctype, pdict = cgi.parse_header(self.headers.getheader('content-type'))	 
 		if ctype == 'multipart/form-data':
 			fs = cgi.FieldStorage( fp = self.rfile, 
@@ -114,30 +115,26 @@ class ULHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 				# but as the FieldStorage object was designed for CGI, absense of 'POST' value in environ	 
 				# will prevent the object from using the 'fp' argument !	 
 			)
-
-		else:
+		else:	
 			raise Exception('Unexpected post request')
 
-		fs_ups = fs['upfile']
-		if not isinstance(fs_ups, list):
-			fs_ups = [fs_ups]
-		for fs_up in fs_ups:
-			if not fs_up.filename:
-				raise Exception('No file sent.')
-			tf=tempfile.NamedTemporaryFile(delete=False)
-			self.chunked_write(fs_up.file,tf)
-			fs_up.file.close()
-			tf.close()
+		local_file=fs['localfile'].value
 
-			uploader.add(tf.name,nicefilename = os.path.split(fs_up.filename)[-1])
+		f=os.path.abspath(os.path.join(FILE_PATH,local_file))
+		if os.path.commonprefix([FILE_PATH,f]) != FILE_PATH:
+			raise Exception('Path escapes pseudo-chroot jail')
+		if not os.access(f, os.R_OK):
+			raise Exception('The specified local file was not found')
 
-	# End class ULHandler
+		manager.add(f,nicefilename = os.path.split(f)[-1])
 
-uploader=UploadManager('http://musicazoo.mit.edu/upload','http://localhost/cmd')
+	# End class FileHandler
+
+manager=LocalManager('http://musicazoo.mit.edu/local','http://localhost/cmd')
 
 if __name__ == '__main__':
 	server_class = MultiThreadedHTTPServer
-	httpd = server_class((HOST_NAME, PORT_NUMBER), ULHandler)
+	httpd = server_class((HOST_NAME, PORT_NUMBER), FileHandler)
 	faulthandler.enable()
 	try:
 		httpd.serve_forever()

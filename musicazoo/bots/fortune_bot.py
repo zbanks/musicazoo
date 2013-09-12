@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from mzbot import MZBot
 import requests
 import subprocess
@@ -5,7 +6,7 @@ import subprocess
 class FortuneBot(MZBot):
     def send_fortune(self):
         try:
-            fortune_text = subprocess.check_output(['fortune', '-s'])
+            fortune_text = subprocess.check_output(['/usr/games/fortune', '-s'])
             data = {'cmd': 'add',
                     'args': {
                         'type': 'text',
@@ -22,7 +23,7 @@ class FortuneBot(MZBot):
                     }
                 }
             return self.doCommands([data])
-        except CalledProcessError:
+        except subprocess.CalledProcessError:
             pass
 
 if __name__ == "__main__":
