@@ -14,6 +14,8 @@ PORT_NUMBER = 9004
 
 MYPATH=os.path.dirname(__file__)
 
+FILE_PATH='/home/musicazoo/'
+
 from SocketServer import ThreadingMixIn
 from BaseHTTPServer import HTTPServer
 
@@ -117,7 +119,14 @@ class FileHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 			raise Exception('Unexpected post request')
 
 		local_file=fs['localfile'].value
-		manager.add(local_file,nicefilename = os.path.split(local_file)[-1])
+
+		f=os.path.abspath(os.path.join(FILE_PATH,local_file))
+		if os.path.commonprefix([FILE_PATH,f]) != FILE_PATH:
+			raise Exception('Path escapes pseudo-chroot jail')
+		if not os.access(f, os.R_OK):
+			raise Exception('The specified local file was not found')
+
+		manager.add(f,nicefilename = os.path.split(f)[-1])
 
 	# End class FileHandler
 
