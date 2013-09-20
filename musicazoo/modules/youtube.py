@@ -4,7 +4,7 @@ import threading
 import time
 import youtube_dl
 
-from youtube_dl.utils import compat_cookiejar, compat_urllib_request, make_HTTPS_handler, YoutubeDLHandler
+from youtube_dl.utils import compat_cookiejar, compat_urllib_request, make_HTTPS_handler
 from musicazoo.lib.vlc_player_compat import Player
 from musicazoo.lib.loading import LoadingScreen
 
@@ -31,6 +31,7 @@ class Youtube:
 		t=threading.Thread(target=self.getVideoInfo, args=[url])
 		t.daemon=True
 		t.start()
+		reload(youtube_dl)
 
 	def get_url(self):
 		return self.url
@@ -185,7 +186,7 @@ class Youtube:
 		proxies = compat_urllib_request.getproxies()
 		proxy_handler = compat_urllib_request.ProxyHandler(proxies)
 		https_handler = make_HTTPS_handler(None)
-		opener = compat_urllib_request.build_opener(https_handler, proxy_handler, cookie_processor, YoutubeDLHandler())
+		opener = compat_urllib_request.build_opener(https_handler, proxy_handler, cookie_processor, youtube_dl.YoutubeDLHandler())
 		compat_urllib_request.install_opener(opener)
 
 		y=youtube_dl.YoutubeDL({'outtmpl':'','format':'18'}) # empty outtmpl needed due to weird issue in youtube-dl
