@@ -19,6 +19,7 @@ def pronounce_email(text):
 
 	body=text['body']
 	body=clean_email(body)
+
 	speech=u"Email from {0} . Subject: {1} . {2}".format(sender,subject,body)
 	speech = pronunciation(speech)
 	return speech
@@ -45,14 +46,16 @@ def pronunciation(text):
         (r'#([A-Za-z])',r'hash tag \1',re.IGNORECASE),
         (r'MIT',r' M I T ',None),
         (r'[\*\~\^\<\>\[\]]',r'',None),
+        (r'__*', r'_', None),
+        (r'--*', r'-', None),
     )
     text = remove_urls(text)
     text = parse_mit_numbers(text)
     for reg, repl, flags in subs:
-	if flags:
-	        text = re.sub(reg, repl, text, flags=flags)
-	else:
-	        text = re.sub(reg, repl, text)
+        if flags:
+                text = re.sub(reg, repl, text, flags=flags)
+        else:
+                text = re.sub(reg, repl, text)
     return text
 
 def remove_urls(text):
