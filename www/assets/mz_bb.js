@@ -186,9 +186,9 @@ var COMMANDS = [
             cb({url: match, short_description: 'Network Video', long_description: match});
         }
     },
-    { // Youtube
-        keywords: ["youtube"],
-        regex: /.*youtube.com.*watch.*v.*/, 
+    { // "Youtube"
+        keywords: ["youtube", "video"],
+        regex: /.*(youtube.com|vimeo.com).*/, 
         module: "youtube",
         args: function(match, cb){
             cb({url: match});
