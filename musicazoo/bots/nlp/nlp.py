@@ -18,8 +18,113 @@ from BaseHTTPServer import HTTPServer
 
 MZQ_URL='http://musicazoo.mit.edu/cmd'
 
+def youtube_lucky_args(match, kw):
+    # Return the args dict for the first youtube result for 'match'
+    youtube_req_url = "http://gdata.youtube.com/feeds/api/videos"
+    youtube_data = {
+        "v": 2,
+        "orderby": "relevance",
+        "alt": "jsonc",
+        "q": match,
+        "max-results": 5
+    }
+    youtube_data = requests.get(youtube_req_url, params=youtube_data).json()
+    try:
+        return {
+            "url": "http://youtube.com/watch?v=%s" % youtube_data["data"]["items"][0]["id"],
+        }
+    except KeyError, IndexError:
+        return None
+
+COMMANDS = [
+    {   # say, text - say & display text
+        "keywords": ("text", "say"),
+        "module": "text",
+        "args": lambda match, kw:
+            {
+                "text": match,
+                "text_preprocessor": "none",
+                "speech_preprocessor": "pronunciation",
+                "text2speech": "google",
+                "renderer": "splash",
+                "duration": 1,
+                "short_description": "(Text)",
+                "long_description": "Text: %s" % match,
+            }
+    },
+    {   # netvid - play a network video
+        "keywords": ("netvid", ),
+        "module": "netvid",
+        "args": lambda match, kw:
+            {
+                "url": match,
+                "short_description": "Network Video",
+                "long_description": match,
+            }
+    },
+    {   # youtube - play a youtube video
+        "keywords": ("youtube", "video", "vimeo"),
+        "module": "youtube",
+        "regex": re.compile(r"/.*youtube.com.*watch.*v.*/"),
+        "args": lambda match, kw: { "url": match }
+    },
+    {   # image - show an image as a background
+        "keywords": ("image", "img"),
+        "regex": re.compile(r"http.*(gif|jpe?g|png|bmp)"),
+        "module": "image",
+        "type": "background",
+        "args": lambda match, kw: {"url": match}
+    },
+    {   # logo - show the logo
+        "keywords": ("logo"),
+        "module": "logo",
+        "type": "background",
+        "args": lambda match, kw: {}
+    },
+    {   # youtube auto search
+        "regex": re.compile(r".*"),
+        "module": "youtube",
+        "args": youtube_lucky_args,
+    },
+]
+
+
 class MultiThreadedHTTPServer(ThreadingMixIn,HTTPServer):
 	pass
+
+def command_match(commands, text):
+    ADD_CMDS = {
+        'background': 'set_bg',
+        'static': 'set_static',
+        'module': 'add',
+        None: 'add',
+    }
+    text = text.strip()
+    kw, _, rest = text.partition(" ")
+    match = None
+    for cmd in commands:
+        if cmd.get("keywords"):
+            if kw in cmd['keywords']:
+                match = rest
+                break
+        if cmd.get("regex"):
+            regex = re.match(cmd.get("regex"), rest)
+            if regex:
+                match = regex.group()
+                break
+    else:
+        return False
+    add_cmd = ADD_CMDS[cmd.get("type")]
+    args = cmd["args"](match, kw)
+    if args is None:
+        return False
+    return [{
+        "cmd": add_cmd, 
+        "args": {
+            "type": cmd["module"],
+            "args": args,
+        }
+    }]
 
 class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 	def address_string(self):
@@ -31,6 +136,10 @@ class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 		s.end_headers()
 
 	def parse(self,q):
+		parsed_command = command_match(COMMANDS, q)
+		print parsed_command
+		if parsed_command:
+			return self.req(parsed_command)
 		g=re.compile(r'vol (\d\d?\d?)').match(q)
 		if g:
 			try:
