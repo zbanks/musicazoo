@@ -136,6 +136,18 @@
         </div>
 
         <div class="queue">
+            <noscript>
+                <h2>Looks like you're not running javascript.</h2>
+                <div>
+                     You won't be able to see the queue, but feel free to submit things using the form below. (After submitting, hit back to get back here).
+                </div>
+                <form action="/nlp" method="POST" autocomplete="off" id="noscriptform">
+                    Search term/URL: 
+                    <input type="text" name="q"> 
+                    <input type="submit" value="Send to Musicazoo">
+                </form>
+            </noscript>
+
             <h2>Add</h2>
             <form action="#" method="GET" autocomplete="off" id="queueform">
                 <input type="text" name="addtxt" class="addtxt" id="addtxt"> <input type="submit" class="addsubmit disconnect-hide" id="addsubmit">
