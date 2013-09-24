@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 import email
+import encodings
 import json
 import os
+import quopri
 import re
 import requests
 import sys
-import quopri
 
 class EmailParser:
 	def __init__(self,f):
@@ -18,11 +19,20 @@ class EmailParser:
 			if part.is_multipart():
 				continue
 			if part.get_content_type() == "text/plain":
-				cs=part.get_charsets()[0]
+				aliases = encodings.aliases.aliases.keys()
+				css=filter(lambda x: x in aliases, part.get_charsets())
+				if not css:
+					cs = 'ascii'
+				else:
+					cs = css[0]
 				msg=part.get_payload()
 				msg=quopri.decodestring(msg)
 				msg=self.strip_reply(msg)
-				self.body=unicode(msg,cs)
+				try:
+					self.body=unicode(msg,cs)
+				except Exception:
+					# Oops, unable to decode the message
+					self.body = u"(Unable to decode message body)"
 				self.find_extra(msg)
 				break
 
