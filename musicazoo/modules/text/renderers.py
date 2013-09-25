@@ -29,10 +29,10 @@ class TextAndSound(FullScreenGraphics):
 		self.vlc_mp.play()
 		self.vlc_mp.set_rate(float(self.text.speed))
 		while True:
+			time.sleep(0.1)
 			d=self.vlc_mp.get_length()
 			if d>0:
 				break
-			time.sleep(0.1)
 		self.audio_duration=float(d)/1000/float(self.text.speed)
 		self.text.duration+=self.audio_duration
 

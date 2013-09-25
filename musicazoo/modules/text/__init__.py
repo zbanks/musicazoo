@@ -94,7 +94,6 @@ class Text:
 		if self.status != 'ready':
 			return
 		self.status='playing'
-		time.sleep(3)
 		self.display.play()
 		self.status='finishing'
 		self.sndfile.close()
