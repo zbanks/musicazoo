@@ -1,6 +1,7 @@
 import Tkinter
 import threading
 import time
+import os
 
 class FullScreenGraphics(Tkinter.Tk,threading.Thread):
 	def __init__(self):
@@ -50,6 +51,10 @@ class FullScreenGraphics(Tkinter.Tk,threading.Thread):
 		self.join()
 
 	def show_sync(self):
+		try:
+			os.system("xset dpms force on")
+		except Exception:
+			pass
 		self.deiconify()
 		self.update()
 

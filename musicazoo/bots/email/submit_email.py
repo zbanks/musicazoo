@@ -87,7 +87,7 @@ def queue_email(f, queue="http://musicazoo.mit.edu/cmd"):
 				'text2speech': "google",
 				'renderer': "email",
 				'duration': duration,
-				'speed': 1.0,
+				'speed': 1.5,
 				'short_description': "Email from {}".format(ep.sender),
 				'long_description': "Email from {}".format(ep.sender),
 			}
