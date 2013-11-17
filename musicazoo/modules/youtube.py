@@ -67,6 +67,7 @@ class Youtube:
 		self.show_loading_screen()
 		self.ready.acquire()
 		if self.status=='invalid' or self.status=='stopped':
+			self.hide_loading_screen()
 			return
 		self.vidPlay()
 		self.status='finishing'
@@ -122,6 +123,7 @@ class Youtube:
 				self.time=t
 				self.duration=self.player.length()
 				self.rate=self.player.get_rate()
+
 
 		if self.status=='loading':
 			self.hide_loading_screen()
@@ -189,12 +191,13 @@ class Youtube:
 		opener = compat_urllib_request.build_opener(https_handler, proxy_handler, cookie_processor, youtube_dl.YoutubeDLHandler())
 		compat_urllib_request.install_opener(opener)
 
-		y=youtube_dl.YoutubeDL({'outtmpl':'','format':'18'}) # empty outtmpl needed due to weird issue in youtube-dl
+		y=youtube_dl.YoutubeDL({'outtmpl':'','format':'18','skip_download':True}) # empty outtmpl needed due to weird issue in youtube-dl
 		y.add_default_info_extractors()
 
 		try:
 			info=y.extract_info(url,download=False)
 		except Exception:
+			raise
 			self.status='invalid'
 			self.queue.removeMeAsync(self.uid) # Remove if possible
 			self.ready.release()
