@@ -41,6 +41,7 @@ class TextAndSound(FullScreenGraphics):
 
 		self.start=time.time()
 		while not self.stopped:
+			#print "playing"
 			self.text.time=time.time()-self.start
 			if self.text.time>=self.text.duration:
 				self.stop()

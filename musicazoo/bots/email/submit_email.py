@@ -21,18 +21,11 @@ class EmailParser:
 			if part.get_content_type() == "text/plain":
 				aliases = encodings.aliases.aliases.keys()
 				css=filter(lambda x: x in aliases, part.get_charsets())
-				if not css:
-					cs = 'ascii'
-				else:
-					cs = css[0]
-				msg=part.get_payload()
-				msg=quopri.decodestring(msg)
+				msg=part.get_payload(decode=True)
 				msg=self.strip_reply(msg)
-				try:
-					self.body=unicode(msg,cs)
-				except Exception:
-					# Oops, unable to decode the message
-					self.body = u"(Unable to decode message body)"
+				msg=re.sub(r'\r\n','\n',msg) # fuck you windows
+				msg=self.strip_reply(msg)
+				self.body=msg
 				self.find_extra(msg)
 				break
 
@@ -71,7 +64,7 @@ def queue_email(f, queue="http://musicazoo.mit.edu/cmd"):
 	if len(ep.extra):
 		duration=3
 	else:
-		duration=15
+		duration=3
 	commands = [{
 		'cmd': 'add',
 		'args': {
