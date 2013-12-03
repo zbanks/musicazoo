@@ -29,6 +29,7 @@ class TextAndSound(FullScreenGraphics):
 		self.vlc_mp.play()
 		self.vlc_mp.set_rate(float(self.text.speed))
 		while True:
+			print "waiting loop"
 			time.sleep(0.1)
 			d=self.vlc_mp.get_length()
 			if d>0:
@@ -41,7 +42,7 @@ class TextAndSound(FullScreenGraphics):
 
 		self.start=time.time()
 		while not self.stopped:
-			#print "playing"
+			print "playing loop"
 			self.text.time=time.time()-self.start
 			if self.text.time>=self.text.duration:
 				self.stop()
