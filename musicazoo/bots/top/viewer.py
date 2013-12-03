@@ -60,10 +60,10 @@ class ViewerBot(Webserver):
 				info=get_info(vid)
 				url="http://youtube.com/watch?v={0}".format(vid)
 				if 'title' in info:
-					yt_cache[vid]=u'<a href="{0}">{1}</a> ({2})'.format(url,info['title'],count)
+					yt_cache[vid]=u'<a href="{0}">{1}</a>'.format(url,info['title'])
 				else:
-					yt_cache[vid]=u'<a href="{0}">{0}</a> ({1})'.format(url,count)
-			out+=u'\t<li>{0}</li>\n'.format(yt_cache[vid])
+					yt_cache[vid]=u'<a href="{0}">{0}</a>'.format(url)
+			out+=u'\t<li>{0} ({1})</li>\n'.format(yt_cache[vid],count)
 		conn.commit()
 		conn.close()
 		out+=u'</ol>\n'
