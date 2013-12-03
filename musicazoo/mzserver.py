@@ -5,6 +5,8 @@ import faulthandler
 import hashlib
 import hmac
 import json
+import sys
+import os
 
 import musicazoo.settings as settings
 
@@ -27,6 +29,8 @@ q = MZQueue(mm,sm,bm)
 qm = MZQueueManager(q)
 qm.start()
 
+DEBUG=False
+
 class MultiThreadedHTTPServer(ThreadingMixIn,HTTPServer):
     pass
 
@@ -39,26 +43,28 @@ class MZHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         s.send_header("Content-type", "text/json")
         s.end_headers()
 
-#    """
     def do_GET(s):
-        #s.giveError("Please POST a command.")
-        s.send_response(200)
-        s.send_header("Content-type", "text/html")
-        s.end_headers()
-        try:
-            print s.path
-            f = open(s.path[1:])
-            s.wfile.write(f.read())
-            f.close()
-        except IOError:
-            pass
-#    """
+        if DEBUG:
+            s.send_response(200)
+            s.send_header("Content-type", "text/html")
+            s.end_headers()
+            try:
+                print s.path
+                if s.path=='/' or s.path=='':
+                    s.path='/index.html'
+                f = open(os.path.join('../www',s.path[1:]))
+                s.wfile.write(f.read())
+                f.close()
+            except IOError:
+                pass
+        else:
+            s.giveError("Please POST a command.")
 
     def giveError(s,error):
         s.send_response(200)
         s.send_header("Content-type", "text/json")
         s.end_headers()
-        s.wfile.write(mzqueue.errorPacket(error))
+        #s.wfile.write(mzqueue.errorPacket(error))
 
     def do_POST(s):
         """
@@ -104,6 +110,9 @@ class MZHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         s.wfile.write(json_output)
 
 if __name__ == '__main__':
+    if '--debug' in sys.argv:
+        DEBUG=True
+
     server_class = MultiThreadedHTTPServer
     httpd = server_class((HOST_NAME, PORT_NUMBER), MZHandler)
     faulthandler.enable()

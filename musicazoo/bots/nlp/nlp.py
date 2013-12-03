@@ -1,9 +1,9 @@
 #!/usr/bin/python
 
-import re
-import musicazoo.lib.mzbot as mzbot
-import musicazoo.lib.webserver as webserver
+from musicazoo.lib.mzbot import MZBot
+from musicazoo.lib.webserver import Webserver
 import requests
+import re
 
 HOST_NAME = ''
 PORT_NUMBER=9003
@@ -28,10 +28,10 @@ def youtube_lucky_args(q):
 	else:
 		return None
 
-class NLPBot(mzbot.MZBot,webserver.Webserver):
+class NLPBot(MZBot,Webserver):
 	def __init__(self):
-		webserver.Webserver.__init__(self,HOST_NAME,PORT_NUMBER)
-		mzbot.MZBot.__init__(self,MZQ_URL)
+		Webserver.__init__(self,HOST_NAME,PORT_NUMBER)
+		MZBot.__init__(self,MZQ_URL)
 
 	def json_transaction(self,json):
 		try:
