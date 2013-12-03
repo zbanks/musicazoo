@@ -31,7 +31,8 @@ qm.start()
 
 DEBUG=False
 
-class MultiThreadedHTTPServer(ThreadingMixIn,HTTPServer):
+#class MultiThreadedHTTPServer(ThreadingMixIn,HTTPServer):
+class MultiThreadedHTTPServer(HTTPServer): # experimenting without Threading
     pass
 
 class MZHandler(BaseHTTPServer.BaseHTTPRequestHandler):
