@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import mzbot
+from musicazoo.lib.mzbot import MZBot
 import time
 import sqlite3
 
