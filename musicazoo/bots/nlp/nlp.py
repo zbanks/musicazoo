@@ -47,7 +47,7 @@ class NLPBot(MZBot,Webserver):
 			except Exception as e:
 				return "Error!\n"+str(e)
 		else:
-			return "<form><input name='q'></input><input type='submit'></form>"
+			return "<form method='POST'><input name='q'></input><input type='submit'></form>"
 
 	def act(self,q):
 		q=q.strip()

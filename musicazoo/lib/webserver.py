@@ -117,14 +117,16 @@ class Webserver:
                 s.respond_json(result)
 
             elif ctype == 'multipart/form-data' or ctype == 'application/x-www-form-urlencoded':
-                fs = cgi.FieldStorage( fp = self.rfile, 
-                    headers = self.headers, # headers_, 
+                fs = cgi.FieldStorage( fp = s.rfile, 
+                    headers = s.headers, # headers_, 
                     environ={ 'REQUEST_METHOD':'POST' } # all the rest will come from the 'headers' object,	 
                     # but as the FieldStorage object was designed for CGI, absense of 'POST' value in environ	 
                     # will prevent the object from using the 'fp' argument !	 
                 )
+                
+                fs=dict([(k,fs.getvalue(k)) for k in fs])
                 try:
-                    result = self.wrapper().form_post(fs,path)
+                    result = s.get_wrapper().form_post(fs,path)
                 except NotImplementedError:
                     s.send_error(400,'Server does not accept formdata')
                     return
