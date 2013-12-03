@@ -256,6 +256,7 @@ function runQueries(cb, err){
             data: JSON.stringify(datas),
             dataType: 'json',
             type: 'POST',
+            contentType: 'text/json',
             success: function(resp){
                 regainConnection();
                 if(resp.length != datas.length){ 

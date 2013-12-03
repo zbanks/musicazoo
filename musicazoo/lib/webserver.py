@@ -97,7 +97,7 @@ class Webserver:
         def do_POST(s):
             path=urlparse.urlparse(s.path)
             ctype, pdict = cgi.parse_header(s.headers.getheader('content-type'))
-            if ctype == 'text/json' or ctype == 'application/x-www-form-urlencoded':
+            if ctype == 'text/json':
                 try:
                     length = int(s.headers.getheader('content-length'))
                     postdata = s.rfile.read(length)
@@ -116,7 +116,7 @@ class Webserver:
                     return
                 s.respond_json(result)
 
-            elif ctype == 'multipart/form-data':
+            elif ctype == 'multipart/form-data' or ctype == 'application/x-www-form-urlencoded':
                 fs = cgi.FieldStorage( fp = self.rfile, 
                     headers = self.headers, # headers_, 
                     environ={ 'REQUEST_METHOD':'POST' } # all the rest will come from the 'headers' object,	 
