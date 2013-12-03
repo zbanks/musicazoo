@@ -1,214 +1,154 @@
-#!/usr/bin/env python
-#grodytothemax
+#!/usr/bin/python
 
-import BaseHTTPServer
-import cgi
-import json
-import magic
-import os
-import urlparse
+from musicazoo.lib.mzbot import MZBot
+from musicazoo.lib.webserver import Webserver
 import requests
 import re
 
 HOST_NAME = ''
-PORT_NUMBER = 9003
-
-from SocketServer import ThreadingMixIn
-from BaseHTTPServer import HTTPServer
-
+PORT_NUMBER=9003
 MZQ_URL='http://musicazoo.mit.edu/cmd'
 
-def youtube_lucky_args(match, kw):
-    # Return the args dict for the first youtube result for 'match'
-    youtube_req_url = "http://gdata.youtube.com/feeds/api/videos"
-    youtube_data = {
-        "v": 2,
-        "orderby": "relevance",
-        "alt": "jsonc",
-        "q": match,
-        "max-results": 5
-    }
-    youtube_data = requests.get(youtube_req_url, params=youtube_data).json()
-    try:
-        return {
-            "url": "http://youtube.com/watch?v=%s" % youtube_data["data"]["items"][0]["id"],
-        }
-    except KeyError, IndexError:
-        return None
+def youtube_lucky_args(q):
+	# Return the args dict for the first youtube result for 'match'
+	youtube_req_url = "http://gdata.youtube.com/feeds/api/videos"
+	youtube_data = {
+		"v": 2,
+		"orderby": "relevance",
+		"alt": "jsonc",
+		"q": q,
+		"max-results": 5
+	}
+	youtube_data = requests.get(youtube_req_url, params=youtube_data).json()
 
-COMMANDS = [
-    {   # say, text - say & display text
-        "keywords": ("text", "say"),
-        "module": "text",
-        "args": lambda match, kw:
-            {
-                "text": match,
-                "text_preprocessor": "none",
-                "speech_preprocessor": "pronunciation",
-                "text2speech": "google",
-                "renderer": "splash",
-                "duration": 1,
-                "short_description": "(Text)",
-                "long_description": "Text: %s" % match,
-            }
-    },
-    {   # netvid - play a network video
-        "keywords": ("netvid", ),
-        "module": "netvid",
-        "args": lambda match, kw:
-            {
-                "url": match,
-                "short_description": "Network Video",
-                "long_description": match,
-            }
-    },
-    {   # youtube - play a youtube video
-        "keywords": ("youtube", "video", "vimeo"),
-        "module": "youtube",
-        "regex": re.compile(r"/.*youtube.com.*watch.*v.*/"),
-        "args": lambda match, kw: { "url": match }
-    },
-    {   # image - show an image as a background
-        "keywords": ("image", "img"),
-        "regex": re.compile(r"http.*(gif|jpe?g|png|bmp)"),
-        "module": "image",
-        "type": "background",
-        "args": lambda match, kw: {"url": match}
-    },
-    {   # logo - show the logo
-        "keywords": ("logo"),
-        "module": "logo",
-        "type": "background",
-        "args": lambda match, kw: {}
-    },
-    {   # youtube auto search
-        "regex": re.compile(r".*"),
-        "module": "youtube",
-        "args": youtube_lucky_args,
-    },
-]
+	yi=youtube_data['data']['items']
 
+	if len(yi)>0:
+		return youtube_data["data"]["items"][0]
+	else:
+		return None
 
-class MultiThreadedHTTPServer(ThreadingMixIn,HTTPServer):
-	pass
+class NLPBot(MZBot,Webserver):
+	def __init__(self):
+		Webserver.__init__(self,HOST_NAME,PORT_NUMBER)
+		MZBot.__init__(self,MZQ_URL)
 
-def command_match(commands, text):
-    ADD_CMDS = {
-        'background': 'set_bg',
-        'static': 'set_static',
-        'module': 'add',
-        None: 'add',
-    }
-    text = text.strip()
-    kw, _, rest = text.partition(" ")
-    match = None
-    for cmd in commands:
-        if cmd.get("keywords"):
-            if kw in cmd['keywords']:
-                match = rest
-                break
-        if cmd.get("regex"):
-            regex = re.match(cmd.get("regex"), rest)
-            if regex:
-                match = regex.group()
-                break
-    else:
-        return False
-    add_cmd = ADD_CMDS[cmd.get("type")]
-    args = cmd["args"](match, kw)
-    if args is None:
-        return False
-    return [{
-        "cmd": add_cmd, 
-        "args": {
-            "type": cmd["module"],
-            "args": args,
-        }
-    }]
-
-class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
-	def address_string(self):
-		return str(self.client_address[0])
-
-	def do_HEAD(s):
-		s.send_response(200)
-		s.send_header("Content-type", "application/json")
-		s.end_headers()
-
-	def parse(self,q):
-		parsed_command = command_match(COMMANDS, q)
-		print parsed_command
-		if parsed_command:
-			return self.req(parsed_command)
-		g=re.compile(r'vol (\d\d?\d?)').match(q)
-		if g:
-			try:
-				vol=int(g.group(1))
-				if vol>100:
-					raise Exception
-				scap=self.req([{'cmd':'static_capabilities'}])[0]
-				if not scap['success']:
-					raise Exception
-				vol_i=None
-				for (i,static) in scap['result'].iteritems():
-					if static['class']=='volume':
-						vol_i=i
-				if not vol_i:
-					raise Exception
-				resp=self.req([
-				{
-					"cmd": "tell_static", "args":
-					{
-						"uid": vol_i,
-						"cmd": "set_vol",
-						"args": {"vol": vol}
-					}
-				}])
-			except:
-				pass
-
-	def do_GET(s):
-		qd=urlparse.parse_qsl(urlparse.urlparse(s.path).query)
-		if not qd:
-			return
-		q=dict(qd)['q']
-		s.act(q)
-		
-	def do_POST(s):
-		ctype, pdict = cgi.parse_header(self.headers.getheader('content-type'))	 
-		if ctype == 'multipart/form-data':
-			fs = cgi.FieldStorage( fp = self.rfile, 
-				headers = self.headers, # headers_, 
-				environ={ 'REQUEST_METHOD':'POST' } # all the rest will come from the 'headers' object,	 
-				# but as the FieldStorage object was designed for CGI, absense of 'POST' value in environ	 
-				# will prevent the object from using the 'fp' argument !	 
-			)
-		else:	
-			raise Exception('Unexpected post request')
-
-		q=fs['q'].value
-		s.act(q)
-
-	def act(s,q):
+	def json_transaction(self,json):
 		try:
-			commands=s.parse(q)
+			result=self.act(json['q'])
+			return {'success':True,'result':result}
 		except Exception as e:
-			s.send_error(500,str(e))
-			return
-		s.send_response(200)
-		s.send_header("Content-type", "application/json")
-		s.end_headers()
-		s.wfile.write("{'success':true}")
+			return {'success':False,'error':str(e)}
 
-	def req(s,commands):
-		return json.loads(requests.post(MZQ_URL, json.dumps(commands)).text)
+	def html_transaction(self,form_data):
+		if form_data and 'q' in form_data:
+			try:
+				return self.act(form_data['q'])
+			except Exception as e:
+				return "Error!\n"+str(e)
+		else:
+			return "<form><input name='q'></input><input type='submit'></form>"
 
-if __name__ == '__main__':
-	server_class = MultiThreadedHTTPServer
-	httpd = server_class((HOST_NAME, PORT_NUMBER), MyHandler)
-	try:
-		httpd.serve_forever()
-	except KeyboardInterrupt:
-		pass
-	httpd.server_close()
+	def act(self,q):
+		q=q.strip()
+		for (regex,func) in self.COMMANDS:
+			m=re.match(regex,q,re.I)
+			if m:
+				return func(self,q,*m.groups())
+				break
+		raise Exception("Command not recognized.")
 
+	def cmd_vol(self,q,vol):
+		vol=int(vol)
+		if vol>100:
+			raise Exception("Volume cannot be greater than 100")
+		scap=self.assert_success(self.doCommand({'cmd':'static_capabilities'}))
+		vol_i=None
+		for (i,static) in scap.iteritems():
+			if static['class']=='volume':
+				vol_i=i
+				break
+		if not vol_i:
+			raise Exception("Volume static not found.")
+		self.assert_success(self.doCommand({
+			"cmd": "tell_static", "args":
+			{
+				"uid": vol_i,
+				"cmd": "set_vol",
+				"args": {"vol": vol}
+			}
+		}))
+
+		return "Volume set to {0}".format(vol)
+
+	def cmd_rm(self,q):
+		def easy_stop(uid):
+			self.assert_success(self.doCommand({'cmd':'tell_module','args':{'uid':uid,'cmd':'stop'}}))
+
+		cur=self.assert_success(self.doCommand({
+			'cmd':'cur',
+			'args':{'parameters':{'youtube':['title'],'netvid':['short_description'],'text':['short_description']}}
+		}))
+		t=cur['type']
+		uid=cur['uid']
+		if t=='youtube':
+			easy_stop(uid)
+			return 'Removed "{0}"'.format(cur['parameters']['title'])
+		if t=='netvid':
+			easy_stop(uid)
+			return 'Removed "{0}"'.format(cur['parameters']['short_description'])
+		if t=='text':
+			easy_stop(uid)
+			return 'Removed "{0}"'.format(cur['parameters']['short_description'])
+		raise Exception('Don\'t know how to stop "{0}"'.format(t))
+
+	def cmd_text(self,q,text):
+		self.assert_success(self.doCommand({
+			'cmd':'add',
+			'args':
+			{
+				'type': 'text',
+				'args':
+				{
+					"text": text,
+					"text_preprocessor": "none",
+					"speech_preprocessor": "pronunciation",
+					"text2speech": "google",
+					"renderer": "splash",
+					"duration": 1,
+					"short_description": "(Text)",
+					"long_description": "Text: %s" % text,
+				}
+			}
+		}))
+		return 'Queued text.'
+
+	def cmd_yt(self,q,kw):
+		res=youtube_lucky_args(kw)
+		if not res:
+			raise Exception('No Youtube results found.')
+		title=res['title']
+		url='http://youtube.com/watch?v={0}'.format(res['id'])
+
+		self.assert_success(self.doCommand({
+			'cmd':'add',
+			'args': {
+				'type': 'youtube',
+				'args': {'url':url}
+			}
+		}))
+		return 'Queued "{0}"'.format(title)
+
+	COMMANDS=(
+		(r'^vol (\d+)$',cmd_vol),
+		(r'^text (.+)$',cmd_text),
+		(r'^say (.+)$',cmd_text),
+		(r'^rm$',cmd_rm),
+		(r'^stfu$',cmd_rm),
+		(r'^skip$',cmd_rm),
+		(r'^next$',cmd_rm),
+		(r'^(.+)$',cmd_yt),
+	)
+
+if __name__=='__main__':
+	NLPBot().run()
