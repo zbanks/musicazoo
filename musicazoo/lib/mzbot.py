@@ -14,9 +14,11 @@ class MZBot(object):
         json_data = json.dumps(cmd_list)
         headers = {"Content-type": "text/json"}
         resp = requests.post(self.endpoint, data=json_data, headers=headers)
-        print resp.json()
         return resp.json()
-    
+
+    def doCommand(self,cmd):
+        return self.doCommands([cmd])[0]
+
     def fetch_capabilities(self):
         cap_resp = self.assert_success(self.doCommands([
             {"cmd":"module_capabilities"},
@@ -30,14 +32,16 @@ class MZBot(object):
     def assert_success(self,result):
         if isinstance(result,dict):
             if result['success']:
-                return result['result']
+                if 'result' in result:
+                    return result['result']
+                return None
             raise Exception(result['error'])
         
         if isinstance(result,list):
             for r in result:
                 if not r['success']:
                     raise Exception(r['error'])
-            return [r.get('result') for r in result]
+            return [r['result'] for r in result if 'result' in r]
         raise Exception('Bad response type from server')
 
 if __name__=='__main__':

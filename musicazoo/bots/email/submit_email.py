@@ -22,7 +22,6 @@ class EmailParser:
 				aliases = encodings.aliases.aliases.keys()
 				css=filter(lambda x: x in aliases, part.get_charsets())
 				msg=part.get_payload(decode=True)
-				msg=self.strip_reply(msg)
 				msg=re.sub(r'\r\n','\n',msg) # fuck you windows
 				msg=self.strip_reply(msg)
 				self.body=msg
