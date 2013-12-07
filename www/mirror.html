@@ -26,6 +26,7 @@
                     {{#if_eq site eq='youtube'}}
                         <a href="#" class="btn youtube-add-related">++</a>
                     {{/if_eq}}
+                    <!--
                     <a href="#" class="btn action-set" data-property="status" data-value="paused">pause</a>
                     <!--
                     <a href="#" class="btn action-set" data-property="time" data-value="0">restart</a>
@@ -37,6 +38,7 @@
                     {{#if_eq site eq='youtube'}}
                         <a href="#" class="btn youtube-add-related">++</a>
                     {{/if_eq}}
+                    <!--
                     <a href="#" class="btn action-set" data-property="status" data-value="playing">resume</a>
                     <!--
                     <a href="#" class="btn action-set" data-property="time" data-value="0">restart</a>
@@ -50,9 +52,11 @@
                 <a href="{{ url }}"> (Loading youtube video...) </a>
             {{/if_eq}}
         <a href="#" class="btn action-set" data-property="status" data-value="stopped">stop</a>
+        <!--
         <div class="video-progress">
             <div class="video-progress-bar" style="width: {{percent time of=duration}}%"></div>
         </div>
+        -->
         {{/if_eq}}
         <!-- ({{ status }}:{{ site }}) -->
     </script>
@@ -71,6 +75,7 @@
     <script class="netvid-active-template" type="text/x-handlebars-template">
         {{#if_eq status neq='stopped' }}
             <a href="{{ url }}"> {{ long_description }} </a>
+            <video src="{{ url }}" controls></video>
             {{#if duration }}
                 - [{{ minutes time }}/{{ minutes duration }}]
             {{else}}
@@ -90,6 +95,7 @@
     </script>
     <script class="netvid-template" type="text/x-handlebars-template">
         <a href="{{ url }}"> {{ short_description }} </a>
+        <video src="{{ url }}" controls></video>
         {{#if duration }}
             - [{{ minutes duration }}]
         {{/if}}

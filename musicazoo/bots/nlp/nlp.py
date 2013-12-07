@@ -102,6 +102,9 @@ class NLPBot(MZBot,Webserver):
 			return 'Removed "{0}"'.format(cur['parameters']['short_description'])
 		raise Exception('Don\'t know how to stop "{0}"'.format(t))
 
+	def cmd_pop(self, q):
+		raise NotImplementedError("Wishful thinking...")
+
 	def cmd_text(self,q,text):
 		self.assert_success(self.doCommand({
 			'cmd':'add',
@@ -147,6 +150,8 @@ class NLPBot(MZBot,Webserver):
 		(r'^stfu$',cmd_rm),
 		(r'^skip$',cmd_rm),
 		(r'^next$',cmd_rm),
+		(r'^pop$',cmd_pop),
+		(r'^undo$',cmd_pop),
 		(r'^(.+)$',cmd_yt),
 	)
 
