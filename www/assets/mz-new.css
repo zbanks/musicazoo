@@ -201,3 +201,10 @@ div.upload-progress-bar, div.video-progress-bar {
     background-color: #F3FDE1;
 }
 
+div.help-sidebar {
+    float: right;
+    width: 400px;
+    height: 100%;
+    border-left: 1px solid #F3FDE1;
+    padding: 10px 20px 10px;
+}

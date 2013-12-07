@@ -788,7 +788,7 @@ var authCallback = _.once(function(capabilities){
 
     var QueueView = Backbone.View.extend({
         initialize: function(){
-            var sself = this;
+            var self = this;
             this.subviews = {};
             this.no_autorefresh = false;
             this.$el.sortable({
@@ -807,6 +807,10 @@ var authCallback = _.once(function(capabilities){
 
             $("a.clear").click(function(){
                 self.collection.each(function(m){ m.destroy(); });
+            });
+
+            $("a.help").click(function(){
+                $("div.help-sidebar").slideToggle();
             });
 
             this.listenTo(this.collection, "add", this.addOne);
