@@ -1,0 +1,73 @@
+<html>
+<head>
+    <title>Musicazoo!</title>
+    <script type="text/javascript" src="./assets/underscore.js"></script>
+    <script type="text/javascript" src="./assets/underscore.string.min.js"></script>
+    <script type="text/javascript" src="./assets/jquery.min.js"></script>
+    <script type="text/javascript" src="./assets/jquery-ui.js"></script>
+    <script type="text/javascript" src="./assets/backbone.js"></script>
+    <script type="text/javascript" src="./assets/handlebars.js"></script>
+    <script class="toplink-template" type="text/x-handlebars-template">
+        <li>
+        {{ n }}. ({{ count }}) <a href="{{ url }}">{{ title }}</a>
+        <li>
+    </script>
+    <!--
+    <link rel="stylesheet" href="http://jqueryui.com/themes/base/jquery.ui.all.css">
+    -->
+    <link rel="stylesheet" href="./assets/mz-new.css">
+    <style type="text/css">.de-only { display: none; }</style>
+    <script type="text/javascript">
+        var toplink_tmpl = Handlebars.compile($("script.toplink-template").html());
+
+        var Toplink = Backbone.Model.extend({
+
+        });
+
+        var Toplinks = Backbone.Collection.extend({
+            model: Toplink,
+            comparator: "n",
+            url: "/top/",
+            sync: function(method, model, options){
+                options.attrs = {limit: 50}
+                //options.emulateJSON = true;
+                options.contentType = "text/json"
+                method = "create"
+                return Backbone.sync(method, model, options);
+            }
+        });
+
+        var ToplinksView = Backbone.View.extend({
+            initialize: function(){
+                var self = this;
+                this.render();
+                this.listenTo(this.collection, "sync", this.render);
+                return this;
+            },
+            render: function(ev){
+                $(".toplinks").html("");
+                _.each(this.collection.models, function(model){ console.log(model); $(".toplinks").append(toplink_tmpl(model.attributes))});
+                return this;
+            },
+
+        });
+
+        var tls = new Toplinks();
+        var tlv  = new ToplinksView({ collection: tls});
+        tls.fetch();
+        $.ready(tls.render);
+
+    </script>
+</head>
+<body>
+    <div class="content">
+        <noscript>
+            <h2>Looks like you're not running javascript.</h2>
+        </noscript>
+
+        <h1>Top</h1>
+        <ol class="toplinks">
+        </ol>
+    </div>
+</body>
+</html>
