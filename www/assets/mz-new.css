@@ -207,4 +207,5 @@ div.help-sidebar {
     height: 100%;
     border-left: 1px solid #F3FDE1;
     padding: 10px 20px 10px;
+    display: none;
 }
