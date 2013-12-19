@@ -15,7 +15,10 @@ class WatchCartoonOnlineIE(InfoExtractor):
 
         mobj = re.match(self._VALID_URL, url)
         video_id = mobj.group(1)
-        webpage = o(url).read()
+        webpage = o('http://www.watchcartoononline.com/{0}'.format(video_id)).read()
+
+	title=re.search(r'<h1.*?>(.+?)</h1>',webpage).group(1)
+
         video_url = re.search(r'<iframe id="(.+?)0" (.+?)>',
                                 webpage).group()
         video_url = re.search('src="(.+?)"',
@@ -27,7 +30,7 @@ class WatchCartoonOnlineIE(InfoExtractor):
                                 video_webpage)
         redirect_url=urllib.unquote(final_url[-1]).replace(' ','%20')
 	flv_url = o(redirect_url).geturl()
-        return {'url':flv_url}
+        return {'url':flv_url,'title':title}
 
 def downloader(fileurl,file_name):
     u = urllib2.urlopen(fileurl)
