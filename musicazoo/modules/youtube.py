@@ -33,7 +33,6 @@ class Youtube:
 		t=threading.Thread(target=self.getVideoInfo, args=[url])
 		t.daemon=True
 		t.start()
-		reload(youtube_dl)
 
 	def get_url(self):
 		return self.url
