@@ -29,6 +29,8 @@ def youtube_lucky_args(q):
 		return None
 
 class NLPBot(MZBot,Webserver):
+	pretty_params={'parameters':{'youtube':['title'],'netvid':['short_description'],'text':['short_description']}}
+
 	def __init__(self):
 		Webserver.__init__(self,HOST_NAME,PORT_NUMBER)
 		MZBot.__init__(self,MZQ_URL)
@@ -81,29 +83,49 @@ class NLPBot(MZBot,Webserver):
 
 		return "Volume set to {0}".format(vol)
 
-	def cmd_rm(self,q):
+	def pretty(self,mod):
+		t=mod['type']
+		if t=='youtube':
+			return '"{0}"'.format(mod['parameters']['title'])
+		if t=='netvid':
+			return '{0}'.format(mod['parameters']['short_description'])
+		if t=='text':
+			return '{0}'.format(mod['parameters']['short_description'])
+		return t
+
+	def get_cur(self,params=pretty_params):
+		return self.assert_success(self.doCommand({
+			'cmd':'cur',
+			'args':params
+		}))
+
+	def get_queue(self,params=pretty_params):
+		return self.assert_success(self.doCommand({
+			'cmd':'queue',
+			'args':params
+		}))
+
+	def cmd_stop(self,q):
 		def easy_stop(uid):
 			self.assert_success(self.doCommand({'cmd':'tell_module','args':{'uid':uid,'cmd':'stop'}}))
 
-		cur=self.assert_success(self.doCommand({
-			'cmd':'cur',
-			'args':{'parameters':{'youtube':['title'],'netvid':['short_description'],'text':['short_description']}}
-		}))
-		t=cur['type']
+		cur=self.get_cur()
+
 		uid=cur['uid']
-		if t=='youtube':
+		if t in ('youtube','netvid','text'):
 			easy_stop(uid)
-			return 'Removed "{0}"'.format(cur['parameters']['title'])
-		if t=='netvid':
-			easy_stop(uid)
-			return 'Removed "{0}"'.format(cur['parameters']['short_description'])
-		if t=='text':
-			easy_stop(uid)
-			return 'Removed "{0}"'.format(cur['parameters']['short_description'])
-		raise Exception('Don\'t know how to stop "{0}"'.format(t))
+			return 'Removed {0}'.format(self.pretty(cur))
+		raise Exception('Don\'t know how to stop {0}'.format(self.pretty(cur)))
 
 	def cmd_pop(self, q):
-		raise NotImplementedError("Wishful thinking...")
+		q=self.get_queue()
+		if len(q)==0:
+			if self.get_cur({}) is not None:
+				return "Nothing on the queue! To stop the current video, use STOP"
+			return 'Nothing on the queue!'
+		last=q[-1]
+		self.assert_success(self.doCommand({'cmd':'rm','args':{'uids':[last['uid']]}}))
+		return 'Removed {0}'.format(self.pretty(last))
 
 	def cmd_text(self,q,text):
 		self.assert_success(self.doCommand({
@@ -142,16 +164,32 @@ class NLPBot(MZBot,Webserver):
 		}))
 		return 'Queued "{0}"'.format(title)
 
+	def cmd_cur(self,q):
+		cur=self.get_cur()
+		if cur is None:
+			return 'Nothing playing!'
+		return 'Now Playing: {0}'.format(self.pretty(cur))
+
+	def cmd_queue(self,q):
+		queue=self.get_queue()
+		if len(queue)==0:
+			return 'Queue is empty!'
+		return '\n'.join(['{0}. {1}'.format(n+1,self.pretty(q)) for (n,q) in zip(range(len(queue)),queue)])
+
 	COMMANDS=(
 		(r'^vol (\d+)$',cmd_vol),
 		(r'^text (.+)$',cmd_text),
 		(r'^say (.+)$',cmd_text),
-		(r'^rm$',cmd_rm),
-		(r'^stfu$',cmd_rm),
-		(r'^skip$',cmd_rm),
-		(r'^next$',cmd_rm),
+		(r'^stop$',cmd_stop),
+		(r'^stfu$',cmd_stop),
+		(r'^skip$',cmd_stop),
+		(r'^next$',cmd_stop),
 		(r'^pop$',cmd_pop),
 		(r'^undo$',cmd_pop),
+		(r'^oops$',cmd_pop),
+		(r'^cur$',cmd_cur),
+		(r'^q$',cmd_queue),
+		(r'^queue$',cmd_queue),
 		(r'^(.+)$',cmd_yt),
 	)
 

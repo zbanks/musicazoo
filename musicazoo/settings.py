@@ -2,7 +2,6 @@ NAME = "Musicazoo"
 LOCATION = "Glounge"
 COLORS={'bg':'#406873','fg':'#F3FDE1'}
 
-
 import musicazoo.backgrounds.image
 import musicazoo.backgrounds.logo
 
