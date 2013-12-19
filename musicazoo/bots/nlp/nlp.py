@@ -110,8 +110,11 @@ class NLPBot(MZBot,Webserver):
 			self.assert_success(self.doCommand({'cmd':'tell_module','args':{'uid':uid,'cmd':'stop'}}))
 
 		cur=self.get_cur()
+		if cur is None:
+			return 'Nothing to remove!'
 
 		uid=cur['uid']
+		t=cur['type']
 		if t in ('youtube','netvid','text'):
 			easy_stop(uid)
 			return 'Removed {0}'.format(self.pretty(cur))
