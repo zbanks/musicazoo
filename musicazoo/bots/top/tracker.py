@@ -27,7 +27,6 @@ class TrackerBot(MZBot):
 			self.luid=None
 
 	def got(self,url):
-		print "GOT",url
 		conn=sqlite3.connect(self.db)
 		c=conn.cursor()
 		c.execute('INSERT INTO youtube_history (url) VALUES (?)',[url])

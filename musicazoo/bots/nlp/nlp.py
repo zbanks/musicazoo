@@ -43,7 +43,7 @@ class NLPBot(MZBot,Webserver):
 			return {'success':False,'error':str(e)}
 
 	def html_transaction(self,form_data):
-		if form_data and 'q' in form_data:
+		if form_data is not None and 'q' in form_data:
 			try:
 				return self.act(form_data['q'])
 			except Exception as e:
@@ -193,6 +193,7 @@ Anything else - Queue Youtube video
 
 	COMMANDS=(
 		(r'^help$',cmd_help),
+		(r'^$',cmd_help),
 		(r'^\?$',cmd_help),
 		(r'^vol (\d+)$',cmd_vol),
 		(r'^text (.+)$',cmd_text),

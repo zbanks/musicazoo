@@ -33,8 +33,8 @@ class Webserver:
             s.do_GETHEAD()
 
         def do_GETHEAD(s,content=True):
-            qd=urlparse.parse_qsl(urlparse.urlparse(s.path).query)
             path=urlparse.urlparse(s.path)
+            qd=urlparse.parse_qsl(path.query,True)
             try:
                 if qd:
 	                result = s.get_wrapper().get(dict(qd),path)
