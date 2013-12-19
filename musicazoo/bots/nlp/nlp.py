@@ -179,7 +179,21 @@ class NLPBot(MZBot,Webserver):
 			return 'Queue is empty!'
 		return '\n'.join(['{0}. {1}'.format(n+1,self.pretty(q)) for (n,q) in zip(range(len(queue)),queue)])
 
+	def cmd_help(self,q):
+		return """Commands I understand:
+help|? - This
+vol [num] - Set volume
+text|say [text] - Say something
+stop|stfu|skip|next - Stop the current video
+pop|undo|oops - Remove the last video on the queue
+cur - Show what is currently playing
+q|queue - List the queue
+Anything else - Queue Youtube video
+"""
+
 	COMMANDS=(
+		(r'^help$',cmd_help),
+		(r'^\?$',cmd_help),
 		(r'^vol (\d+)$',cmd_vol),
 		(r'^text (.+)$',cmd_text),
 		(r'^say (.+)$',cmd_text),
