@@ -138,12 +138,13 @@ class PusherBot(MZBot,threading.Thread): # i am the pusher robot
 			elif start>=fl or stop>=fl:
 				self.send_error(416)
 			else:
+				if stop is None:
+					stop=fl-1
 				self.send_response(206)
 				self.send_header("Content-range","bytes {0}-{1}/{2}".format(start,stop,fl))
 
 			if start is None:
 				start=0
-
 			if stop is None:
 				stop=fl-1
 
