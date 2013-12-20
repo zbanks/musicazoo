@@ -45,5 +45,6 @@ class BTC:
 	}
 
 	parameters={
+		'status':lambda x:'playing',
 	}
 

@@ -115,7 +115,7 @@ class NLPBot(MZBot,Webserver):
 
 		uid=cur['uid']
 		t=cur['type']
-		if t in ('youtube','netvid','text'):
+		if t in ('youtube','netvid','text','btc'):
 			easy_stop(uid)
 			return 'Removed {0}'.format(self.pretty(cur))
 		raise Exception('Don\'t know how to stop {0}'.format(self.pretty(cur)))
