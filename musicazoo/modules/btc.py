@@ -2,6 +2,7 @@ import Tkinter
 from musicazoo.lib.graphics import FullScreenGraphics
 from musicazoo.settings import COLORS
 import urllib
+import threading
 
 class BTCDisplayer(FullScreenGraphics):
 	def __init__(self):
@@ -28,12 +29,16 @@ class BTC:
 		self.queue=queue
 		self.uid=uid
 		self.display = BTCDisplayer()
+		self.lock = threading.Lock()
+		self.lock.acquire()
 
 	def play(self):
 		self.display.show()
+		self.lock.acquire()
 
 	def stop(self):
-		self.display.stop()
+		self.display.close()
+		self.lock.release()
 
 	commands={
 		'stop':stop,
