@@ -91,7 +91,7 @@ class NLPBot(MZBot,Webserver):
 			return '{0}'.format(mod['parameters']['short_description'])
 		if t=='text':
 			return '{0}'.format(mod['parameters']['short_description'])
-		return t
+		return mod['parameters']['str']
 
 	def get_cur(self,params=pretty_params):
 		return self.assert_success(self.doCommand({
