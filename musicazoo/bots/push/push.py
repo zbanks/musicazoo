@@ -2,12 +2,13 @@
 
 from mzbot import MZBot
 import BaseHTTPServer
+import SocketServer
 import mimetypes
-import httplib
 import threading
 import time
 import sys
 import os
+import re
 
 class PusherBot(MZBot,threading.Thread): # i am the pusher robot
 	def __init__(self,mzq_url,file_to_host,host_name='',port_number=9100,vid_name=None):
@@ -34,7 +35,7 @@ class PusherBot(MZBot,threading.Thread): # i am the pusher robot
 				time.sleep(3)
 				if not self.still_playing():
 					break
-			time.sleep(3)
+			time.sleep(1)
 		except KeyboardInterrupt:
 			self.remove()
 		self.httpd.shutdown()
@@ -93,43 +94,71 @@ class PusherBot(MZBot,threading.Thread): # i am the pusher robot
 		self.httpd.serve_forever()
 		self.httpd.server_close()
 
-	#class MultiThreadedHTTPServer(ThreadingMixIn,BaseHTTPServer.HTTPServer): # No threading for testing
-	class MultiThreadedHTTPServer(BaseHTTPServer.HTTPServer):
+	class MultiThreadedHTTPServer(SocketServer.ThreadingMixIn,BaseHTTPServer.HTTPServer):
+	#class MultiThreadedHTTPServer(BaseHTTPServer.HTTPServer):
 		pass
 
 	class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 		def address_string(self):
 			return str(self.client_address[0])
 
-		def content_length(self,f):
-			self.fl=os.fstat(f.fileno()).st_size
-			self.send_header("Content-length",str(self.fl))
-
-		def chunked_write(self,fr,to,chunksize=4096):
+		def chunked_write(self,fr,to,length,chunksize=4096):
 			total=0
 			while True:
-				chunk=fr.read(chunksize)
-				if not chunk:
-					break
+				chunk=fr.read(min(chunksize,total-length))
+				total+=len(chunk)
 				to.write(chunk)
+				if total==length:
+					break
+
+		def parse_range(self):
+			if 'range' not in self.headers:
+				return (None,None)
+			r=re.match(r'^(?:bytes=)?(\d+)-(\d*)$',self.headers['range'])
+			if r is None:
+				return (None,None)
+			start=int(r.group(1))
+			stop=r.group(2)
+			if stop=='':
+				stop=None
+			else:
+				stop=int(stop)
+			return (start,stop)
 
 		def do_GET(self):
+			self.do_GETHEAD(True)
+
+		def do_GETHEAD(self,content):
 			infile=open(self.server.file_to_host,'rb')
-			self.send_response(200)
+			fl=os.fstat(infile.fileno()).st_size
+			(start,stop)=self.parse_range()
+
+			if start==None:
+				self.send_response(200)
+			elif start>=fl or stop>=fl:
+				self.send_error(416)
+			else:
+				self.send_response(206)
+				self.send_header("Content-range","bytes {0}-{1}/{2}".format(start,stop,fl))
+
+			if start is None:
+				start=0
+
+			if stop is None:
+				stop=fl-1
+
 			self.send_header("Content-type", mimetypes.guess_type(self.server.file_to_host)[0])
-			self.content_length(infile)
+			self.send_header("Content-length",str(stop-start+1))
+			self.send_header("Accept-Ranges","bytes")
 			self.end_headers()
-			self.chunked_write(infile,self.wfile)
+			if content:
+				infile.seek(start,0)
+				self.chunked_write(infile,self.wfile,stop-start+1)
 			infile.close()
 			return
 
 		def do_HEAD(self):
-			infile=open(self.server.file_to_host,'rb')
-			self.send_response(200)
-			self.send_header("Content-type", mimetypes.guess_type(self.server.file_to_host)[0])
-			self.content_length(infile)
-			self.end_headers()
-			infile.close()
+			self.do_GETHEAD(False)
 
 if __name__=='__main__':
 	PusherBot(sys.argv[1],sys.argv[2]).push()
