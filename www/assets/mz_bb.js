@@ -186,6 +186,13 @@ var COMMANDS = [
             cb({url: match, short_description: 'Network Video', long_description: match});
         }
     },
+    { // BTC
+        keywords: ["btc"],
+        module: "btc",
+        args: function(match, cb){
+            cb({});
+        }
+    },
     { // Images
         keywords: ["image"],
         regex: /http.*(gif|jpe?g|png|bmp)/, 

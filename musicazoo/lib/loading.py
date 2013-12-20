@@ -17,7 +17,5 @@ class LoadingScreen(FullScreenGraphics):
 	def animate(self,state):
 		self.c.itemconfig(self.text,text="Loading"+'.'*state)
 		self.update()
-		state+=1
-		if state>3:
-			state=0
+		state=(state+1)%4
 		self.defer(300,lambda:self.animate(state))
