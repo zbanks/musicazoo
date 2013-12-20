@@ -96,7 +96,7 @@ var TEMPLATES = _.objectMap({
     "nothing": '(Nothing)',
 }, Handlebars.compile);
 
-_.each(["youtube", "text", "netvid"], function(n){
+_.each(["youtube", "text", "netvid", "btc"], function(n){
     TEMPLATES[n] = Handlebars.compile($("script." + n + "-template").html());
     TEMPLATES[n + "_active"] = Handlebars.compile($("script." + n + "-active-template").html());
     TEMPLATE_NAMES[n] = {queue: n, active: n + "_active"};
@@ -184,6 +184,13 @@ var COMMANDS = [
         module: "netvid",
         args: function(match, cb){
             cb({url: match, short_description: 'Network Video', long_description: match});
+        }
+    },
+    { // BTC
+        keywords: ["btc"],
+        module: "btc",
+        args: function(match, cb){
+            cb({});
         }
     },
     { // Images

@@ -179,6 +179,17 @@ class NLPBot(MZBot,Webserver):
 			return 'Queue is empty!'
 		return '\n'.join(['{0}. {1}'.format(n+1,self.pretty(q)) for (n,q) in zip(range(len(queue)),queue)])
 
+	def cmd_btc(self,q):
+		self.assert_success(self.doCommand({
+			'cmd':'add',
+			'args':
+			{
+				'type': 'btc',
+				'args': {},
+			}
+		}))
+		return "Here's how much money you lost."
+
 	def cmd_help(self,q):
 		return """Commands I understand:
 help|? - This
@@ -188,6 +199,7 @@ stop|stfu|skip|next - Stop the current video
 pop|undo|oops - Remove the last video on the queue
 cur - Show what is currently playing
 q|queue - List the queue
+btc - List BTC prices
 Anything else - Queue Youtube video
 """
 
@@ -208,6 +220,7 @@ Anything else - Queue Youtube video
 		(r'^cur$',cmd_cur),
 		(r'^q$',cmd_queue),
 		(r'^queue$',cmd_queue),
+		(r'^btc$',cmd_btc),
 		(r'^(.+)$',cmd_yt),
 	)
 
