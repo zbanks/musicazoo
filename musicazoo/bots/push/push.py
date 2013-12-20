@@ -7,6 +7,7 @@ import mimetypes
 import httplib
 import threading
 import time
+import sys
 
 class PusherBot(MZBot,threading.Thread): # i am the pusher robot
 	def __init__(self,mzq_url,file_to_host,host_name='',port_number=9100,vid_name=None):
