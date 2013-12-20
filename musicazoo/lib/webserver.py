@@ -6,7 +6,6 @@ import json
 import urlparse
 import os
 
-from BaseHTTPServer import HTTPServer
 from SocketServer import ThreadingMixIn
 
 CHUNKSIZE=4096
@@ -18,8 +17,8 @@ class HTTPException(Exception):
         Exception.__init__(self,"{0}: {1}".format(num,msg))
 
 class Webserver:
-    #class MultiThreadedHTTPServer(ThreadingMixIn,HTTPServer): # No threading for testing
-    class MultiThreadedHTTPServer(HTTPServer):
+    #class MultiThreadedHTTPServer(ThreadingMixIn,BaseHTTPServer.HTTPServer): # No threading for testing
+    class MultiThreadedHTTPServer(BaseHTTPServer.HTTPServer):
         pass
 
     class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
@@ -65,6 +64,7 @@ class Webserver:
             s.send_response(200)
             s.send_header('Content-type', mime)
             s.send_header('Content-length', len(response))
+            s.send_header('Client-ip', s.address_string())
             for (name,value) in additional_headers:
                 s.send_header(name,value)
             s.end_headers()
@@ -76,6 +76,7 @@ class Webserver:
             s.send_response(200)
             s.send_header('Content-type', mime)
             s.send_header('Content-length', l)
+            s.send_header('Client-ip', s.address_string())
             for (name,value) in additional_headers:
                 s.send_header(name,value)
             s.end_headers()

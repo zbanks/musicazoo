@@ -16,6 +16,10 @@ class MZBot(object):
         resp = requests.post(self.endpoint, data=json_data, headers=headers)
         return resp.json()
 
+    def whoami(self):
+        resp = requests.post(self.endpoint, data='[]', headers={"Content-type": "text/json"})
+        return resp.headers['Client-ip']
+
     def doCommand(self,cmd):
         return self.doCommands([cmd])[0]
 
