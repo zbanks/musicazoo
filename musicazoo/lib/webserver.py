@@ -60,11 +60,16 @@ class Webserver:
                 return rf(response,*args,**kwargs)
             raise Exception('Unknown type of response')
 
+        def get_client_ip(s):
+            if 'X-forwarded-for' in s.headers:
+                return s.headers['X-forwarded-for']
+            return s.address_string()
+
         def respond_str(s,response,mime='text/html',additional_headers=(),content=True):
             s.send_response(200)
             s.send_header('Content-type', mime)
             s.send_header('Content-length', len(response))
-            s.send_header('Client-ip', s.address_string())
+            s.send_header('Client-ip', s.get_client_ip())
             for (name,value) in additional_headers:
                 s.send_header(name,value)
             s.end_headers()
@@ -76,7 +81,7 @@ class Webserver:
             s.send_response(200)
             s.send_header('Content-type', mime)
             s.send_header('Content-length', l)
-            s.send_header('Client-ip', s.address_string())
+            s.send_header('Client-ip', s.get_client_ip())
             for (name,value) in additional_headers:
                 s.send_header(name,value)
             s.end_headers()
