@@ -4,6 +4,7 @@ COLORS={'bg':'#406873','fg':'#F3FDE1'}
 
 import musicazoo.backgrounds.image
 import musicazoo.backgrounds.logo
+import musicazoo.backgrounds.clock
 
 import musicazoo.modules.netvid
 import musicazoo.modules.text
@@ -27,5 +28,6 @@ STATICS = [
 
 BACKGROUNDS = [
     musicazoo.backgrounds.logo.Logo,
-    musicazoo.backgrounds.image.ImageBG
+    musicazoo.backgrounds.image.ImageBG,
+    musicazoo.backgrounds.clock.Clock
 ]
