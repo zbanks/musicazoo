@@ -96,7 +96,7 @@ var TEMPLATES = _.objectMap({
     "nothing": '(Nothing)',
 }, Handlebars.compile);
 
-_.each(["youtube", "text", "netvid"], function(n){
+_.each(["youtube", "text", "netvid", "btc"], function(n){
     TEMPLATES[n] = Handlebars.compile($("script." + n + "-template").html());
     TEMPLATES[n + "_active"] = Handlebars.compile($("script." + n + "-active-template").html());
     TEMPLATE_NAMES[n] = {queue: n, active: n + "_active"};
