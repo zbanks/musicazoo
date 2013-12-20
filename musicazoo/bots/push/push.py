@@ -130,5 +130,5 @@ class PusherBot(MZBot,threading.Thread): # i am the pusher robot
 			infile.close()
 
 if __name__=='__main__':
-	PusherBot('http://localhost:9000','chainsaw.avi').push()
+	PusherBot(sys.argv[1],sys.argv[2]).push()
 
