@@ -1,13 +1,13 @@
 #!/usr/bin/python
 
-from musicazoo.lib.mzbot import MZBot
+from mzbot import MZBot
 import BaseHTTPServer
-import os
 import mimetypes
 import httplib
 import threading
 import time
 import sys
+import os
 
 class PusherBot(MZBot,threading.Thread): # i am the pusher robot
 	def __init__(self,mzq_url,file_to_host,host_name='',port_number=9100,vid_name=None):
@@ -102,10 +102,11 @@ class PusherBot(MZBot,threading.Thread): # i am the pusher robot
 			return str(self.client_address[0])
 
 		def content_length(self,f):
-			l=os.fstat(f.fileno()).st_size
-			self.send_header("Content-length",str(l))
+			self.fl=os.fstat(f.fileno()).st_size
+			self.send_header("Content-length",str(self.fl))
 
 		def chunked_write(self,fr,to,chunksize=4096):
+			total=0
 			while True:
 				chunk=fr.read(chunksize)
 				if not chunk:
@@ -113,7 +114,7 @@ class PusherBot(MZBot,threading.Thread): # i am the pusher robot
 				to.write(chunk)
 
 		def do_GET(self):
-			infile=open(self.server.file_to_host)
+			infile=open(self.server.file_to_host,'rb')
 			self.send_response(200)
 			self.send_header("Content-type", mimetypes.guess_type(self.server.file_to_host)[0])
 			self.content_length(infile)
@@ -123,7 +124,7 @@ class PusherBot(MZBot,threading.Thread): # i am the pusher robot
 			return
 
 		def do_HEAD(self):
-			infile=open(self.server.file_to_host)
+			infile=open(self.server.file_to_host,'rb')
 			self.send_response(200)
 			self.send_header("Content-type", mimetypes.guess_type(self.server.file_to_host)[0])
 			self.content_length(infile)
@@ -132,4 +133,5 @@ class PusherBot(MZBot,threading.Thread): # i am the pusher robot
 
 if __name__=='__main__':
 	PusherBot(sys.argv[1],sys.argv[2]).push()
+	#PusherBot("http://musicazoo.mit.edu/cmd","C:\Users\Public\Pictures\Sample Pictures\Chrysanthemum.jpg").push()
 
