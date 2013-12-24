@@ -124,10 +124,11 @@ class Webserver:
 
             elif ctype == 'multipart/form-data' or ctype == 'application/x-www-form-urlencoded':
                 fs = cgi.FieldStorage( fp = s.rfile, 
-                    headers = s.headers, # headers_, 
-                    environ={ 'REQUEST_METHOD':'POST' } # all the rest will come from the 'headers' object,	 
+                    headers = s.headers,
+                    environ={ 'REQUEST_METHOD':'POST' }, # all the rest will come from the 'headers' object,	 
                     # but as the FieldStorage object was designed for CGI, absense of 'POST' value in environ	 
                     # will prevent the object from using the 'fp' argument !	 
+                    keep_blank_values=True,
                 )
                 
                 fs=dict([(k,fs.getvalue(k)) for k in fs])

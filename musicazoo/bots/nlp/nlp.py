@@ -37,6 +37,8 @@ class NLPBot(MZBot,Webserver):
 
 	def json_transaction(self,json):
 		try:
+			if 'incomplete' in json and json['incomplete']:
+				result=self.complete(json['q'])
 			result=self.act(json['q'])
 			return {'success':True,'result':result}
 		except Exception as e:
@@ -45,11 +47,13 @@ class NLPBot(MZBot,Webserver):
 	def html_transaction(self,form_data):
 		if form_data is not None and 'q' in form_data:
 			try:
+				if 'incomplete' in form_data:
+					return '\n'.join(self.complete(form_data['q']))
 				return self.act(form_data['q'])
 			except Exception as e:
 				return "Error!\n"+str(e)
 		else:
-			return "<form method='POST'><input name='q'></input><input type='submit'></form>"
+			return "<form method='POST'><input name='q'></input><input type='submit'></form><form method='POST'><input name='q'></input><input type='submit' value='Complete'><input type='hidden' name='incomplete'></input></form>"
 
 	def act(self,q):
 		q=q.strip()
@@ -59,6 +63,10 @@ class NLPBot(MZBot,Webserver):
 				return func(self,q,*m.groups())
 				break
 		raise Exception("Command not recognized.")
+
+	def complete(self,q):
+		q=q.strip()
+		return [q+' porn',q+' creepy porn',q+' weird porn']
 
 	def cmd_vol(self,q,vol):
 		vol=int(vol)
