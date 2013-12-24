@@ -6,7 +6,6 @@ import json
 import urlparse
 import os
 
-from BaseHTTPServer import HTTPServer
 from SocketServer import ThreadingMixIn
 
 CHUNKSIZE=4096
@@ -18,8 +17,8 @@ class HTTPException(Exception):
         Exception.__init__(self,"{0}: {1}".format(num,msg))
 
 class Webserver:
-    #class MultiThreadedHTTPServer(ThreadingMixIn,HTTPServer): # No threading for testing
-    class MultiThreadedHTTPServer(HTTPServer):
+    #class MultiThreadedHTTPServer(ThreadingMixIn,BaseHTTPServer.HTTPServer): # No threading for testing
+    class MultiThreadedHTTPServer(BaseHTTPServer.HTTPServer):
         pass
 
     class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
@@ -61,10 +60,16 @@ class Webserver:
                 return rf(response,*args,**kwargs)
             raise Exception('Unknown type of response')
 
+        def get_client_ip(s):
+            if 'X-forwarded-for' in s.headers:
+                return s.headers['X-forwarded-for']
+            return s.address_string()
+
         def respond_str(s,response,mime='text/html',additional_headers=(),content=True):
             s.send_response(200)
             s.send_header('Content-type', mime)
             s.send_header('Content-length', len(response))
+            s.send_header('Client-ip', s.get_client_ip())
             for (name,value) in additional_headers:
                 s.send_header(name,value)
             s.end_headers()
@@ -76,6 +81,7 @@ class Webserver:
             s.send_response(200)
             s.send_header('Content-type', mime)
             s.send_header('Content-length', l)
+            s.send_header('Client-ip', s.get_client_ip())
             for (name,value) in additional_headers:
                 s.send_header(name,value)
             s.end_headers()
@@ -118,10 +124,11 @@ class Webserver:
 
             elif ctype == 'multipart/form-data' or ctype == 'application/x-www-form-urlencoded':
                 fs = cgi.FieldStorage( fp = s.rfile, 
-                    headers = s.headers, # headers_, 
-                    environ={ 'REQUEST_METHOD':'POST' } # all the rest will come from the 'headers' object,	 
+                    headers = s.headers,
+                    environ={ 'REQUEST_METHOD':'POST' }, # all the rest will come from the 'headers' object,	 
                     # but as the FieldStorage object was designed for CGI, absense of 'POST' value in environ	 
                     # will prevent the object from using the 'fp' argument !	 
+                    keep_blank_values=True,
                 )
                 
                 fs=dict([(k,fs.getvalue(k)) for k in fs])

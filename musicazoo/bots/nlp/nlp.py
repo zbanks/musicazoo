@@ -37,6 +37,8 @@ class NLPBot(MZBot,Webserver):
 
 	def json_transaction(self,json):
 		try:
+			if 'incomplete' in json and json['incomplete']:
+				result=self.complete(json['q'])
 			result=self.act(json['q'])
 			return {'success':True,'result':result}
 		except Exception as e:
@@ -45,11 +47,13 @@ class NLPBot(MZBot,Webserver):
 	def html_transaction(self,form_data):
 		if form_data is not None and 'q' in form_data:
 			try:
+				if 'incomplete' in form_data:
+					return '\n'.join(self.complete(form_data['q']))
 				return self.act(form_data['q'])
 			except Exception as e:
 				return "Error!\n"+str(e)
 		else:
-			return "<form method='POST'><input name='q'></input><input type='submit'></form>"
+			return "<form method='POST'><input name='q'></input><input type='submit'></form><form method='POST'><input name='q'></input><input type='submit' value='Complete'><input type='hidden' name='incomplete'></input></form>"
 
 	def act(self,q):
 		q=q.strip()
@@ -59,6 +63,10 @@ class NLPBot(MZBot,Webserver):
 				return func(self,q,*m.groups())
 				break
 		raise Exception("Command not recognized.")
+
+	def complete(self,q):
+		q=q.strip()
+		return [q+' porn',q+' creepy porn',q+' weird porn']
 
 	def cmd_vol(self,q,vol):
 		vol=int(vol)
@@ -115,7 +123,7 @@ class NLPBot(MZBot,Webserver):
 
 		uid=cur['uid']
 		t=cur['type']
-		if t in ('youtube','netvid','text'):
+		if t in ('youtube','netvid','text','btc'):
 			easy_stop(uid)
 			return 'Removed {0}'.format(self.pretty(cur))
 		raise Exception('Don\'t know how to stop {0}'.format(self.pretty(cur)))
@@ -179,6 +187,17 @@ class NLPBot(MZBot,Webserver):
 			return 'Queue is empty!'
 		return '\n'.join(['{0}. {1}'.format(n+1,self.pretty(q)) for (n,q) in zip(range(len(queue)),queue)])
 
+	def cmd_btc(self,q):
+		self.assert_success(self.doCommand({
+			'cmd':'add',
+			'args':
+			{
+				'type': 'btc',
+				'args': {},
+			}
+		}))
+		return "Here's how much money you lost."
+
 	def cmd_help(self,q):
 		return """Commands I understand:
 help|? - This
@@ -188,6 +207,7 @@ stop|stfu|skip|next - Stop the current video
 pop|undo|oops - Remove the last video on the queue
 cur - Show what is currently playing
 q|queue - List the queue
+btc - List BTC prices
 Anything else - Queue Youtube video
 """
 
@@ -208,6 +228,7 @@ Anything else - Queue Youtube video
 		(r'^cur$',cmd_cur),
 		(r'^q$',cmd_queue),
 		(r'^queue$',cmd_queue),
+		(r'^btc$',cmd_btc),
 		(r'^(.+)$',cmd_yt),
 	)
 

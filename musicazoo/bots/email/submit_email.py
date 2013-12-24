@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from musicazoo.lib.mzbot import MZBot
 import email
 import encodings
 import json
@@ -8,8 +9,8 @@ import re
 import requests
 import sys
 
-class EmailParser:
-	def __init__(self,f):
+class EmailParser(MZBot):
+	def parse(self,f):
 		msg = email.message_from_file(f)
 		self.sender = msg["From"]
 		self.subject = msg["Subject"]
@@ -56,41 +57,39 @@ class EmailParser:
 		if len(self.extra)>3:
 			self.extra=self.extra[0:3]
 
-# End class parser
-
-def queue_email(f, queue="http://musicazoo.mit.edu/cmd"):
-	ep = EmailParser(f)
-	if len(ep.extra):
-		duration=3
-	else:
-		duration=3
-	commands = [{
-		'cmd': 'add',
-		'args': {
-			'type': 'text',
+	def queue_email(self,f):
+		self.parse(f)
+		if len(self.extra):
+			duration=3
+		else:
+			duration=3
+		commands = [{
+			'cmd': 'add',
 			'args': {
-				'text': {
-					'sender':ep.sender,
-					'subject':ep.subject,
-					'body':ep.body
-				},
-				'text_preprocessor': "display_email",
-					'speech_preprocessor': "pronounce_email",
-				'text2speech': "google",
-				'renderer': "email",
-				'duration': duration,
-				'speed': 1.5,
-				'short_description': "Email from {}".format(ep.sender),
-				'long_description': "Email from {}".format(ep.sender),
+				'type': 'text',
+				'args': {
+					'text': {
+						'sender':self.sender,
+						'subject':self.subject,
+						'body':self.body
+					},
+					'text_preprocessor': "display_email",
+						'speech_preprocessor': "pronounce_email",
+					'text2speech': "google",
+					'renderer': "email",
+					'duration': duration,
+					'speed': 1.5,
+					'short_description': "Email from {}".format(self.sender),
+					'long_description': "Email from {}".format(self.sender),
+				}
 			}
-		}
-	}]
-	commands+=ep.extra
-	print requests.post(queue, json.dumps(commands)).text
+		}]
+		commands+=self.extra
+		print self.doCommands(commands)
 
 if __name__ == "__main__":
 	if len(sys.argv)==2:
 		queue=sys.argv[1]
 	else:
-		queue="http://localhost/cmd"
-	queue_email(sys.stdin,queue=queue) 
+		queue="http://musicazoo.mit.edu/cmd"
+	EmailParser(queue).queue_email(sys.stdin)

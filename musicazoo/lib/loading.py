@@ -9,15 +9,10 @@ class LoadingScreen(FullScreenGraphics):
 		self.c.pack()
 		(x,y) = self.center()
 		self.text=self.c.create_text((x-250,y), fill=COLORS['fg'], justify=Tkinter.CENTER,anchor='w', font=("Helvetica",72))
-
-	def show(self):
 		self.animate(0)
-		FullScreenGraphics.show(self)
 
 	def animate(self,state):
 		self.c.itemconfig(self.text,text="Loading"+'.'*state)
 		self.update()
-		state+=1
-		if state>3:
-			state=0
+		state=(state+1)%4
 		self.defer(300,lambda:self.animate(state))

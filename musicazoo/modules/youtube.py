@@ -8,6 +8,8 @@ from youtube_dl.utils import compat_cookiejar, compat_urllib_request, make_HTTPS
 from musicazoo.lib.vlc_player_compat import Player
 from musicazoo.lib.loading import LoadingScreen
 
+from musicazoo.lib.watch_dl import WatchCartoonOnlineIE
+
 class Youtube:
 	TYPE_STRING='youtube'
 
@@ -31,7 +33,6 @@ class Youtube:
 		t=threading.Thread(target=self.getVideoInfo, args=[url])
 		t.daemon=True
 		t.start()
-		reload(youtube_dl)
 
 	def get_url(self):
 		return self.url
@@ -191,7 +192,8 @@ class Youtube:
 		opener = compat_urllib_request.build_opener(https_handler, proxy_handler, cookie_processor, YoutubeDLHandler)
 		compat_urllib_request.install_opener(opener)
 
-		y=youtube_dl.YoutubeDL({'outtmpl':u'','format':'18','skip_download':True}) # empty outtmpl needed due to weird issue in youtube-dl
+		y=youtube_dl.YoutubeDL({'outtmpl':u'','skip_download':True}) # empty outtmpl needed due to weird issue in youtube-dl
+		y.add_info_extractor(WatchCartoonOnlineIE())
 		y.add_default_info_extractors()
 
 		try:
@@ -205,7 +207,11 @@ class Youtube:
 
 		jar.save()
 
-		vinfo=info['entries'][0]
+		if 'entries' in info:
+			vinfo=info['entries'][0]
+		else:
+			vinfo=info
+
 		if 'title' in vinfo:
 			self.title=vinfo['title']
 		if 'duration' in vinfo:
