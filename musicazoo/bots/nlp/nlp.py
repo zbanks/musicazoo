@@ -1,9 +1,10 @@
 #!/usr/bin/python
 
 from musicazoo.lib.mzbot import MZBot
-from musicazoo.lib.webserver import Webserver
+from musicazoo.lib.webserver import make_webserver_json, make_webserver_html
 import requests
 import re
+from  wsgiref.simple_server import make_server
 
 HOST_NAME = ''
 PORT_NUMBER=9003
@@ -28,11 +29,12 @@ def youtube_lucky_args(q):
 	else:
 		return None
 
-class NLPBot(MZBot,Webserver):
+class NLPBot(MZBot):
+#class NLPBot(MZBot,Webserver):
 	pretty_params={'parameters':{'youtube':['title'],'netvid':['short_description'],'text':['short_description']}}
 
 	def __init__(self):
-		Webserver.__init__(self,HOST_NAME,PORT_NUMBER)
+#Webserver.__init__(self,HOST_NAME,PORT_NUMBER)
 		MZBot.__init__(self,MZQ_URL)
 
 	def json_transaction(self,json):
@@ -45,6 +47,7 @@ class NLPBot(MZBot,Webserver):
 			return {'success':False,'error':str(e)}
 
 	def html_transaction(self,form_data):
+		print form_data
 		if form_data is not None and 'q' in form_data:
 			try:
 				if 'incomplete' in form_data:
@@ -233,4 +236,9 @@ Anything else - Queue Youtube video
 	)
 
 if __name__=='__main__':
-	NLPBot().run()
+    bot = NLPBot()
+#app = make_webserver_html(bot.html_transaction)
+    app = make_webserver_json(bot.json_transaction)
+    print app
+    httpd = make_server(HOST_NAME, PORT_NUMBER, app)
+    httpd.serve_forever()

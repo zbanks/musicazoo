@@ -5,6 +5,8 @@ import faulthandler
 import json
 import urlparse
 import os
+import wsgiref
+import StringIO
 
 from SocketServer import ThreadingMixIn
 
@@ -15,6 +17,119 @@ class HTTPException(Exception):
         self.http_error_num=num
         self.http_error_msg=msg
         Exception.__init__(self,"{0}: {1}".format(num,msg))
+
+def webserver_app(environ, start_response):
+    pass
+
+def make_webserver_json(transaction_fn):
+    @middleware_nginx
+    @middleware_querystr
+    @middleware_json
+    def application(environ, start_response, json=None):
+        if json is None:
+            json = {}
+        out_json = transaction_fn({"q":"help"})
+        start_response("200 OK", [("Content-type", "text/html")])
+        yield "hello"
+#return json
+    return application
+
+def make_webserver_html(transaction_fn):
+    @middleware_nginx
+    @middleware_querystr
+    def application(environ, start_response):
+        out_html = transaction_fn(environ["GET"])
+        start_response("200 OK", [("Content-type", "text/html")])
+        yield out_html
+    return application
+
+
+def middleware_file(app):
+    """
+    Milddleware to serve a file response
+    Return a tuple of (mime_type, filelike)
+    """
+    def wrapped(environ, start_response, *args, **kwargs):
+        file_mime = None
+
+        file_wrapper = environ.get("wsgi.file_wrapper", wsgiref.util.FileWrapper)
+
+        def wrap_start_response(wr_status, wr_headers):
+            headers = wr_headers
+            status = wr_status
+            # It works, trust me
+            if 'Content-type' not in dict(headers):
+                headers.append(("Content-type", file_mime))
+            start_response(status, headers)
+
+        file_mime, file_obj = app(environ, wrap_start_response, *args, **kwargs)
+
+        return file_wrapper(file_obj)
+    return wrapped
+
+def middleware_json(app):
+    """
+    Middleware to deserialize POST body from JSON, serialize response into JSON
+    """
+    def wrapped(environ, start_response, *args, **kwargs):
+        file_wrapper = environ.get("wsgi.file_wrapper", wsgiref.util.FileWrapper)
+        def wrap_start_response(wr_status, wr_headers):
+            headers = wr_headers
+            status = wr_status
+
+            if 'Content-type' not in dict(headers):
+                headers.append(("Content-type", "text/json"))
+
+            start_response(status, headers)
+
+        json_body = json.load(environ["wsgi.input"])
+
+        json_response = app(environ, wrap_start_response, *args, json=json_body, **kwargs)
+
+#sio = StringIO.StringIO()
+#json.dump(json_response, sio)
+#print json_response, "json"
+#wrap_start_response("200 OK", [])
+#yield json.dumps(json_response)
+#return file_wrapper(sio)
+        return json_response
+    return wrapped
+
+def middleware_querystr(app):
+    """
+    Middleware to parse querystrings into environ["GET"]
+    """
+    def wrapped(environ, start_response, *args, **kwargs):
+        # Converting to a dict loses info, but its what fns want.
+        environ["GET"] = dict(urlparse.parse_qsl(environ["QUERY_STRING"], True))
+        return app(environ, start_response, *args, **kwargs) # I think `return` is okay here
+    return wrapped
+
+def middleware_nginx(app):
+    """
+    Middleware to handle some small nginx fixes (eg IP)
+    """
+    def wrapped(environ, start_response, *args, **kwargs):
+        if "HTTP_X_FORWARDED_FOR" in environ:
+            remote_addr = environ["HTTP_X_FORWARDED_FOR"].partition(",")[0].strip()
+            environ["REMOTE_ADDR"] = remote_addr
+        else:
+            remote_addr = environ.get("REMOTE_ADDR", None)
+
+        def wrap_start_response(wr_status, wr_headers):
+            headers = wr_headers
+            status = wr_status
+
+            if remote_addr is not None:
+                headers.append(("Client-ip", remote_addr))
+
+            start_response(status, headers)
+
+        response = app(environ, wrap_start_response, *args, **kwargs)
+
+        return response
+    return wrapped
+
 
 class Webserver:
     #class MultiThreadedHTTPServer(ThreadingMixIn,BaseHTTPServer.HTTPServer): # No threading for testing
