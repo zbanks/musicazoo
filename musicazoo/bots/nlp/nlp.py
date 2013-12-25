@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 from musicazoo.lib.mzbot import MZBot
-from musicazoo.lib.webserver import make_webserver_json, make_webserver_html
+from musicazoo.lib.webserver import Webserver
 import requests
 import re
 from  wsgiref.simple_server import make_server
@@ -29,7 +29,7 @@ def youtube_lucky_args(q):
 	else:
 		return None
 
-class NLPBot(MZBot):
+class NLPBot(MZBot, Webserver):
 #class NLPBot(MZBot,Webserver):
 	pretty_params={'parameters':{'youtube':['title'],'netvid':['short_description'],'text':['short_description']}}
 
@@ -238,7 +238,8 @@ Anything else - Queue Youtube video
 if __name__=='__main__':
     bot = NLPBot()
 #app = make_webserver_html(bot.html_transaction)
-    app = make_webserver_json(bot.json_transaction)
+#app = make_webserver_json(bot.json_transaction)
+    app = bot.transaction_application()
     print app
     httpd = make_server(HOST_NAME, PORT_NUMBER, app)
     httpd.serve_forever()
