@@ -223,7 +223,9 @@ class NLPBot(MZBot,Webserver):
 	def cmd_help(self,q):
 		return """Commands I understand:
 help|? - This
+vol - Get volume
 vol [num] - Set volume
+vol up|down - Change volume
 text|say [text] - Say something
 stop|stfu|skip|next - Stop the current video
 pop|undo|oops - Remove the last video on the queue
@@ -252,6 +254,7 @@ Anything else - Queue Youtube video
 		(r'^q$',cmd_queue),
 		(r'^queue$',cmd_queue),
 		(r'^btc$',cmd_btc),
+		(r'^rm$',lambda x,y:"rm is ambiguous. Use stop or pop."),
 		(r'^(.+)$',cmd_yt),
 	)
 
