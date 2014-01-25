@@ -54,6 +54,7 @@ class Webserver:
             rf=None
             if isinstance(response,str) or isinstance(response,unicode):
                 rf=s.respond_str
+                response=response.encode('utf-8')
             if isinstance(response,file):
                 rf=s.respond_file
             if rf is not None:
@@ -65,7 +66,7 @@ class Webserver:
                 return s.headers['X-forwarded-for']
             return s.address_string()
 
-        def respond_str(s,response,mime='text/html',additional_headers=(),content=True):
+        def respond_str(s,response,mime='text/html;charset=utf-8',additional_headers=(),content=True):
             s.send_response(200)
             s.send_header('Content-type', mime)
             s.send_header('Content-length', len(response))

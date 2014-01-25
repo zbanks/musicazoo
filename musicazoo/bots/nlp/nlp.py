@@ -68,10 +68,7 @@ class NLPBot(MZBot,Webserver):
 		q=q.strip()
 		return [q+' porn',q+' creepy porn',q+' weird porn']
 
-	def cmd_vol(self,q,vol):
-		vol=int(vol)
-		if vol>100:
-			raise Exception("Volume cannot be greater than 100")
+	def cmd_set_vol(self,q,vol):
 		scap=self.assert_success(self.doCommand({'cmd':'static_capabilities'}))
 		vol_i=None
 		for (i,static) in scap.iteritems():
@@ -80,6 +77,18 @@ class NLPBot(MZBot,Webserver):
 				break
 		if not vol_i:
 			raise Exception("Volume static not found.")
+
+		if vol=='up':
+			result=self.assert_success(self.doCommand({"cmd":"statics","args":{"parameters":{str(vol_i):["vol"]}}}))
+			vol=max(result[str(vol_i)]['vol']+5,0)
+		elif vol=='down':
+			result=self.assert_success(self.doCommand({"cmd":"statics","args":{"parameters":{str(vol_i):["vol"]}}}))
+			vol=min(result[str(vol_i)]['vol']-5,100)
+		else:
+			vol=int(vol)
+
+		if vol>100:
+			raise Exception("Volume cannot be greater than 100")
 		self.assert_success(self.doCommand({
 			"cmd": "tell_static", "args":
 			{
@@ -90,6 +99,19 @@ class NLPBot(MZBot,Webserver):
 		}))
 
 		return "Volume set to {0}".format(vol)
+
+	def cmd_get_vol(self,q):
+		scap=self.assert_success(self.doCommand({'cmd':'static_capabilities'}))
+		vol_i=None
+		for (i,static) in scap.iteritems():
+			if static['class']=='volume':
+				vol_i=i
+				break
+		if not vol_i:
+			raise Exception("Volume static not found.")
+		result=self.assert_success(self.doCommand({"cmd":"statics","args":{"parameters":{str(vol_i):["vol"]}}}))
+		v=result[str(vol_i)]['vol']
+		return "Volume is {0}".format(v)
 
 	def pretty(self,mod):
 		t=mod['type']
@@ -173,7 +195,7 @@ class NLPBot(MZBot,Webserver):
 				'args': {'url':url}
 			}
 		}))
-		return 'Queued "{0}"'.format(title)
+		return u'Queued "{0}"'.format(title)
 
 	def cmd_cur(self,q):
 		cur=self.get_cur()
@@ -215,7 +237,8 @@ Anything else - Queue Youtube video
 		(r'^help$',cmd_help),
 		(r'^$',cmd_help),
 		(r'^\?$',cmd_help),
-		(r'^vol (\d+)$',cmd_vol),
+		(r'^vol (\d+|up|down)$',cmd_set_vol),
+		(r'^vol$',cmd_get_vol),
 		(r'^text (.+)$',cmd_text),
 		(r'^say (.+)$',cmd_text),
 		(r'^stop$',cmd_stop),
