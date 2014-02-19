@@ -124,6 +124,18 @@
         Logo
         {{ status }}
     </script>
+    <script class="btc-active-template" type="text/x-handlebars-template">
+        {{#if_eq status neq='stopped' }}
+            BTC Price
+            {{#if_eq status neq='added' }}
+                <a href="#" class="btn action-set" data-property="status" data-value="stopped">stop</a>
+            {{/if_eq}}
+        {{/if_eq}}
+        <!-- {{ status }} -->
+    </script>
+    <script class="btc-template" type="text/x-handlebars-template">
+        BTC Price
+    </script>
     <script type="text/javascript" src="./assets/mz_mirror.js"></script>
     <script type="text/javascript" src="./assets/mz_bb.js"></script>
     <!--
