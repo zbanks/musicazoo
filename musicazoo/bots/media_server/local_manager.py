@@ -8,7 +8,7 @@ class LocalManager:
 	def __init__(self,my_url,mz_url):
 		self.uid=0
 		self.served_media={}
-		self.magic=magic.Magic(flags=magic.MAGIC_MIME)
+		self.magic=magic.Magic(mime=True)
 		self.my_url=my_url
 		self.mz_url=mz_url
 
