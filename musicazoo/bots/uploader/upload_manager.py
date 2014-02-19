@@ -19,7 +19,7 @@ class UploadManager:
 
 	def add(self,tempfilename,nicefilename=None):
 		uid=self.getUID()
-		mime=self.magic.id_filename(tempfilename)
+        mime=self.magic.from_file(tempfilename)
 		uf=UploadedFile(self,uid,tempfilename,nicefilename,finished_hook=lambda:self.rm(uid),mime_type=mime)
 		self.served_media[uid]=uf
 

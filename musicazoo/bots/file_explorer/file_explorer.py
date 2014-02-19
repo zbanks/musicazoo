@@ -74,7 +74,7 @@ class FileExplorerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                                  'size': os.path.getsize(lpath),
                                  'atime': os.path.getatime(lpath),
                                  'ctime': os.path.getctime(lpath),
-                                 'magic': md.id_filename(lpath),
+                                 'magic': md.from_file(lpath),
                                 }
                             files.append(f)
                     except:

@@ -19,7 +19,7 @@ class LocalManager:
 
 	def add(self,localfilename,nicefilename=None):
 		uid=self.getUID()
-		mime=self.magic.id_filename(localfilename)
+        mime=self.magic.from_file(localfilename)
 		uf=LocalFile(self,uid,localfilename,nicefilename,finished_hook=lambda:self.rm(uid),mime_type=mime)
 		self.served_media[uid]=uf
 
