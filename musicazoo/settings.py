@@ -10,6 +10,7 @@ import musicazoo.modules.netvid
 import musicazoo.modules.text
 import musicazoo.modules.youtube
 import musicazoo.modules.btc
+import musicazoo.modules.vba
 
 import musicazoo.statics.identity
 import musicazoo.statics.volume
@@ -19,6 +20,7 @@ MODULES = [
     musicazoo.modules.text.Text,
     musicazoo.modules.netvid.NetVid,
     musicazoo.modules.btc.BTC,
+    musicazoo.modules.vba.VBA,
 ]
 
 STATICS = [

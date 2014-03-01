@@ -96,7 +96,7 @@ var TEMPLATES = _.objectMap({
     "nothing": '(Nothing)',
 }, Handlebars.compile);
 
-_.each(["youtube", "text", "netvid", "btc"], function(n){
+_.each(["youtube", "text", "netvid", "btc", "vba"], function(n){
     TEMPLATES[n] = Handlebars.compile($("script." + n + "-template").html());
     TEMPLATES[n + "_active"] = Handlebars.compile($("script." + n + "-active-template").html());
     TEMPLATE_NAMES[n] = {queue: n, active: n + "_active"};
@@ -193,6 +193,13 @@ var COMMANDS = [
             cb({});
         }
     },
+    { // VBA - Play some pokemon
+        keywords: ["vba", "pokemon"],
+        module: "vba",
+        args: function(match, cb){
+            cb({});
+        }
+    },
     { // Images
         keywords: ["image"],
         regex: /http.*(gif|jpe?g|png|bmp)/, 
@@ -242,8 +249,8 @@ setInterval(function(){ volume_lockout = false; }, 500);
 
 var _query_queue = [];
 var _runquery_timeout;
-//var BASE_URL = "http://localhost:9000/";
-var BASE_URL = "/cmd";
+var BASE_URL = "http://localhost:9000/";
+//var BASE_URL = "/cmd";
 
 function deferQuery(data, cb, err){
     _query_queue.push({"data": data, "cb": cb, "err": err});
@@ -714,6 +721,8 @@ var authCallback = _.once(function(capabilities){
             "click .video-progress": "setProgress",
             "click .video-progress-bar": "setProgress",
             "click .youtube-add-related": "addRelatedYoutube",
+            "mousedown .kbd": "keyDown",
+            "mouseup .kbd": "keyUp",
         },
         initialize: function(){
             var self = this;
@@ -748,6 +757,14 @@ var authCallback = _.once(function(capabilities){
             console.log("seek to:", seekTo, this.model.get("duration"));
             this.$(".video-progress-bar").css("width", ev.offsetX + "px");
             this.model.set("time", seekTo);
+        },
+        keyDown: function(ev){
+            var key = $(ev.target).attr('data-key');
+            deferQuery({cmd: "tell_module", args: {uid: this.model.id, cmd: "key_down", args: {key: key}}});
+        },
+        keyUp: function(ev){
+            var key = $(ev.target).attr('data-key');
+            deferQuery({cmd: "tell_module", args: {uid: this.model.id, cmd: "key_up", args: {key: key}}});
         },
         addRelatedYoutube: function(ev){
             var self = this;

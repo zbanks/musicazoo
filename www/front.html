@@ -113,6 +113,33 @@
         {{/if_eq}}
         <!-- {{ status }} -->
     </script>
+    <script class="vba-active-template" type="text/x-handlebars-template">
+        {{#if_eq status neq='stopped' }}
+            Game Boy Advance
+            <div>
+                <a href="#" class="btn kbd" data-key="a">A</a>
+                <a href="#" class="btn kbd" data-key="b">B</a>
+                <a href="#" class="btn kbd" data-key="l">L</a>
+                <a href="#" class="btn kbd" data-key="r">R</a>
+            </div>
+            <div>
+                <a href="#" class="btn kbd" data-key="left">left</a>
+                <a href="#" class="btn kbd" data-key="right">right</a>
+                <a href="#" class="btn kbd" data-key="up">up</a>
+                <a href="#" class="btn kbd" data-key="down">down</a>
+            </div>
+            <div>
+                <a href="#" class="btn kbd" data-key="select">select</a>
+                <a href="#" class="btn kbd" data-key="start">start</a>
+                <a href="#" class="btn kbd" data-key="turbo">turbo</a>
+            </div>
+            <div>
+                <a href="#" class="btn rm">rm</a>
+            </div>
+        {{/if_eq}}
+        <a href="#" class="btn action-set" data-property="status" data-value="stopped">stop</a>
+        <!-- {{ status }} -->
+    </script>
     <script class="text-template" type="text/x-handlebars-template">
         {{ short_description }}
         <!-- {{ status }} -->
@@ -128,6 +155,9 @@
     </script>
     <script class="btc-template" type="text/x-handlebars-template">
         BTC Price
+    </script>
+    <script class="vba-template" type="text/x-handlebars-template">
+        Game Boy Advance Game
     </script>
     <script type="text/javascript" src="./assets/mz_bb.js"></script>
     <!--
