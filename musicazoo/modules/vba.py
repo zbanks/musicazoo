@@ -1,6 +1,7 @@
 import evdev
 import subprocess
 import threading
+import time
 
 E = evdev.ecodes
 
@@ -49,12 +50,13 @@ class VBA(object):
 
     def play(self):
         #self.vbam = subprocess.Popen(["/home/musicazoo/vbam", "-c", "/home/musicazoo/vbam.cfg"])
-        self.vbam = subprocess.Popen(["/usr/local/bin/vbam", "/tmp/pe.gba"])
+        self.vbam = subprocess.Popen(["/usr/local/bin/vbam", "-F", "--auto-frameskip", "/home/musicazoo/pe.gba"])
         self.lock.acquire()
 
     def stop(self):
         if self.vbam is not None:
-            #self.vbam.terminate() # VBA-M won't stop on terminate
+            self.vbam.terminate() # VBA-M won't stop on terminate
+            time.sleep(5)
             self.vbam.kill()
         self.lock.release()
 

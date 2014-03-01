@@ -249,8 +249,8 @@ setInterval(function(){ volume_lockout = false; }, 500);
 
 var _query_queue = [];
 var _runquery_timeout;
-var BASE_URL = "http://localhost:9000/";
-//var BASE_URL = "/cmd";
+//var BASE_URL = "http://localhost:9000/";
+var BASE_URL = "/cmd";
 
 function deferQuery(data, cb, err){
     _query_queue.push({"data": data, "cb": cb, "err": err});
