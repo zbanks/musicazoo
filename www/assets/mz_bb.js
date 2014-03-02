@@ -731,7 +731,9 @@ var authCallback = _.once(function(capabilities){
             "click .video-progress-bar": "setProgress",
             "click .youtube-add-related": "addRelatedYoutube",
             "mousedown .kbd": "keyDown",
+            "touchstart .kbd": "keyDown",
             "mouseup .kbd": "keyUp",
+            "touchend.kbd": "keyUp",
         },
         initialize: function(){
             var self = this;
