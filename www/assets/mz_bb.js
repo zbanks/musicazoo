@@ -84,6 +84,15 @@ Handlebars.registerHelper('if_eq', function(x, options){
     }
 });
 
+Handlebars.registerHelper('pressed', function(x, options){
+    var list = options.hash.list;
+    if(_.contains(list, x)){
+        return "pressed";
+    }else{
+        return "";
+    }
+});
+
 
 // Handlebars templates
 

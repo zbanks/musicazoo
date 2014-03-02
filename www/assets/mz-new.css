@@ -183,6 +183,10 @@ a.related:hover, a.rm:hover {
 	background: rgba(0,30,60,0.8);
 }
 
+a.pressed {
+	background: rgba(0,30,60,0.8);
+}
+
 div.video-progress {
     margin-top: 1em;
     margin-bottom: 1em;

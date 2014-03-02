@@ -117,21 +117,21 @@
         {{#if_eq status neq='stopped' }}
             Game Boy Advance
             <div>
-                <a href="#" class="btn kbd" data-key="a">A</a>
-                <a href="#" class="btn kbd" data-key="b">B</a>
-                <a href="#" class="btn kbd" data-key="l">L</a>
-                <a href="#" class="btn kbd" data-key="r">R</a>
+                <a href="#" class="btn kbd {{pressed'a' list=keys_down}}" data-key="a">A</a>
+                <a href="#" class="btn kbd {{pressed'b' list=keys_down}}" data-key="b">B</a>
+                <a href="#" class="btn kbd {{pressed'l' list=keys_down}}" data-key="l">L</a>
+                <a href="#" class="btn kbd {{pressed'r' list=keys_down}}" data-key="r">R</a>
             </div>
             <div>
-                <a href="#" class="btn kbd" data-key="left">left</a>
-                <a href="#" class="btn kbd" data-key="right">right</a>
-                <a href="#" class="btn kbd" data-key="up">up</a>
-                <a href="#" class="btn kbd" data-key="down">down</a>
+                <a href="#" class="btn kbd {{pressed'left' list=keys_down}}" data-key="left">left</a>
+                <a href="#" class="btn kbd {{pressed'right' list=keys_down}}" data-key="right">right</a>
+                <a href="#" class="btn kbd {{pressed'up' list=keys_down}}" data-key="up">up</a>
+                <a href="#" class="btn kbd {{pressed'down' list=keys_down}}" data-key="down">down</a>
             </div>
             <div>
-                <a href="#" class="btn kbd" data-key="select">select</a>
-                <a href="#" class="btn kbd" data-key="start">start</a>
-                <a href="#" class="btn kbd" data-key="turbo">turbo</a>
+                <a href="#" class="btn kbd {{pressed'select' list=keys_down}}" data-key="select">select</a>
+                <a href="#" class="btn kbd {{pressed'start' list=keys_down}}" data-key="start">start</a>
+                <a href="#" class="btn kbd {{pressed'turbo' list=keys_down}}" data-key="turbo">turbo</a>
             </div>
         {{/if_eq}}
         <a href="#" class="btn action-set" data-property="status" data-value="stopped">stop</a>
