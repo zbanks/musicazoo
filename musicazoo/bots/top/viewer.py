@@ -21,7 +21,10 @@ def get_info(vid):
 	}
 	youtube_data = requests.get(youtube_req_url, params=youtube_data).json()
 
-	return youtube_data['data']
+	if 'data' in youtube_data:
+		return youtube_data['data']
+	else:
+		return {"title": "(Unknown: %s)" % vid, "url": vid}
 
 yt_cache={}
 
@@ -30,7 +33,11 @@ class ViewerBot(Webserver):
 		Webserver.__init__(self,HOST_NAME,PORT_NUMBER)
 
 	def json_transaction(self, json):
-		return self.make_json_list(limit=30)
+		if "limit" in json:
+			limit = json["limit"]
+		else:
+			limit = 30
+		return self.make_json_list(limit=limit)
 
 	def html_transaction(self,form_data):
 		try:
