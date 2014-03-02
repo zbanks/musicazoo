@@ -116,19 +116,19 @@
     <script class="vba-active-template" type="text/x-handlebars-template">
         {{#if_eq status neq='stopped' }}
             Game Boy Advance
-            <div>
+            <div class="kbdrow">
                 <a class="btn kbd {{pressed 'a' list=keys_down}}" data-key="a">A</a>
                 <a class="btn kbd {{pressed 'b' list=keys_down}}" data-key="b">B</a>
                 <a class="btn kbd {{pressed 'l' list=keys_down}}" data-key="l">L</a>
                 <a class="btn kbd {{pressed 'r' list=keys_down}}" data-key="r">R</a>
             </div>
-            <div>
+            <div class="kbdrow">
                 <a class="btn kbd {{pressed 'left' list=keys_down}}" data-key="left">left</a>
                 <a class="btn kbd {{pressed 'right' list=keys_down}}" data-key="right">right</a>
                 <a class="btn kbd {{pressed 'up' list=keys_down}}" data-key="up">up</a>
                 <a class="btn kbd {{pressed 'down' list=keys_down}}" data-key="down">down</a>
             </div>
-            <div>
+            <div class="kbdrow">
                 <a class="btn kbd {{pressed 'select' list=keys_down}}" data-key="select">select</a>
                 <a class="btn kbd {{pressed 'start' list=keys_down}}" data-key="start">start</a>
                 <a class="btn kbd {{pressed 'turbo' list=keys_down}}" data-key="turbo">turbo</a>
