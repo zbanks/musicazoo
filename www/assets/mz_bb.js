@@ -760,11 +760,11 @@ var authCallback = _.once(function(capabilities){
         },
         keyDown: function(ev){
             var key = $(ev.target).attr('data-key');
-            deferQuery({cmd: "tell_module", args: {uid: this.model.id, cmd: "key_down", args: {key: key}}});
+            forceQuery({cmd: "tell_module", args: {uid: this.model.id, cmd: "key_down", args: {key: key}}});
         },
         keyUp: function(ev){
             var key = $(ev.target).attr('data-key');
-            deferQuery({cmd: "tell_module", args: {uid: this.model.id, cmd: "key_up", args: {key: key}}});
+            forceQuery({cmd: "tell_module", args: {uid: this.model.id, cmd: "key_up", args: {key: key}}});
         },
         addRelatedYoutube: function(ev){
             var self = this;
