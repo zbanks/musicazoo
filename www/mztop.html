@@ -9,7 +9,7 @@
     <script type="text/javascript" src="./assets/handlebars.js"></script>
     <script class="toplink-template" type="text/x-handlebars-template">
         <li>
-        {{ n }}. ({{ count }}) <a href="{{ url }}">{{ title }}</a> <a class="btn btn-queue">++</a>
+        {{ n }}. ({{ count }}) <a href="{{ url }}">{{ title }}</a> <a class="btn btn-queue" data-url="{{ url }}" href="#">++</a>
         <li>
     </script>
     <!--
@@ -56,6 +56,11 @@
         var tlv  = new ToplinksView({ collection: tls});
         tls.fetch();
         $.ready(tls.render);
+        $(document).on("click", "a.btn-queue", function(){
+            var $this = $(this);
+            var NLP_URL = "/nlp";
+            $.get(NLP_URL, {q: $this.data('url')});
+        });
 
     </script>
 </head>
