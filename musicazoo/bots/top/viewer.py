@@ -33,9 +33,9 @@ class ViewerBot(Webserver):
 		Webserver.__init__(self,HOST_NAME,PORT_NUMBER)
 
 	def json_transaction(self, json):
-		if "limit" in json:
-			limit = json["limit"]
-		else:
+		try:
+			limit = int(json["limit"])
+		except:
 			limit = 30
 		return self.make_json_list(limit=limit)
 
