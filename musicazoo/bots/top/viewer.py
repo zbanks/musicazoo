@@ -79,7 +79,7 @@ class ViewerBot(Webserver):
 		out=u''
 		conn=sqlite3.connect(self.db)
 		c=conn.cursor()
-		c.execute('SELECT COUNT(*) as num,url FROM youtube_history GROUP BY url ORDER BY num DESC, t DESC LIMIT {0}, {1}'.format(n, offset))
+		c.execute('SELECT COUNT(*) as num,url FROM youtube_history GROUP BY url ORDER BY num DESC, t DESC LIMIT {1}, {0}'.format(n, offset))
 		n=offset + 1
 		last_n=n
 		last_count=None
@@ -114,7 +114,7 @@ class ViewerBot(Webserver):
 		out=u''
 		conn=sqlite3.connect(self.db)
 		c=conn.cursor()
-		c.execute('SELECT COUNT(*) as num,url FROM youtube_history GROUP BY url ORDER BY num DESC, t DESC LIMIT {0}, {1}'.format(limit, offset))
+		c.execute('SELECT COUNT(*) as num,url FROM youtube_history GROUP BY url ORDER BY num DESC, t DESC LIMIT {1}, {0}'.format(limit, offset))
 		n=offset+1
 		last_n=n
 		last_count=None
