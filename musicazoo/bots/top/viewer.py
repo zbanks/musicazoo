@@ -35,9 +35,17 @@ class ViewerBot(Webserver):
 	def json_transaction(self, json):
 		try:
 			limit = int(json["limit"])
+			if limit < 0:
+				raise ValueError
 		except:
 			limit = 30
-		return self.make_json_list(limit=limit)
+        try:
+			offset = int(json["offset"])
+			if offset < 0:
+				raise ValueError
+        except:
+			offset = 0
+		return self.make_json_list(limit=limit, offset=offset)
 
 	def html_transaction(self,form_data):
 		try:
@@ -61,7 +69,7 @@ class ViewerBot(Webserver):
 '''
 		return out
 
-	def makelist(self,n=30):
+	def makelist(self,n=30, offset=0):
 		global yt_cache
 		def format_yt_link(url, title=None):
 			if title is not None:
@@ -71,9 +79,9 @@ class ViewerBot(Webserver):
 		out=u''
 		conn=sqlite3.connect(self.db)
 		c=conn.cursor()
-		c.execute('SELECT COUNT(*) as num,url FROM youtube_history GROUP BY url ORDER BY num DESC, t DESC LIMIT {0}'.format(n))
-		n=1
-		last_n=1
+		c.execute('SELECT COUNT(*) as num,url FROM youtube_history GROUP BY url ORDER BY num DESC, t DESC LIMIT {0}, {1}'.format(n, offset))
+		n=offset + 1
+		last_n=n
 		last_count=None
 		while True:
 			line=c.fetchone()
@@ -100,15 +108,15 @@ class ViewerBot(Webserver):
 		conn.close()
 		return out
 
-	def make_json_list(self, limit=30):
+	def make_json_list(self, limit=30, offset=0):
 		global yt_cache
 		self.db=os.path.join(os.path.dirname(os.path.realpath(__file__)),'mz.db')
 		out=u''
 		conn=sqlite3.connect(self.db)
 		c=conn.cursor()
-		c.execute('SELECT COUNT(*) as num,url FROM youtube_history GROUP BY url ORDER BY num DESC, t DESC LIMIT {0}'.format(limit))
-		n=1
-		last_n=1
+		c.execute('SELECT COUNT(*) as num,url FROM youtube_history GROUP BY url ORDER BY num DESC, t DESC LIMIT {0}, {1}'.format(limit, offset))
+		n=offset+1
+		last_n=n
 		last_count=None
 		result = []
 		while True:
