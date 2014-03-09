@@ -39,11 +39,11 @@ class ViewerBot(Webserver):
 				raise ValueError
 		except:
 			limit = 30
-        try:
+		try:
 			offset = int(json["offset"])
 			if offset < 0:
 				raise ValueError
-        except:
+		except:
 			offset = 0
 		return self.make_json_list(limit=limit, offset=offset)
 
