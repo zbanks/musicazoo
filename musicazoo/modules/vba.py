@@ -50,7 +50,7 @@ class VBA(object):
 
     def play(self):
         #self.vbam = subprocess.Popen(["/home/musicazoo/vbam", "-c", "/home/musicazoo/vbam.cfg"])
-        self.vbam = subprocess.Popen(["/usr/local/bin/vbam", "-F", "--auto-frameskip", "/home/musicazoo/pe.gba"])
+        self.vbam = subprocess.Popen(["/usr/local/bin/mednafen", "/home/musicazoo/roms/gold.gbc"], env={"MEDNAFEN_HOME", "/home/musicazoo/.mednafen/")
         self.lock.acquire()
 
     def stop(self):
