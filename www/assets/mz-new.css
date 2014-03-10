@@ -193,6 +193,7 @@ a.kbd {
 }
 div.kbdrow {
     margin: 10px;
+    padding: 12px;
 }
 
 div.video-progress {
