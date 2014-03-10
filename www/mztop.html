@@ -9,7 +9,7 @@
     <script type="text/javascript" src="./assets/handlebars.js"></script>
     <script class="toplink-template" type="text/x-handlebars-template">
         <li>
-        {{ n }}. ({{ count }}) <a href="{{ url }}">{{ title }}</a> <a class="btn btn-queue" data-url="{{ url }}" href="#">++</a>
+        {{ n }}. ({{ count }}) <a href="{{ url }}">{{ title }}</a> <a class="btn btn-queue" data-url="{{ url }}" href="#link-{{ cid }}" id="link-{{ cid }}">++</a>
         <li>
     </script>
     <!--
@@ -28,10 +28,14 @@
             model: Toplink,
             comparator: "n",
             url: "/top/",
+            offset: 0,
+            limit: 15,
             sync: function(method, model, options){
-                options.attrs = {limit: 50}
+                options.attrs = {limit: this.limit, offset:this.offset}
+                this.offset += this.limit; // TODO: What happens when the call fails?
                 //options.emulateJSON = true;
                 options.contentType = "text/json"
+                options.remove = false;
                 method = "create"
                 return Backbone.sync(method, model, options);
             }
@@ -42,6 +46,9 @@
                 var self = this;
                 this.render();
                 this.listenTo(this.collection, "sync", this.render);
+                $(document).on("click", "a.more", function(){
+                    self.collection.fetch();
+                });
                 return this;
             },
             render: function(ev){
@@ -71,8 +78,10 @@
         </noscript>
 
         <h1>Top</h1>
-        <ol class="toplinks">
+        <ol class="toplinks" style="margin-bottom: 20px;">
         </ol>
+        
+        <a class="btn more" style="margin-top: 10px" href="#more" id="more">next page</a>
     </div>
 </body>
 </html>
