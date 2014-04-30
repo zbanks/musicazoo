@@ -592,6 +592,16 @@ var authCallback = _.once(function(capabilities){
                     }
                 }, this);
             }
+
+            // Rate
+            this.off("change:rate"); // Reset events
+            if(this.hasParameter("rate") && this.hasCommand("set_rate")){
+                this.on("change:rate", function(model, rate, options){
+                    if(!options.parse){ // Not a server update
+                        deferQuery({cmd: "tell_module", args: {uid: this.id, cmd: "set_rate", args: {rate: rate}}});
+                    }
+                }, this);
+            }
         },
         initialize: function(params, options, x){
             this.on("change:type", this.updateType, this);
