@@ -29,7 +29,7 @@ def youtube_lucky_args(q):
 		return None
 
 class NLPBot(MZBot,Webserver):
-	pretty_params={'parameters':{'youtube':['title'],'netvid':['short_description'],'text':['short_description']}}
+	pretty_params={'parameters':{'youtube':['title','duration','time'],'netvid':['short_description'],'text':['short_description']}}
 
 	def __init__(self):
 		Webserver.__init__(self,HOST_NAME,PORT_NUMBER)
@@ -201,7 +201,20 @@ class NLPBot(MZBot,Webserver):
 		cur=self.get_cur()
 		if cur is None:
 			return 'Nothing playing!'
-		return 'Now Playing: {0}'.format(self.pretty(cur))
+		if not ('duration' in cur['parameters'] and 'time' in cur['parameters']):
+			return 'Now Playing: {0}'.format(self.pretty(cur))
+		ratio = float(cur['parameters']['time']) / cur['parameters']['duration']
+		size = 20 #Perhaps later make this duration-dependent.
+		barlength = int(size * ratio)
+		if barlength == 0:
+			bar = " "*size
+		elif barlength == 1:
+			bar = "8" + " "*(size-1)
+		elif barlength < .7*size:
+			bar = "8" + "="*(barlength-2) + "D" + " "*(size-barlength)
+		else:
+			bar = "8" + "="*int(.7*size-2) + "D" + "~"*(barlength-int(.7*size)) + " "*(size-barlength)
+		return 'Now Playing: {0}\n[{1}]'.format(self.pretty(cur),bar)
 
 	def cmd_queue(self,q):
 		queue=self.get_queue()
