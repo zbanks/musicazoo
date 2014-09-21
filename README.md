@@ -13,7 +13,8 @@ pip install -r requirements.txt
 ## New Debathena Server Setup:
 
 ```
-sudo apt-get install git vlc python-imaging-tk python-dev libasound2-dev nginx alsa-base xorg
+sudo apt-get install git vlc python-imaging-tk python-dev libasound2-dev nginx alsa alsa-oss alsa-tools xorg dwm
+sudo adduser $USER audio
 sudo pip install --upgrade pip
 git clone https://github.com/zbanks/musicazoo.git
 cd musicazoo
