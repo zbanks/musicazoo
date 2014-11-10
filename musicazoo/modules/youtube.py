@@ -4,7 +4,8 @@ import threading
 import time
 import youtube_dl
 
-from youtube_dl.utils import compat_cookiejar, compat_urllib_request, make_HTTPS_handler, YoutubeDLHandler
+from youtube_dl.compat import compat_cookiejar, compat_urllib_request
+from youtube_dl.utils import make_HTTPS_handler, YoutubeDLHandler
 from musicazoo.lib.vlc_player_compat import Player
 from musicazoo.lib.loading import LoadingScreen
 
