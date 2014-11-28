@@ -5,5 +5,5 @@ static_endpoints = {
 }
 
 wsgi_endpoints = {
-    '/cmd':util.wsgi_control('localhost',5580)
+    '/queue':util.wsgi_control('localhost',5580)
 }

@@ -1,9 +1,12 @@
 import tornado.tcpserver
 from tornado.gen import *
+import tornado.ioloop
 import itertools
 import json
 import traceback
+import time
 
+# TODO Callback, Wait are deprecated
 @coroutine
 def read_until(stream, delimiter, _idalloc=itertools.count()):
     cb_id = next(_idalloc)
@@ -14,6 +17,49 @@ def read_until(stream, delimiter, _idalloc=itertools.count()):
 
 def write(stream, data):
     return Task(stream.write, data)
+
+# TODO Callback, Wait are deprecated, and timeout doesn't work because of this
+# also this could probably be rewritten to be nicer
+@coroutine
+def accept(sock, timeout=None, _idalloc=itertools.count()):
+    cb_id = next(_idalloc)
+    cb = yield Callback(cb_id)
+    sock.setblocking(0)
+    io_loop = tornado.ioloop.IOLoop.instance()
+    callback = functools.partial(cb, sock)
+    io_loop.add_handler(sock.fileno(), callback, io_loop.READ)
+    if timeout is not None:
+        end_t=time.time()+timeout
+    try:
+        while True:
+            if timeout is not None:
+                t=time.time()
+                if t >= end_t:
+                    raise Exception("Timeout occurred.")
+                yield with_timeout(end_t-t,Wait(cb_id))
+            else:
+                yield Wait(cb_id)
+            try:
+                result = sock.accept()
+                break
+            except socket.error, e:
+                if e.args[0] not in (errno.EWOULDBLOCK, errno.EAGAIN):
+                    raise
+                continue
+    finally:
+        io_loop.remove_handler(sock.fileno())
+    raise Return(result)
+
+def connection_ready(sock, fd, events):
+    while True:
+        try:
+            connection, address = sock.accept()
+        except socket.error, e:
+            if e.args[0] not in (errno.EWOULDBLOCK, errno.EAGAIN):
+                raise
+            return
+        connection.setblocking(0)
+        handle_connection(connection, address)
 
 class Service(tornado.tcpserver.TCPServer):
     def __init__(self,port=None):
@@ -56,7 +102,7 @@ class JSONCommandService(Service):
                 result = error_packet("Generic multi-command processing error")
             finally:
                 raise Return(result)
-        elif isinstanc(line,dict):
+        elif isinstance(line,dict):
             try:
                 result = yield self.single_command(line)
             except Exception:
@@ -94,6 +140,7 @@ class JSONCommandService(Service):
         try:
             result=yield f(self,**args)
         except Exception as e:
+            traceback.print_exc()
             raise Return(error_packet(str(e)))
 
         raise Return(good_packet(result))
