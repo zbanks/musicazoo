@@ -7,7 +7,9 @@ class Queue(service.JSONCommandService):
         print "Queue started."
         self.modules_available=dict([(m.TYPE_STRING,m) for m in modules])
         self.queue=[]
+        self.old_queue=[]
         self.last_uid=-1
+        self.queue_lock=service.Lock()
         service.JSONCommandService.__init__(self)
 
     def get_uid(self):
@@ -88,11 +90,35 @@ class Queue(service.JSONCommandService):
         uid=self.get_uid()
         if type not in self.modules_available:
             raise Exception("Unrecognized module name")
-        mod_inst=self.modules_available[type]()
+        mod_inst=self.modules_available[type](lambda:self.rm([uid]))
         yield mod_inst.new(args)
-        self.queue.append((uid,mod_inst))
-        # TODO handle queue-y things
+        with (yield self.queue_lock.acquire()):
+            self.queue.append((uid,mod_inst))
+            yield self.queue_updated()
         raise service.Return({'uid':uid})
+
+    # TODO harden this
+    @service.coroutine
+    def queue_updated(self):
+        cur_uids=[uid for (uid,obj) in self.queue]
+        to_remove=[obj.remove() for (uid,obj) in self.old_queue if uid not in cur_uids and obj.alive]
+        if len(self.queue) > 0:
+            uid,obj=self.queue[0]
+            if not obj.is_on_top:
+                to_play=[obj.play()]
+            else:
+                to_play=[]
+        to_suspend=[obj.suspend() for (uid,obj) in self.queue[1:] if obj.is_on_top]
+        self.old_queue=self.queue
+
+        futures=to_remove+to_suspend+to_play
+        yield futures
+
+    @service.coroutine
+    def rm(self,uids):
+        with (yield self.queue_lock.acquire()):
+            self.queue=[(uid,obj) for (uid,obj) in self.queue if uid not in [int(u) for u in uids]]
+            yield self.queue_updated()
 
 ## EVERYTHING BELOW HERE IS TRASH
     def set_bg(self,type,args={}):
@@ -119,9 +145,6 @@ class Queue(service.JSONCommandService):
             if self.bg_visible:
                 bg_obj.hide()
                 self.bg_visible=False
-
-    def rm(self,uids):
-        self.queue=[(uid,obj) for (uid,obj) in self.queue if uid not in [int(u) for u in uids]]
 
     def mv(self,uids):
         newqueue=[]

@@ -5,6 +5,8 @@ import itertools
 import json
 import traceback
 import time
+import musicazoo.lib.packet as packet
+from toro import *
 
 # TODO Callback, Wait are deprecated
 @coroutine
@@ -99,7 +101,7 @@ class JSONCommandService(Service):
                     result.append(single_result)
             except Exception:
                 traceback.print_exc()
-                result = error_packet("Generic multi-command processing error")
+                result = packet.error("Generic multi-command processing error")
             finally:
                 raise Return(result)
         elif isinstance(line,dict):
@@ -107,22 +109,22 @@ class JSONCommandService(Service):
                 result = yield self.single_command(line)
             except Exception:
                 traceback.print_exc()
-                result = error_packet("Generic command processing error")
+                result = packet.error("Generic command processing error")
             finally:
                 raise Return(result)
         else:
-            raise Return(error_packet("Command must be either dict (single command) or list (multiple commands)"))
+            raise Return(packet.error("Command must be either dict (single command) or list (multiple commands)"))
 
     # Parse and run a command
     @coroutine
     def single_command(self,line):
         if not isinstance(line,dict):
-            raise Return(error_packet('Command not a dict.'))
+            raise Return(packet.error('Command not a dict.'))
 
         try:
             cmd=line['cmd'] # Fails if no cmd given
         except KeyError:
-            raise Return(error_packet('No command given.'))
+            raise Return(packet.error('No command given.'))
 
         try:
             args=line['args']
@@ -130,28 +132,22 @@ class JSONCommandService(Service):
             args={}
 
         if not isinstance(args,dict):
-            raise Return(error_packet('Argument list not a dict.'))
+            raise Return(packet.error('Argument list not a dict.'))
 
         try:
             f=self.commands[cmd]
         except KeyError:
-            raise Return(error_packet('Bad command.'))
+            raise Return(packet.error('Bad command.'))
 
         try:
             result=yield f(self,**args)
         except Exception as e:
             traceback.print_exc()
-            raise Return(error_packet(str(e)))
+            raise Return(packet.error(str(e)))
 
-        raise Return(good_packet(result))
+        raise Return(packet.good(result))
 
     commands={
     }
 
-def error_packet(err):
-    return {'success':False,'error':err}
 
-def good_packet(payload):
-    if payload is not None:
-        return {'success':True,'result':payload}
-    return {'success':True}

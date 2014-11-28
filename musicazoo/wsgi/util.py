@@ -8,7 +8,7 @@ def wsgi_control(addr,port):
     def zmq_query(inp):
         data=json.dumps(inp)
         s=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.settimeout(0.1)
+        s.settimeout(1)
         s.connect((addr,port))
         s.sendall(data+'\n')
         result=''

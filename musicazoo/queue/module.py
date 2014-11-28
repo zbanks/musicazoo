@@ -1,15 +1,19 @@
 import musicazoo.lib.service as service
 import musicazoo.lib.tcp
+import musicazoo.lib.packet as packet
 import socket
 import tornado.iostream
+import tornado.ioloop
 import subprocess
+import json
 
 class Module(object):
     listen_host = 'localhost'
     connect_host = 'localhost'
 
-    def __init__(self):
+    def __init__(self,remove_function):
         self.parameters={}
+        self.remove_function=remove_function
 
     # Set up listening sockets for subprocess
     def listen(self):
@@ -28,6 +32,7 @@ class Module(object):
     def spawn(self):
         additional_args=[self.connect_host,str(self.cmd_port),str(self.update_port)]
         self.proc=subprocess.Popen(self.process+additional_args)
+        self.alive=True
 
     # Set up IOstreams for the command and update connection objects
     def setup_connections(self,connections):
@@ -39,18 +44,66 @@ class Module(object):
         self.update_stream.set_close_callback(self.on_disconnect)
 
     @service.coroutine
-    def new(self,args):
+    def new(self,args=None):
         listen_futures = self.listen()
         self.spawn()
         connections = yield listen_futures
         self.setup_connections(connections)
-
         self.poll_updates()
 
+        self.is_on_top=False
+
+        result = yield self.send_cmd("init",args)
+        print result
+
+    @service.coroutine
+    def remove(self):
+        print "remove"
+
+    @service.coroutine
+    def play(self):
+        self.is_on_top=True
+        print "play"
+
+    @service.coroutine
+    def suspend(self):
+        self.is_on_top=False
+        print "suspend"
+
+    @service.coroutine
+    def send_cmd(self,cmd,args=None):
+        cmd_dict={"cmd":cmd}
+        if args is not None:
+            cmd_dict["args"]=args
+        cmd_str=json.dumps(cmd_dict)+'\n'
+        yield service.write(self.cmd_stream,cmd_str)
+        response_str = yield service.read_until(self.cmd_stream,'\n')
+        response_dict=json.loads(response_str)
+        packet.assert_success(response_dict)
+        if 'result' in response_dict:
+            raise service.Return(response_dict['result'])
+
     def on_disconnect(self):
-        print "OH NO, child died!"
+        if self.alive:
+            print "OH NO, child died!"
+            tornado.ioloop.IOLoop.instance().add_future(self.terminate(),self.terminate_done)
+
+    def terminate_done(self,f):
+        print "done killing child",f
+
+    @service.coroutine
+    def terminate(self):
+        # TODO implement nice timeouts and stuff and make this asynchronous
+        if not self.alive:
+            raise service.Return()
         self.cmd_stream.close()
         self.update_stream.close()
+        if self.proc.poll() is None:
+            self.proc.terminate()
+            if self.proc.poll() is None:
+                self.proc.kill()
+        self.alive=False
+        yield self.remove_function()
 
     def poll_updates(self):
         self.update_stream.read_until('\n',self.got_update)
@@ -64,5 +117,41 @@ class Module(object):
         return dict([(p,self.parameters[p]) for p in parameters if p in self.parameters])
 
     @service.coroutine
-    def tell(self,cmd,parameters):
-        raise service.Return()
+    def tell(self,cmd,args):
+        result = yield self.send_cmd("do_"+cmd,args)
+        raise service.Return(result)
+
+# For the sub-process
+class ParentConnection():
+    def __init__(self):
+        import socket
+        import sys
+
+        host = sys.argv[1]
+        cmd_port = int(sys.argv[2])
+        update_port = int(sys.argv[3])
+        self.cs=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+        self.us=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+        self.cs.connect((host,cmd_port))
+        self.us.connect((host,update_port))
+
+        self.cs_buffer=''
+        self.us_buffer=''
+
+    def recv_cmd(self):
+        while True:
+            self.cs_buffer+=self.cs.recv(4096)
+            a=self.cs_buffer.find('\n')
+            if a >= 0:
+                cmd=self.cs_buffer[0:a]
+                self.cs_buffer=self.cs_buffer[a+1:]
+                break
+        return json.loads(cmd)
+
+    def send_resp(self,packet):
+        p_str=json.dumps(packet)+'\n'
+        self.cs.send(p_str)
+
+    def close(self):
+        self.cs.close()
+        self.us.close()
