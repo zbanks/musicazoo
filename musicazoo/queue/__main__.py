@@ -1,8 +1,4 @@
-from musicazoo.lib.service import Service
-
-class MZQueue(Service):
-    port=5580
-
 import tornado.ioloop
-MZQueue()
+import musicazoo.queue
+musicazoo.queue.Queue()
 tornado.ioloop.IOLoop.instance().start()
