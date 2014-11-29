@@ -4,7 +4,8 @@ import threading
 import time
 import youtube_dl
 
-from youtube_dl.utils import compat_cookiejar, compat_urllib_request, make_HTTPS_handler, YoutubeDLHandler
+from youtube_dl.compat import compat_cookiejar, compat_urllib_request
+from youtube_dl.utils import make_HTTPS_handler, YoutubeDLHandler
 from musicazoo.lib.vlc_player_compat import Player
 from musicazoo.lib.loading import LoadingScreen
 
@@ -192,7 +193,7 @@ class Youtube:
 		opener = compat_urllib_request.build_opener(https_handler, proxy_handler, cookie_processor, YoutubeDLHandler)
 		compat_urllib_request.install_opener(opener)
 
-		y=youtube_dl.YoutubeDL({'outtmpl':u'','skip_download':True}) # empty outtmpl needed due to weird issue in youtube-dl
+		y=youtube_dl.YoutubeDL({'outtmpl':u'','skip_download':True, 'format_limit': 18}) # empty outtmpl needed due to weird issue in youtube-dl
 		y.add_info_extractor(WatchCartoonOnlineIE())
 		y.add_default_info_extractors()
 
