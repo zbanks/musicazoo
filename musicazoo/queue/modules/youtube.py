@@ -1,13 +1,19 @@
-import musicazoo.queue.module as module
-import musicazoo.lib.packet as packet
-
 if __name__ != '__main__':
+    # If name is not main then this was imported for use in the queue process
+
+    import musicazoo.queue.module as module
+
     class Youtube(module.Module):
         TYPE_STRING='youtube'
-        process = ['python',__file__]
+        process = ['python',__file__] # The sub-process to execute is itself
+        # tell me that isn't cute
+else:
+    # If name is main then this is the sub-process
+    # admittedly, it does feel very fork-esque
+    import musicazoo.lib.packet as packet
+    import musicazoo.queue.pymodule as pymodule
 
-else: # name is main
-    conn=module.ParentConnection()
+    conn=pymodule.ParentConnection()
 
     def poller():
         while True:

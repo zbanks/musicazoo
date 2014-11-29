@@ -1,21 +1,36 @@
 import musicazoo.lib.service as service
 
+# A queue manages the life and death of modules, through tornado's IOLoop.
+
 class Queue(service.JSONCommandService):
     port=5580
 
     def __init__(self,modules):
         print "Queue started."
+        # Create lookup table of possible modules
         self.modules_available=dict([(m.TYPE_STRING,m) for m in modules])
+
+        # queue is the actual queue of modules
         self.queue=[]
-        self.old_queue=[]
-        self.last_uid=-1
+        # queue_lock is a synchronization object so that multiple clients don't try to alter the queue at the same time
         self.queue_lock=service.Lock()
+        # old_queue is used to take diffs of the queue (and from there, send appropriate messages to affected modules.)
+        # whenever the queue is unlocked, it should equal the queue.
+        self.old_queue=[]
+
+        # Each module on the queue gets a unique ID, this variable allocates those
+        self.last_uid=-1
+
+        # JSONCommandService handles all of the low-level TCP connection stuff.
         service.JSONCommandService.__init__(self)
 
+    # Get a new UID for a module.
     def get_uid(self):
         self.last_uid += 1
         return self.last_uid
 
+    # Called from client
+    # Retrieves given parameters from the module
     @service.coroutine
     def ask_module(self,uid,parameters):
         uid=int(uid)
@@ -24,6 +39,8 @@ class Queue(service.JSONCommandService):
             raise Exception("Module identifier not in queue")
         raise service.Return(d[uid].get_multiple_parameters(parameters))
 
+    # Called fom client
+    # Retrieves given parameters from the background
     @service.coroutine
     def ask_background(self,uid,parameters):
         uid=int(uid)
@@ -34,15 +51,20 @@ class Queue(service.JSONCommandService):
             raise Exception("Background identifier doesn't match current background")
         raise service.Return(bg_obj.get_multiple_parameters(parameters))
 
+    # Called from client
+    # Retrieves names of possible modules that can be added to the queue
     @service.coroutine
     def modules_available(self):
         raise service.Return(self.modules_available.keys())
 
+    # Called from client
+    # Retrieves names of possible backgrounds
     @service.coroutine
     def backgrounds_available(self):
         raise service.Return(self.backgrounds_available.keys())
 
-    # queue command
+    # Called from client
+    # Retrieves the current queue, and info about modules on it
     @service.coroutine
     def get_queue(self,parameters={}):
         l=[]
@@ -53,7 +75,8 @@ class Queue(service.JSONCommandService):
             l.append(d)
         raise service.Return(l)
 
-    # bg command
+    # Called from client
+    # Retrieves the current background, and info about it
     @service.coroutine
     def get_bg(self,parameters={}):
         if self.bg is None:
@@ -65,6 +88,10 @@ class Queue(service.JSONCommandService):
             d['parameters']=obj.get_multiple_parameters(parameters[obj.TYPE_STRING])
         raise service.Return(d)
 
+    # Called from client
+    # Issues a command to a module
+    # Note that this involves a transaction between the queue and the module, and may take a while.
+    # This is in contrast to ask_module which only retrieves cached information and does not create additional transactions.
     @service.coroutine
     def tell_module(self,uid,cmd,args={}):
         uid=int(uid)
@@ -74,6 +101,8 @@ class Queue(service.JSONCommandService):
         result = yield d[uid].tell(cmd,args)
         raise service.Return(result)
 
+    # Called from client
+    # Issues a command to the background (see tell_module)
     @service.coroutine
     def tell_background(self,uid,cmd,args={}):
         uid=int(uid)
@@ -85,6 +114,9 @@ class Queue(service.JSONCommandService):
         result = yield bg_obj.tell(cmd,args)
         raise service.Return(result)
 
+    # Called from client
+    # Create a new module and add it to the queue
+    # May take a little while as module is spawned and constructed.
     @service.coroutine
     def add(self,type,args={}):
         uid=self.get_uid()
@@ -97,6 +129,37 @@ class Queue(service.JSONCommandService):
             yield self.queue_updated()
         raise service.Return({'uid':uid})
 
+    # Called from client
+    # Removes some modules from the queue
+    # May take a little while as the modules are destroyed.
+    @service.coroutine
+    def rm(self,uids):
+        with (yield self.queue_lock.acquire()):
+            self.queue=[(uid,obj) for (uid,obj) in self.queue if uid not in [int(u) for u in uids]]
+            yield self.queue_updated()
+
+    # Called from client
+    # Reorders modules on the queue
+    # May take a little while if the top (playing) module is moved down (suspended).
+    @service.coroutine
+    def mv(self,uids):
+        with (yield self.queue_lock.acquire()):
+            newqueue=[]
+            oldqueue=[uid for (uid,obj) in self.queue]
+            d=dict(self.queue)
+            for uid in uids:
+                uid=int(uid)
+                if uid in oldqueue:
+                    oldqueue.remove(uid)
+                    newqueue.append(uid)
+            newqueue+=oldqueue
+            self.queue=[(uid,d[uid]) for uid in newqueue]
+            yield self.queue_updated()
+
+    # Take a diff of the queue, and issue appropriate commands to modules (play, suspend, and rm) if necessary.
+    # May take a little while as the commands are executed.
+    # Commands are executed simultaneously.
+    # Queue should be locked for this operation
     # TODO harden this
     @service.coroutine
     def queue_updated(self):
@@ -112,8 +175,12 @@ class Queue(service.JSONCommandService):
 
         futures=to_remove+to_suspend+to_play
         if len(futures) > 0:
+            # Execute all operations simultaneously
             yield [future() for future in futures]
 
+    # Returns a coroutine that may be executed to remove the current module from the queue
+    # Generally, the result of this function is passed into a newly constructed module, so that
+    # it may gracefully remove itself if it terminates naturally.
     def get_remover(self,my_uid):
         @service.coroutine
         def remove_self():
@@ -122,13 +189,8 @@ class Queue(service.JSONCommandService):
                 yield self.queue_updated()
         return remove_self
 
-    @service.coroutine
-    def rm(self,uids):
-        with (yield self.queue_lock.acquire()):
-            self.queue=[(uid,obj) for (uid,obj) in self.queue if uid not in [int(u) for u in uids]]
-            yield self.queue_updated()
-
 ## EVERYTHING BELOW HERE IS TRASH
+    """
     def set_bg(self,type,args={}):
         uid=self.backgrounds.get_uid()
         mod_inst=self.backgrounds.instantiate(type,self,uid,args)
@@ -153,22 +215,11 @@ class Queue(service.JSONCommandService):
             if self.bg_visible:
                 bg_obj.hide()
                 self.bg_visible=False
-
-    def mv(self,uids):
-        newqueue=[]
-        oldqueue=[uid for (uid,obj) in self.queue]
-        d=dict(self.queue)
-        for uid in uids:
-            uid=int(uid)
-            if uid in oldqueue:
-                oldqueue.remove(uid)
-                newqueue.append(uid)
-        newqueue+=oldqueue
-        self.queue=[(uid,d[uid]) for uid in newqueue]
+"""
 
     commands = {
         'rm':rm,
-#        'mv':mv,
+        'mv':mv,
         'add':add,
         'queue':get_queue,
         'bg':get_bg,
