@@ -11,7 +11,7 @@ else: # name is main
 
     def poller():
         while True:
-            print conn.recv_cmd()
+            print "MOD RECV",conn.recv_cmd()
             conn.send_resp(packet.good())
 
     import sys
@@ -22,6 +22,8 @@ else: # name is main
     t.start()
 
     import time
-    time.sleep(4)
+    while True:
+        time.sleep(1)
+    
     print "QUITTING"
     conn.close()

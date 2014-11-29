@@ -14,6 +14,7 @@ class Module(object):
     def __init__(self,remove_function):
         self.parameters={}
         self.remove_function=remove_function
+        self.cmd_lock = service.Lock()
 
     # Set up listening sockets for subprocess
     def listen(self):
@@ -50,25 +51,23 @@ class Module(object):
         connections = yield listen_futures
         self.setup_connections(connections)
         self.poll_updates()
-
         self.is_on_top=False
-
         result = yield self.send_cmd("init",args)
-        print result
 
     @service.coroutine
     def remove(self):
-        print "remove"
+        yield self.send_cmd("rm")
+        yield self.external_terminate()
 
     @service.coroutine
     def play(self):
+        yield self.send_cmd("play")
         self.is_on_top=True
-        print "play"
 
     @service.coroutine
     def suspend(self):
+        yield self.send_cmd("suspend")
         self.is_on_top=False
-        print "suspend"
 
     @service.coroutine
     def send_cmd(self,cmd,args=None):
@@ -76,8 +75,11 @@ class Module(object):
         if args is not None:
             cmd_dict["args"]=args
         cmd_str=json.dumps(cmd_dict)+'\n'
-        yield service.write(self.cmd_stream,cmd_str)
-        response_str = yield service.read_until(self.cmd_stream,'\n')
+
+        with (yield self.cmd_lock.acquire()):
+            yield service.write(self.cmd_stream,cmd_str)
+            response_str = yield service.read_until(self.cmd_stream,'\n')
+
         response_dict=json.loads(response_str)
         packet.assert_success(response_dict)
         if 'result' in response_dict:
@@ -86,10 +88,14 @@ class Module(object):
     def on_disconnect(self):
         if self.alive:
             print "OH NO, child died!"
-            tornado.ioloop.IOLoop.instance().add_future(self.terminate(),self.terminate_done)
+            service.ioloop.add_future(self.internal_terminate(),self.terminate_done)
 
     def terminate_done(self,f):
         print "done killing child",f
+
+    # Terminated by queue, don't need to remove self
+    def external_terminate(self):
+        return self.terminate()
 
     @service.coroutine
     def terminate(self):
@@ -98,11 +104,16 @@ class Module(object):
             raise service.Return()
         self.cmd_stream.close()
         self.update_stream.close()
-        if self.proc.poll() is None:
+        if self.proc.poll() is None: # TODO wait .1 sec here
             self.proc.terminate()
-            if self.proc.poll() is None:
+            if self.proc.poll() is None: # TODO wait 1 sec here
                 self.proc.kill()
         self.alive=False
+
+    # Terminated naturally, need to inform queue
+    @service.coroutine
+    def internal_terminate(self):
+        yield self.terminate()
         yield self.remove_function()
 
     def poll_updates(self):

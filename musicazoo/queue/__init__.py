@@ -90,7 +90,7 @@ class Queue(service.JSONCommandService):
         uid=self.get_uid()
         if type not in self.modules_available:
             raise Exception("Unrecognized module name")
-        mod_inst=self.modules_available[type](lambda:self.rm([uid]))
+        mod_inst=self.modules_available[type](self.get_remover(uid))
         yield mod_inst.new(args)
         with (yield self.queue_lock.acquire()):
             self.queue.append((uid,mod_inst))
@@ -101,18 +101,26 @@ class Queue(service.JSONCommandService):
     @service.coroutine
     def queue_updated(self):
         cur_uids=[uid for (uid,obj) in self.queue]
-        to_remove=[obj.remove() for (uid,obj) in self.old_queue if uid not in cur_uids and obj.alive]
+        to_remove=[obj.remove for (uid,obj) in self.old_queue if uid not in cur_uids and obj.alive]
+        to_play=[]
         if len(self.queue) > 0:
             uid,obj=self.queue[0]
             if not obj.is_on_top:
-                to_play=[obj.play()]
-            else:
-                to_play=[]
-        to_suspend=[obj.suspend() for (uid,obj) in self.queue[1:] if obj.is_on_top]
+                to_play=[obj.play]
+        to_suspend=[obj.suspend for (uid,obj) in self.queue[1:] if obj.is_on_top]
         self.old_queue=self.queue
 
         futures=to_remove+to_suspend+to_play
-        yield futures
+        if len(futures) > 0:
+            yield [future() for future in futures]
+
+    def get_remover(self,my_uid):
+        @service.coroutine
+        def remove_self():
+            with (yield self.queue_lock.acquire()):
+                self.queue=[(uid,obj) for (uid,obj) in self.queue if uid != uid]
+                yield self.queue_updated()
+        return remove_self
 
     @service.coroutine
     def rm(self,uids):
@@ -159,7 +167,7 @@ class Queue(service.JSONCommandService):
         self.queue=[(uid,d[uid]) for uid in newqueue]
 
     commands = {
-#        'rm':rm,
+        'rm':rm,
 #        'mv':mv,
         'add':add,
         'queue':get_queue,

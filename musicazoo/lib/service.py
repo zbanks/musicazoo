@@ -8,6 +8,8 @@ import time
 import musicazoo.lib.packet as packet
 from toro import *
 
+ioloop=tornado.ioloop.IOLoop.instance()
+
 # TODO Callback, Wait are deprecated
 @coroutine
 def read_until(stream, delimiter, _idalloc=itertools.count()):
