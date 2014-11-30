@@ -259,7 +259,7 @@ setInterval(function(){ volume_lockout = false; }, 500);
 var _query_queue = [];
 var _runquery_timeout;
 //var BASE_URL = "http://localhost:9000/";
-var BASE_URL = "/cmd";
+var BASE_URL = "/queue";
 
 function deferQuery(data, cb, err){
     _query_queue.push({"data": data, "cb": cb, "err": err});
@@ -334,13 +334,15 @@ function authenticate(cb){
         // Auth & get capabilities
         console.log("trying to auth");
         var caps = {};
-        deferQuery({cmd: "module_capabilities"}, function(mcap){
+        deferQuery({cmd: "modules_available"}, function(mcap){
             caps.modules = mcap;
         });
+        /* GT - Statics no longer part of queue
         deferQuery({cmd: "static_capabilities"}, function(scap){
             caps.statics = scap;
         });
-        deferQuery({cmd: "background_capabilities"}, function(bcap){
+        */
+        deferQuery({cmd: "backgrounds_available"}, function(bcap){
             caps.backgrounds = bcap;
         });
         runQueries(function(){
@@ -489,7 +491,18 @@ $(document).ready(function(){
 
 });
 
-var authCallback = _.once(function(capabilities){
+var authCallback = _.once(function(available){
+    var modules = _({
+        "youtube": {
+            commands: [],
+            parameters: [],
+            background: false
+        },
+    }).pick(available.modules);
+    var backgrounds = _({
+
+    }).pick(available.backgrounds);
+    /* GT - Modules available instead of capabilities
     var modules = _.objectMap(capabilities.modules.specifics, function(x){ 
         x.commands = x.commands.concat(capabilities.modules.commands); 
         x.parameters = x.parameters.concat(capabilities.modules.parameters); 
@@ -502,17 +515,18 @@ var authCallback = _.once(function(capabilities){
         x.background = true;
         return x;
     });
-    var statics = capabilities.statics;
+    */
+    //var statics = capabilities.statics;
     var module_capabilities = _.objectMap(modules, function(x){ return x.parameters });
     var background_capabilities = _.objectMap(backgrounds, function(x){ return x.parameters });
-    var static_capabilities = _.objectMap(statics, function(x){ return x.parameters });
+    //var static_capabilities = _.objectMap(statics, function(x){ return x.parameters });
     var commands = _.filter(COMMANDS, function(x){ return  _.contains(_.keys(modules), x.module); });
     _.extend(modules, backgrounds);
     console.log("Modules:", modules);
-    console.log("Statics:", statics);
-    console.log("Commands:", commands);
-    console.log("Module capabilities: ", module_capabilities);
-    console.log("Static capabilities: ", static_capabilities);
+    //console.log("Statics:", statics);
+    //console.log("Commands:", commands);
+    //console.log("Module capabilities: ", module_capabilities);
+    //console.log("Static capabilities: ", static_capabilities);
     Backbone.sync = function(method, model, options){
         console.error("unsupported sync");
         console.log(method, model, options);
@@ -612,9 +626,12 @@ var authCallback = _.once(function(capabilities){
             if(method == "read"){
                 if(this.background){
                     deferQuery({cmd: "bg", args: {parameters: background_capabilities}}, options.success, options.error);
+                /* GT - No more "current" vs. queue -- still need to check queue
                 }else if(this.active){
                     deferQuery({cmd: "cur", args: {parameters: module_capabilities}}, options.success, options.error);
+                */
                 }else{
+                    console.log(this);
                     console.error("Unable to sync queue item");
                 }
             }else if(method == "delete"){
@@ -718,15 +735,15 @@ var authCallback = _.once(function(capabilities){
         defaults: function(){
             return {
                 queue: new Queue(),
-                statics: new StaticSet(),
-                active: new CurrentAction(),
+                // statics: new StaticSet(),
+                //active: new CurrentAction(),
                 background: new Background(),
             };
         },
         fetch: function(){
             this.get('queue').fetch();
-            this.get('statics').fetch();
-            this.get('active').fetch();
+            //this.get('statics').fetch();
+            //this.get('active').fetch();
             this.get('background').fetch();
         }
     });
@@ -968,9 +985,9 @@ var authCallback = _.once(function(capabilities){
 
     mz = mz = new Musicazoo();
     var qv = new QueueView({collection: mz.get('queue'), el: $("ol.playlist")});
-    var cv = new ActiveView({model: mz.get('active'), el: $("ol.current")});
+    //var cv = new ActiveView({model: mz.get('active'), el: $("ol.current")});
     var bv = new BackgroundView({model: mz.get('background'), el: $("ol.background")});
-    var ssv = new StaticSetView({collection: mz.get('statics')});
+    //var ssv = new StaticSetView({collection: mz.get('statics')});
     mz.fetch();
 
     refreshPlaylist = function(){

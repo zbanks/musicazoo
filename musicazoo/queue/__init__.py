@@ -7,8 +7,10 @@ class Queue(service.JSONCommandService):
 
     def __init__(self,modules):
         print "Queue started."
-        # Create lookup table of possible modules
-        self.modules_available=dict([(m.TYPE_STRING,m) for m in modules])
+        # Create lookup table of possible modules & backgrounds
+        self.modules_available_dict = dict([(m.TYPE_STRING,m) for m in modules])
+        #TODO
+        self.backgrounds_available_dict = {} 
 
         # queue is the actual queue of modules
         self.queue=[]
@@ -17,6 +19,10 @@ class Queue(service.JSONCommandService):
         # old_queue is used to take diffs of the queue (and from there, send appropriate messages to affected modules.)
         # whenever the queue is unlocked, it should equal the queue.
         self.old_queue=[]
+
+        # bg is the module running in the background
+        #TODO
+        self.bg = None
 
         # Each module on the queue gets a unique ID, this variable allocates those
         self.last_uid=-1
@@ -55,13 +61,13 @@ class Queue(service.JSONCommandService):
     # Retrieves names of possible modules that can be added to the queue
     @service.coroutine
     def modules_available(self):
-        raise service.Return(self.modules_available.keys())
+        raise service.Return(self.modules_available_dict.keys())
 
     # Called from client
     # Retrieves names of possible backgrounds
     @service.coroutine
     def backgrounds_available(self):
-        raise service.Return(self.backgrounds_available.keys())
+        raise service.Return(self.backgrounds_available_dict.keys())
 
     # Called from client
     # Retrieves the current queue, and info about modules on it
@@ -120,9 +126,9 @@ class Queue(service.JSONCommandService):
     @service.coroutine
     def add(self,type,args={}):
         uid=self.get_uid()
-        if type not in self.modules_available:
+        if type not in self.modules_available_dict:
             raise Exception("Unrecognized module name")
-        mod_inst=self.modules_available[type](self.get_remover(uid))
+        mod_inst=self.modules_available_dict[type](self.get_remover(uid))
         yield mod_inst.new(args)
         with (yield self.queue_lock.acquire()):
             self.queue.append((uid,mod_inst))
