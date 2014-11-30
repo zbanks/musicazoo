@@ -55,6 +55,7 @@ else:
             self.rate=None
             self.status='added'
             messages.put("init")
+            self.update()
             return packet.good()
 
         def cmd_play(self):
@@ -65,12 +66,14 @@ else:
         def cmd_suspend(self):
             print "Suspend"
             self.player.pause()
+            self.update()
             return packet.good()
 
         def cmd_rm(self):
             print "Remove"
             self.player.stop()
             messages.put("rm")
+            self.update()
             messages.join()
             return packet.good()
 
@@ -79,6 +82,7 @@ else:
 
         def play(self):
             self.player.load(self.media,cookies=self.cookies)
+            self.update()
     
         def get_video_info(self):
             url = self.url
@@ -132,6 +136,7 @@ else:
             if self.status=='added':
                 self.status='ready'
 
+            self.update()
             return True
 
     mod = YoutubeModule()

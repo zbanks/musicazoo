@@ -495,7 +495,10 @@ var authCallback = _.once(function(available){
     var modules = _({
         "youtube": {
             commands: [],
-            parameters: [],
+            parameters: [
+                "url", "title", "duration", "site", "media", "thumbnail", "description",
+                "time", "status"
+            ],
             background: false
         },
     }).pick(available.modules);

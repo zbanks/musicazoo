@@ -97,5 +97,5 @@ class JSONParentPoller(object):
 
     def update(self):
         params = self.serialize()
-        data = {"cmd": "set_parameters", "args": [params]}
-        return self.send_update(data)
+        data = {"cmd": "set_parameters", "args": {"parameters": params}}
+        return self.connection.send_update(data)

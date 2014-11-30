@@ -184,7 +184,17 @@ class Module(object):
     # Callback for when data received on this module's update pipe
     def got_update(self,data):
         print "RECEIVED DATA!" # TODO update this module's parameters dictionary
-        print data[:-1]
+        try:
+            json_data = json.loads(data)
+            cmd = json_data.get("cmd")
+            args = json_data.get("args", {})
+            if cmd == "set_parameters":
+                params = args.get("parameters")
+                if isinstance(params, dict):
+                    self.parameters = params
+                    print "UPDATED PARAMETERS", len(params)
+        except:
+            print "Error parsing update data:", data
         self.poll_updates() # re-register
 
 
