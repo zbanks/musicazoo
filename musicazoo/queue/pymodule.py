@@ -14,7 +14,6 @@ class ParentConnection(object):
         host = sys.argv[1]
         cmd_port = int(sys.argv[2])
         update_port = int(sys.argv[3])
-        print "New Connection:", host, cmd_port, update_port
         self.cs=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         self.us=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         self.cs.connect((host,cmd_port))
@@ -34,10 +33,29 @@ class ParentConnection(object):
                 break
         return json.loads(cmd)
 
+    # Blocks until an update has been acknowledged
+    def recv_update_resp(self):
+        while True:
+            self.us_buffer+=self.us.recv(4096)
+            a=self.us_buffer.find('\n')
+            if a >= 0:
+                resp=self.us_buffer[0:a]
+                self.us_buffer=self.us_buffer[a+1:]
+                break
+        resp_dict = json.loads(resp)
+        packet.assert_success(resp_dict)
+        return resp_dict['result']
+
     # Sends response to a command
     def send_resp(self,packet):
         p_str=json.dumps(packet)+'\n'
         self.cs.send(p_str)
+
+    # Sends an update packet
+    def send_update(self, packet):
+        p_str=json.dumps(packet)+'\n'
+        self.us.send(p_str)
+        return self.recv_update_resp()
 
     # Gracefully close the open sockets
     def close(self):
@@ -47,6 +65,9 @@ class ParentConnection(object):
 class JSONParentPoller(object):
     def __init__(self):
         self.connection = ParentConnection()
+
+    def serialize(self):
+        return {}
 
     def close(self):
         return self.connection.close()
@@ -68,6 +89,9 @@ class JSONParentPoller(object):
                     traceback.print_exc()
                     response = packet.error("Generic multi-command processing error")
             
-            if response is not None:
-                self.connection.send_resp(response)
+            self.connection.send_resp(response)
 
+    def update(self):
+        params = self.serialize()
+        data = {"cmd": "set_parameters", "args": [params]}
+        return self.send_update(data)

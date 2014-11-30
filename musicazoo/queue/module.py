@@ -33,11 +33,13 @@ class Module(object):
     # Set up listening sockets for subprocess
     def listen(self):
         self.cmd_port = musicazoo.lib.tcp.get_free_port()
-        self.update_port = musicazoo.lib.tcp.get_free_port()
-
+        print "Command port:", self.cmd_port
         s1=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s1.bind((self.listen_host,self.cmd_port))
         s1.listen(0)
+
+        self.update_port = musicazoo.lib.tcp.get_free_port()
+        print "Update port:", self.update_port
         s2=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s2.bind((self.listen_host,self.update_port))
         s2.listen(0)

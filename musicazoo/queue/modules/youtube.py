@@ -14,6 +14,7 @@ else:
     import tempfile
     import time
     import youtube_dl 
+    import Queue
 
     import musicazoo.lib.packet as packet
     import musicazoo.queue.pymodule as pymodule
@@ -24,7 +25,20 @@ else:
 
     from musicazoo.lib.watch_dl import WatchCartoonOnlineIE
 
+    messages = Queue.Queue()
+
     class YoutubeModule(pymodule.JSONParentPoller):
+        def __init__(self):
+            super(YoutubeModule, self).__init__()
+
+        def serialize(self):
+            result = { t: getattr(self, t) for t in [
+                "url", "title", "duration", "site", "media", "thumbnail", "description",
+                "time", "status"
+                ]
+            }
+            return result
+
         def cmd_init(self, url):
             print "URL:", url
             self.player=Player()
@@ -40,19 +54,38 @@ else:
             self.cookies=None
             self.rate=None
             self.status='added'
-            self.getVideoInfo()
+            messages.put("init")
             return packet.good()
 
         def cmd_play(self):
             print "Play"
-            self.player.load(self.media,cookies=self.cookies)
-            return packet.good()
+            messages.put("play")
 
         def cmd_suspend(self):
             print "Suspend"
+            self.pause()
+            return packet.good()
+
+        def cmd_rm(self):
+            print "Remove"
+            self.stop()
+            messages.put("rm")
+            messages.join()
+            return packet.good()
+
+        def cmd_do_seek(self, time):
+            return packet.good()
+
+        def play(self):
+            self.player.load(self.media,cookies=self.cookies)
+    
+        def pause(self):
+            self.player.pause()
+
+        def stop(self):
             self.player.stop()
 
-        def getVideoInfo(self):
+        def get_video_info(self):
             url = self.url
             # General configuration
             tf=tempfile.NamedTemporaryFile(delete=False)
@@ -117,7 +150,15 @@ else:
 
     import time
     while True:
-        time.sleep(1)
+        msg = messages.get()
+        messages.task_done()
+        if msg == "init":
+            mod.get_video_info()
+        elif msg == "play":
+            mod.play()
+        elif msg == "rm":
+            break
+        
     
     print "QUITTING"
     mod._close()
