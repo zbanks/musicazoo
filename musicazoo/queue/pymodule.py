@@ -55,7 +55,8 @@ class ParentConnection(object):
     def send_update(self, packet):
         p_str=json.dumps(packet)+'\n'
         self.us.send(p_str)
-        return self.recv_update_resp()
+        # Right now, updates are not responded to
+        #return self.recv_update_resp()
 
     # Gracefully close the open sockets
     def close(self):
@@ -88,7 +89,10 @@ class JSONParentPoller(object):
                 except Exception:
                     traceback.print_exc()
                     response = packet.error("Generic multi-command processing error")
-            
+
+            if response is None: 
+                print "Warning: command response is None to data:", data
+
             self.connection.send_resp(response)
 
     def update(self):

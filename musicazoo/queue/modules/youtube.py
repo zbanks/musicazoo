@@ -60,15 +60,16 @@ else:
         def cmd_play(self):
             print "Play"
             messages.put("play")
+            return packet.good()
 
         def cmd_suspend(self):
             print "Suspend"
-            self.pause()
+            self.player.pause()
             return packet.good()
 
         def cmd_rm(self):
             print "Remove"
-            self.stop()
+            self.player.stop()
             messages.put("rm")
             messages.join()
             return packet.good()
@@ -79,12 +80,6 @@ else:
         def play(self):
             self.player.load(self.media,cookies=self.cookies)
     
-        def pause(self):
-            self.player.pause()
-
-        def stop(self):
-            self.player.stop()
-
         def get_video_info(self):
             url = self.url
             # General configuration
