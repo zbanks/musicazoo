@@ -43,7 +43,7 @@ class Module(object):
         s2.listen(0)
         self.update_port = s2.getsockname()[1]
         print "Update port:", self.update_port
-        return [service.accept(s1),service.accept(s2)]
+        return [lambda:service.accept(s1),lambda:service.accept(s2)]
 
     # Helper function for new()
     # Launch subprocess
@@ -73,7 +73,7 @@ class Module(object):
         self.spawn()
 
         # Wait for the subprocess to connect
-        connections = yield listen_futures
+        connections = yield [f() for f in listen_futures]
         self.setup_connections(connections)
 
         # Set up a callback for push-notifications from the sub-process

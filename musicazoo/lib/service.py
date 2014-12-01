@@ -1,5 +1,6 @@
 import tornado.tcpserver
 from tornado.gen import *
+from tornado.concurrent import *
 import tornado.ioloop
 import itertools
 import json
@@ -10,49 +11,32 @@ from toro import *
 
 ioloop=tornado.ioloop.IOLoop.instance()
 
-# TODO Callback, Wait are deprecated
-@coroutine
-def read_until(stream, delimiter, _idalloc=itertools.count()):
-    cb_id = next(_idalloc)
-    cb = yield Callback(cb_id)
-    stream.read_until(delimiter, cb)
-    result = yield Wait(cb_id)
-    raise Return(result)
+def read_until(stream, delimiter):
+    return return_future(stream.read_until)(delimiter)
 
 def write(stream, data):
-    return Task(stream.write, data)
+    return return_future(stream.write)(data)
 
-# TODO Callback, Wait are deprecated, and timeout doesn't work because of this
-# also this could probably be rewritten to be nicer
 @coroutine
-def accept(sock, timeout=None, _idalloc=itertools.count()):
-    cb_id = next(_idalloc)
-    cb = yield Callback(cb_id)
-    sock.setblocking(0)
-    io_loop = tornado.ioloop.IOLoop.instance()
-    callback = functools.partial(cb, sock)
-    io_loop.add_handler(sock.fileno(), callback, io_loop.READ)
-    if timeout is not None:
-        end_t=time.time()+timeout
-    try:
-        while True:
-            if timeout is not None:
-                t=time.time()
-                if t >= end_t:
-                    raise Exception("Timeout occurred.")
-                yield with_timeout(end_t-t,Wait(cb_id))
-            else:
-                yield Wait(cb_id)
+def accept(sock):
+    @return_future
+    def wrap_add_handler(callback):
+       def wait_for_accept(fd,events): # TODO more intelligently check for events?
             try:
                 result = sock.accept()
-                break
+                callback(result)
             except socket.error, e:
                 if e.args[0] not in (errno.EWOULDBLOCK, errno.EAGAIN):
                     raise
-                continue
+
+       ioloop.add_handler(sock.fileno(), wait_for_accept, ioloop.READ)
+
+    sock.setblocking(0)
+    try:
+        result = yield wrap_add_handler()
+        raise Return(result)
     finally:
-        io_loop.remove_handler(sock.fileno())
-    raise Return(result)
+        ioloop.remove_handler(sock.fileno())
 
 def connection_ready(sock, fd, events):
     while True:
