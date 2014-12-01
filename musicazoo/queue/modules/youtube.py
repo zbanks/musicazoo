@@ -10,7 +10,7 @@ if __name__ != '__main__':
 else:
     # If name is main then this is the sub-process
     # admittedly, it does feel very fork-esque
-    import os_
+    import os
     import tempfile
     import time
     import youtube_dl 

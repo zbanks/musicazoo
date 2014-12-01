@@ -6,6 +6,7 @@ import tornado.iostream
 import tornado.ioloop
 import subprocess
 import json
+import datetime
 
 # A module is an object on the queue.
 # The actual code for a module runs in a sub-process.
@@ -20,6 +21,9 @@ class Module(object):
     # Hostname for connecting socket (passed to sub-process)
     # i.e. "Where does the queue process live?"
     connect_host = 'localhost'
+
+    connect_timeout=datetime.timedelta(milliseconds=500)
+    init_timeout=datetime.timedelta(milliseconds=100)
 
     # Make a new instance of this module.
     # This constructor is fairly bare because it is not a coroutine.
@@ -43,7 +47,7 @@ class Module(object):
         s2.listen(0)
         self.update_port = s2.getsockname()[1]
         print "Update port:", self.update_port
-        return [lambda:service.accept(s1),lambda:service.accept(s2)]
+        return [service.accept(s1),service.accept(s2)]
 
     # Helper function for new()
     # Launch subprocess
@@ -72,18 +76,28 @@ class Module(object):
         # Launch the subprocess
         self.spawn()
 
-        # Wait for the subprocess to connect
-        connections = yield [f() for f in listen_futures]
-        self.setup_connections(connections)
+        try:
+            # Wait for the subprocess to connect
+            try:
+                connections = yield [service.with_timeout(self.connect_timeout,f) for f in listen_futures]
+            except service.TimeoutError:
+                raise Exception("Could not connect to spawned module")
+            self.setup_connections(connections)
 
-        # Set up a callback for push-notifications from the sub-process
-        self.poll_updates()
+            # Set up a callback for push-notifications from the sub-process
+            self.poll_updates()
 
-        # Helps the queue keep track of whether a module is playing or suspended
-        self.is_on_top=False
+            # Helps the queue keep track of whether a module is playing or suspended
+            self.is_on_top=False
 
-        # Send initialization data to the sub-process
-        result = yield self.send_cmd("init",args)
+            # Send initialization data to the sub-process
+            try:
+                result = yield service.with_timeout(self.init_timeout,self.send_cmd("init",args))
+            except service.TimeoutError:
+                raise Exception("Could not init spawned module")
+        except Exception:
+            self.terminate() # ensure process is dead if any sort of error occurs
+            raise
 
     # Called from queue
     # Stops the module, as it has been removed from the queue
