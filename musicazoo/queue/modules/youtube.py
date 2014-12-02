@@ -5,7 +5,7 @@ if __name__ != '__main__':
 
     class Youtube(module.Module):
         TYPE_STRING='youtube'
-        process = ['python',__file__] # The sub-process to execute is itself
+        process = ['python',__file__, "--flag"] # The sub-process to execute is itself
         # tell me that isn't cute
 else:
     # If name is main then this is the sub-process
@@ -153,7 +153,8 @@ else:
     import threading
 
     def serve_forever():
-        mod.handle_one_command()
+        while True:
+            mod.handle_one_command()
 
     t=threading.Thread(target=serve_forever)
     t.daemon=True
@@ -172,4 +173,4 @@ else:
         
     
     print "QUITTING"
-    mod._close()
+    mod.close()

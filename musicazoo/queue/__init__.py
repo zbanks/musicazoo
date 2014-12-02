@@ -191,7 +191,7 @@ class Queue(service.JSONCommandService):
         @service.coroutine
         def remove_self():
             with (yield self.queue_lock.acquire()):
-                self.queue=[(uid,obj) for (uid,obj) in self.queue if uid != uid]
+                self.queue=[(uid,obj) for (uid,obj) in self.queue if uid != my_uid]
                 yield self.queue_updated()
         return remove_self
 

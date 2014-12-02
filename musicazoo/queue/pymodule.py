@@ -11,9 +11,9 @@ import musicazoo.lib.packet as packet
 # Connects back to the queue based on command-line arguments
 class ParentConnection(object):
     def __init__(self):
-        host = sys.argv[1]
-        cmd_port = int(sys.argv[2])
-        update_port = int(sys.argv[3])
+        host = sys.argv[-3]
+        cmd_port = int(sys.argv[-2])
+        update_port = int(sys.argv[-1])
         self.cs=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         self.us=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         self.cs.connect((host,cmd_port))
@@ -82,7 +82,7 @@ class JSONParentPoller(object):
             cmd=data['cmd']
 
             if cmd not in self.commands:
-                raise Exception("Unrecognized command "+cmd)
+                raise Exception("Unrecognized command")
 
             cmd_f=self.commands[cmd]
 
@@ -94,7 +94,8 @@ class JSONParentPoller(object):
             traceback.print_exc()
             self.connection.send_resp(packet.error(str(e)))
 
-    def update(self):
-        params = self.serialize()
+    def update(self, params=None):
+        if params is None:
+            params = self.serialize()
         data = {"cmd": "set_parameters", "args": {"parameters": params}}
         return self.connection.send_update(data)

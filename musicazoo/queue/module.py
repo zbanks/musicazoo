@@ -155,6 +155,8 @@ class Module(object):
     def on_disconnect(self):
         # Unused callback
         def terminate_done(f):
+            if f.exception() is not None:
+                traceback.print_exception(*f.exc_info())
             print "done killing child"
 
         if self.alive:

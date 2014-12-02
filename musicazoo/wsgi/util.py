@@ -3,7 +3,7 @@ import json
 import socket
 
 def wsgi_control(addr,port):
-    timeout=100
+    timeout=10000
 
     def zmq_query(inp):
         data=json.dumps(inp)
