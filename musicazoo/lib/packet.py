@@ -8,11 +8,11 @@ def good(payload=None):
 
 def assert_success(response):
     if not isinstance(response,dict) or 'success' not in response:
-        print response
+        print "E",response
         raise Exception("Malformed response")
     if response['success']:
         return
     if 'error' not in response:
-        print response
+        print "E",response
         raise Exception("Malformed response")
     raise Exception(response['error'])

@@ -8,6 +8,7 @@ import traceback
 import time
 import musicazoo.lib.packet as packet
 from toro import *
+import datetime
 
 ioloop=tornado.ioloop.IOLoop.instance()
 
@@ -37,6 +38,20 @@ def accept(sock):
         raise Return(result)
     finally:
         ioloop.remove_handler(sock.fileno())
+
+@coroutine
+def wait(proc):
+    poll_period=datetime.timedelta(milliseconds=10)
+    while True:
+        p=proc.poll()
+        if p is not None:
+            raise Return(p)
+
+        @return_future
+        def pause(callback):
+            ioloop.add_timeout(poll_period,callback)
+
+        yield pause()
 
 def connection_ready(sock, fd, events):
     while True:
