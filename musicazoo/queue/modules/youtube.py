@@ -139,12 +139,23 @@ else:
             self.update()
             return True
 
+        commands={
+            'init':cmd_init,
+            'play':cmd_play,
+            'suspend':cmd_suspend,
+            'rm':cmd_rm,
+            'do_seek':cmd_do_seek
+        }
+
     mod = YoutubeModule()
 
     import sys
     import threading
 
-    t=threading.Thread(target=mod.poller)
+    def serve_forever():
+        mod.handle_one_command()
+
+    t=threading.Thread(target=serve_forever)
     t.daemon=True
     t.start()
 

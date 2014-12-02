@@ -23,6 +23,8 @@ class Module(object):
 
     connect_timeout=datetime.timedelta(milliseconds=500)
     init_timeout=datetime.timedelta(milliseconds=100)
+    natural_death_timeout=datetime.timedelta(milliseconds=100) # give SIGTERM after .1 sec
+    sigterm_timeout=datetime.timedelta(milliseconds=500) # give SIGKILL after 1 sec
 
     # Make a new instance of this module.
     # This constructor is fairly bare because it is not a coroutine.
@@ -180,15 +182,19 @@ class Module(object):
         # TODO implement nice timeouts and stuff and make this asynchronous
         if not self.alive:
             raise service.Return()
+        self.alive=False
         self.cmd_stream.close()
         self.update_stream.close()
-        if self.proc.poll() is None: # TODO wait .1 sec here
+        try:
+            yield service.with_timeout(self.natural_death_timeout,service.wait(self.proc))
+        except service.TimeoutError:
             print "Module was not dead, sending SIGTERM..."
             self.proc.terminate()
-            if self.proc.poll() is None: # TODO wait 1 sec here
+            try:
+                yield service.with_timeout(self.sigterm_timeout,service.wait(self.proc))
+            except service.TimeoutError:
                 print "Module was not dead, sending SIGKILL..."
                 self.proc.kill()
-        self.alive=False
 
     # Register callback for data received on this module's update pipe
     def poll_updates(self):

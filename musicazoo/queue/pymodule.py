@@ -73,27 +73,26 @@ class JSONParentPoller(object):
     def close(self):
         return self.connection.close()
 
-    def poller(self):
-        while True:
-            data = self.connection.recv_cmd()
-            print "Module Recieved: ", data
-            cmd = "cmd_" + data.get("cmd")
+    def handle_one_command(self):
+        data = self.connection.recv_cmd()
+        try:
+            if 'cmd' not in data:
+                raise Exception("Malformed command")
 
-            if not hasattr(self, cmd):
-                response = packet.error("Invalid command")
-            else:
-                args = data.get("args", {})
+            cmd=data['cmd']
 
-                try:
-                    response = getattr(self, cmd)(**args)
-                except Exception:
-                    traceback.print_exc()
-                    response = packet.error("Generic multi-command processing error")
+            if cmd not in self.commands:
+                raise Exception("Unrecognized command "+cmd)
 
-            if response is None: 
-                print "Warning: command response is None to data:", data
+            cmd_f=self.commands[cmd]
 
-            self.connection.send_resp(response)
+            args = data.get("args", {})
+
+            self.connection.send_resp(packet.good(cmd_f(self,**args)))
+
+        except Exception as e:
+            traceback.print_exc()
+            self.connection.send_resp(packet.error(str(e)))
 
     def update(self):
         params = self.serialize()
