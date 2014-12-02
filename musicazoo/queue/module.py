@@ -1,5 +1,4 @@
 import musicazoo.lib.service as service
-import musicazoo.lib.tcp
 import musicazoo.lib.packet as packet
 import socket
 import tornado.iostream
