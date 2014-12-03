@@ -169,20 +169,35 @@ class Queue(service.JSONCommandService):
     # TODO harden this
     @service.coroutine
     def queue_updated(self):
-        cur_uids=[uid for (uid,obj) in self.queue]
-        to_remove=[obj.remove for (uid,obj) in self.old_queue if uid not in cur_uids and obj.alive]
-        to_play=[]
-        if len(self.queue) > 0:
-            uid,obj=self.queue[0]
-            if not obj.is_on_top:
-                to_play=[obj.play]
-        to_suspend=[obj.suspend for (uid,obj) in self.queue[1:] if obj.is_on_top]
-        self.old_queue=self.queue
+        again=True
+        while again:
+            again=False
+            cur_uids=[uid for (uid,obj) in self.queue]
+            to_remove=[((uid,obj),obj.remove) for (uid,obj) in self.old_queue if uid not in cur_uids and obj.alive]
+            to_play=[]
+            if len(self.queue) > 0:
+                uid,obj=self.queue[0]
+                if not obj.is_on_top:
+                    to_play=[((uid,obj),obj.play)]
+            to_suspend=[((uid,obj),obj.suspend) for (uid,obj) in self.queue[1:] if obj.is_on_top]
+            self.old_queue=self.queue
 
-        futures=to_remove+to_suspend+to_play
-        if len(futures) > 0:
-            # Execute all operations simultaneously
-            yield [future() for future in futures]
+            actions=to_remove+to_suspend+to_play
+            try:
+                if len(actions) > 0:
+                    # Execute all operations simultaneously
+                    actions=[(mod,future()) for mod,future in actions]
+                    yield [future for uid,future in actions]
+            except Exception as e:
+                print "Errors trying to update queue:"
+                for (uid,obj),f in actions:
+                    if f.exception():
+                        print "- {0} raised {1}".format(uid,f.exception())
+                bad_modules=[mod for mod,f in actions if f.exception()]
+                print "Removing bad modules:",bad_modules
+                yield [obj.terminate() for uid,obj in bad_modules]
+                self.queue=[(uid,obj) for uid,obj in self.queue if uid not in [uid2 for uid2,obj2 in bad_modules]]
+                again=True
 
     # Returns a coroutine that may be executed to remove the current module from the queue
     # Generally, the result of this function is passed into a newly constructed module, so that
@@ -194,6 +209,17 @@ class Queue(service.JSONCommandService):
                 self.queue=[(uid,obj) for (uid,obj) in self.queue if uid != my_uid]
                 yield self.queue_updated()
         return remove_self
+
+    def shutdown(self):
+        def shutdown_complete(f):
+            service.ioloop.stop()
+        service.ioloop.add_future(self.killall(),shutdown_complete)
+
+    @service.coroutine
+    def killall(self):
+        with (yield self.queue_lock.acquire()):
+            self.queue=[]
+            yield self.queue_updated()
 
 ## EVERYTHING BELOW HERE IS TRASH
     """

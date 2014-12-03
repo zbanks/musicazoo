@@ -22,7 +22,8 @@ class Module(object):
     connect_host = 'localhost'
 
     connect_timeout=datetime.timedelta(milliseconds=500)
-    init_timeout=datetime.timedelta(milliseconds=100)
+    cmd_write_timeout=datetime.timedelta(milliseconds=100)
+    cmd_read_timeout=datetime.timedelta(milliseconds=100)
     natural_death_timeout=datetime.timedelta(milliseconds=100) # give SIGTERM after .1 sec
     sigterm_timeout=datetime.timedelta(milliseconds=500) # give SIGKILL after 1 sec
 
@@ -93,7 +94,7 @@ class Module(object):
 
             # Send initialization data to the sub-process
             try:
-                result = yield service.with_timeout(self.init_timeout,self.send_cmd("init",args))
+                result = yield self.send_cmd("init",args)
             except service.TimeoutError:
                 raise Exception("Could not init spawned module")
         except Exception:
@@ -141,10 +142,11 @@ class Module(object):
             cmd_dict["args"]=args
         cmd_str=json.dumps(cmd_dict)+'\n'
 
+        toe=None
         # Lock on the command pipe so we ensure sequential req/rep transactions
         with (yield self.cmd_lock.acquire()):
-            yield service.write(self.cmd_stream,cmd_str)
-            response_str = yield service.read_until(self.cmd_stream,'\n')
+            yield service.with_timeout(self.cmd_write_timeout,self.cmd_stream.write(cmd_str))
+            response_str = yield service.with_timeout(self.cmd_read_timeout,self.cmd_stream.read_until('\n'))
 
         response_dict=json.loads(response_str)
         packet.assert_success(response_dict)

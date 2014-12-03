@@ -12,12 +12,6 @@ import datetime
 
 ioloop=tornado.ioloop.IOLoop.instance()
 
-def read_until(stream, delimiter):
-    return return_future(stream.read_until)(delimiter)
-
-def write(stream, data):
-    return return_future(stream.write)(data)
-
 @coroutine
 def accept(sock):
     @return_future
@@ -79,11 +73,11 @@ class Service(tornado.tcpserver.TCPServer):
     @coroutine
     def handle_stream(self,stream,address):
         try:
-            data = yield read_until(stream,'\n')
+            data = yield stream.read_until('\n')
             parsed = json.loads(data)
             response = yield self.command(parsed)
             encoded = json.dumps(response)+'\n'
-            yield write(stream, encoded)
+            yield stream.write(encoded)
         except Exception:
             print "Communication exception!"
             traceback.print_exc()
