@@ -494,7 +494,7 @@ $(document).ready(function(){
 var authCallback = _.once(function(available){
     var modules = _({
         "youtube": {
-            commands: [],
+            commands: ["seek_abs", "seek_rel", "suspend", "pause", "resume"],
             parameters: [
                 "url", "title", "duration", "site", "media", "thumbnail", "description",
                 "time", "status"
@@ -536,6 +536,7 @@ var authCallback = _.once(function(available){
     }
 
     var Action = Backbone.Model.extend({
+        active: true, // everything is active! GT
         defaults: function(){
             return {
                 type: null,
@@ -605,6 +606,7 @@ var authCallback = _.once(function(available){
                 this.on("change:time", function(model, time, options){
                     if(!options.parse){ // Not a server update
                         var prev_time = this.previous('time');
+                        console.log("seek", time);
                         deferQuery({cmd: "tell_module", args: {uid: this.id, cmd: "seek_abs", args: {position: time}}});
                     }
                 }, this);
@@ -670,7 +672,7 @@ var authCallback = _.once(function(available){
         hasCommand: function(p){ return _.contains(this.commands, p); },
         template_queue: "unknown",
         template_active: "unknown",
-        active: false,
+        //active: false,
         background: false
     });
 
@@ -746,6 +748,7 @@ var authCallback = _.once(function(available){
         fetch: function(){
             this.get('queue').fetch();
             //this.get('statics').fetch();
+            //
             //this.get('active').fetch();
             this.get('background').fetch();
         }
