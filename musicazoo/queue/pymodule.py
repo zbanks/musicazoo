@@ -82,6 +82,7 @@ class JSONParentPoller(object):
             cmd=data['cmd']
 
             if cmd not in self.commands:
+                print "Unrecognized command:", cmd, data
                 raise Exception("Unrecognized command")
 
             cmd_f=self.commands[cmd]
