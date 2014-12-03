@@ -19,8 +19,9 @@ else:
             self.run=True
             super(ProblematicModule, self).__init__()
 
-        def cmd_init(self, noinit=False, noquit=False, noterm=False):
+        def cmd_init(self, noinit=False, noquit=False, noterm=False, noresponse=False):
             self.noquit=noquit
+            self.noresponse=noresponse
             if noterm:
                 signal.signal(signal.SIGTERM, handler)
             if noinit:
@@ -51,3 +52,7 @@ else:
 
     while mod.run:
         mod.handle_one_command()
+        if mod.noresponse:
+            print "Handled init, freezing..."
+            while True:
+                time.sleep(1)

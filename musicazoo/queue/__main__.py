@@ -8,5 +8,7 @@ modules = [youtube.Youtube,problem.Problem]
 #   "youtube": ["python", "path/to/youtube.py"],
 #}
 
+
 musicazoo.queue.Queue(modules)
+tornado.ioloop.IOLoop.instance().set_blocking_signal_threshold(.9, None)
 tornado.ioloop.IOLoop.instance().start()
