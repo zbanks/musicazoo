@@ -210,6 +210,11 @@ class Queue(service.JSONCommandService):
                 yield self.queue_updated()
         return remove_self
 
+    def shutdown(self):
+        def shutdown_complete(f):
+            service.ioloop.stop()
+        service.ioloop.add_future(self.killall(),shutdown_complete)
+
     @service.coroutine
     def killall(self):
         with (yield self.queue_lock.acquire()):
