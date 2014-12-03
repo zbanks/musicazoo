@@ -1,14 +1,20 @@
 import musicazoo.queue
 import musicazoo.lib.service as service
-from musicazoo.queue.modules import youtube,problem
+from musicazoo.queue.module import Module
+import os
 import signal
 
-modules = [youtube.Youtube,problem.Problem]
+cwd=os.path.dirname(__file__)
 
-#modules = {
-#   "youtube": ["python", "path/to/youtube.py"],
-#}
+class Youtube(Module):
+    TYPE_STRING='youtube'
+    process = ['python',os.path.join(cwd,'modules/youtube.py')]
 
+class Problem(Module):
+    TYPE_STRING='problem'
+    process = ['python',os.path.join(cwd,'modules/problem.py')]
+
+modules = [Youtube, Problem]
 
 q=musicazoo.queue.Queue(modules)
 
