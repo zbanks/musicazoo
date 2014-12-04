@@ -6,6 +6,7 @@ import tornado.ioloop
 import subprocess
 import json
 import datetime
+import traceback
 
 # A module is an object on the queue.
 # The actual code for a module runs in a sub-process.
@@ -183,15 +184,14 @@ class Module(object):
     # Like, no really.
     @service.coroutine
     def terminate(self):
-        # TODO implement nice timeouts and stuff and make this asynchronous
         if not self.alive:
             raise service.Return()
         self.alive=False
-        self.cmd_stream.close()
-        self.update_stream.close()
         try:
+            self.cmd_stream.close()
+            self.update_stream.close()
             yield service.with_timeout(self.natural_death_timeout,service.wait(self.proc))
-        except service.TimeoutError:
+        except (service.TimeoutError, AttributeError):
             print "Module was not dead, sending SIGTERM..."
             self.proc.terminate()
             try:
@@ -199,6 +199,10 @@ class Module(object):
             except service.TimeoutError:
                 print "Module was not dead, sending SIGKILL..."
                 self.proc.kill()
+        except Exception:
+            print "UNHANDLED EXCEPTION IN TERMINATE"
+            traceback.print_exc()
+            print "There is probably an orphaned child process!"
 
     # Register callback for data received on this module's update pipe
     def poll_updates(self):
