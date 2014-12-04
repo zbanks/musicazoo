@@ -39,7 +39,6 @@ class YoutubeModule(pymodule.JSONParentPoller):
             state = "ready"
 
         result["status"] = state
-        print "State:", state
         return result
 
     @property
@@ -74,7 +73,6 @@ class YoutubeModule(pymodule.JSONParentPoller):
         self.rate=None
         messages.put("init")
         self.update()
-        return packet.good()
 
     def cmd_play(self):
         print "Play"
@@ -85,7 +83,6 @@ class YoutubeModule(pymodule.JSONParentPoller):
             messages.put("play")
         self.state_is_suspended = False
         self.update()
-        return packet.good()
 
     def cmd_suspend(self):
         print "Suspend"
@@ -93,7 +90,6 @@ class YoutubeModule(pymodule.JSONParentPoller):
             self.player.pause()
         self.state_is_suspended = True
         self.update()
-        return packet.good()
 
     def cmd_resume(self):
         print "Resume"
@@ -101,7 +97,6 @@ class YoutubeModule(pymodule.JSONParentPoller):
             self.player.play()
             self.state_is_paused = False
             self.update()
-        return packet.good()
 
     def cmd_pause(self):
         print "Pause"
@@ -109,27 +104,24 @@ class YoutubeModule(pymodule.JSONParentPoller):
             self.player.pause()
             self.state_is_paused = True
             self.update()
-        return packet.good()
 
     def cmd_rm(self):
         print "Remove"
         self.state_is_stopping = True
-        self.update()
-
-        self.player.stop()
         messages.put("rm")
-        messages.join()
-        return packet.good()
+        #messages.join()
 
     def cmd_seek_abs(self, position):
         if self.player.up():
             self.player.seek_abs(position)
-        return packet.good()
 
     def cmd_seek_rel(self, position):
         if not self.player.up():
             self.player.seek_rel(position)
-        return packet.good()
+
+    def stop(self):
+        self.player.stop()
+        self.update()
 
     def play(self):
         self.player.load(self.media,cookies=self.cookies)
@@ -137,6 +129,11 @@ class YoutubeModule(pymodule.JSONParentPoller):
         self.update()
 
     def update_time(self):
+        if self.state_has_started and not self.player.up():
+            # Done!
+            messages.put("rm")
+            #messages.join()
+            return
         t = self.player.time()
         if t is not None:
             # TODO: loading state
@@ -148,6 +145,7 @@ class YoutubeModule(pymodule.JSONParentPoller):
             if t != self.time:
                 self.time = t
                 self.update()
+
 
     def get_video_info(self):
         url = self.url
@@ -242,6 +240,7 @@ while True:
         elif msg == "play":
             mod.play()
         elif msg == "rm":
+            mod.stop()
             break
     
 
