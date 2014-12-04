@@ -100,10 +100,9 @@ class Module(service.JSONCommandProcessor):
             raise
 
         def poll_updates_done(f):
-            print "Update stream closed!"
-            
             if f.exception() is not None:
                 traceback.print_exception(*f.exc_info())
+
         service.ioloop.add_future(self.poll_updates(),poll_updates_done) # Listen for updates from module forever
 
     # Called from queue
