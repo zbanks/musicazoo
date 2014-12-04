@@ -256,33 +256,46 @@ var volume_lockout = false;
 setInterval(function(){ volume_lockout = false; }, 500);
 
 
-var _query_queue = [];
-var _runquery_timeout;
 //var BASE_URL = "http://localhost:9000/";
 var BASE_URL = "/queue";
 
-function deferQuery(data, cb, err){
-    _query_queue.push({"data": data, "cb": cb, "err": err});
+var Endpoint = function(url){
+    this.url = url;
+    this.reqs = [];
+    this.alive = false;
+    this.onAlive = null;
+    this.onDead = null;
+    this.timeout = window.setTimeout(_.bind(this.runQueries, this), 0);
 }
 
-function forceQuery(data, cb, err){
-    deferQuery(data, cb, err);
-    runQueries();
+Endpoint.prototype.deferQuery = function(data, cb, err){
+    console.log("def query", this.url, data);
+    this.reqs.push({"data": data, "cb": cb, "err": err});
 }
 
-function runQueries(cb, err){
-    window.clearTimeout(_runquery_timeout);
-    if(_query_queue.length){
-        var cbs = _.pluck(_query_queue, "cb");
-        var errs = _.pluck(_query_queue, "cb");
-        var datas = _.pluck(_query_queue, "data");
-        $.ajax(BASE_URL, {
+Endpoint.prototype.forceQuery = function(data, cb, err){
+    this.deferQuery(data, cb, err);
+    this.runQueries();
+}
+
+Endpoint.prototype.runQueries = function(cb, err){
+    var self = this;
+    if(this.timeout !== null){
+        window.clearTimeout(this.timeout);
+    }
+    if(this.reqs.length){
+        var cbs = _.pluck(this.reqs, "cb");
+        var errs = _.pluck(this.reqs, "cb");
+        var datas = _.pluck(this.reqs, "data");
+        console.log("req'ing", this.url);
+        $.ajax(this.url, {
             data: JSON.stringify(datas),
             dataType: 'json',
             type: 'POST',
             contentType: 'text/json',
             success: function(resp){
-                regainConnection();
+                //regainConnection();
+                self.onAlive && self.onAlive();
                 if(resp.length != datas.length){ 
                     console.error("Did not recieve correct number of responses from server!");
                     return;
@@ -301,21 +314,22 @@ function runQueries(cb, err){
                 if(cb){
                     cb();
                 }
-                _runquery_timeout = window.setTimeout(runQueries, 0); // Defer
+                self.timeout = window.setTimeout(_.bind(self.runQueries, self), 0); // Defer
             },
             error: function(){
-                lostConnection();
+                //lostConnection();
+                this.onDead && this.onDead();
                 _.each(errs, function(x){ if(x){ x(); } });
-                _runquery_timeout = window.setTimeout(runQueries, 500); // Connection dropped?
+                this.timeout = window.setTimeout(_.bind(this.runQueries, this), 500); // Connection dropped?
                 if(err){
                     err();
                 }
             }
         });
     }else{
-        _runquery_timeout = window.setTimeout(runQueries, 50);
+        this.timeout = window.setTimeout(_.bind(this.runQueries, this), 50);
     }
-    _query_queue = [];
+    this.reqs = [];
 }
 
 function regainConnection(){
@@ -329,23 +343,29 @@ function lostConnection(){
     $(".disconnect-hide").hide();
 }
 
+var queue_endpoint = new Endpoint("/queue");
+var volume_endpoint = new Endpoint("/vol");
+
+queue_endpoint.onAlive = regainConnection();
+queue_endpoint.onDead = lostConnection();
+
 function authenticate(cb){
     var doAuth = function(){
         // Auth & get capabilities
         console.log("trying to auth");
         var caps = {};
-        deferQuery({cmd: "modules_available"}, function(mcap){
+        queue_endpoint.deferQuery({cmd: "modules_available"}, function(mcap){
             caps.modules = mcap;
         });
         /* GT - Statics no longer part of queue
-        deferQuery({cmd: "static_capabilities"}, function(scap){
+        queue_endpoint.deferQuery({cmd: "static_capabilities"}, function(scap){
             caps.statics = scap;
         });
         */
-        deferQuery({cmd: "backgrounds_available"}, function(bcap){
+        queue_endpoint.deferQuery({cmd: "backgrounds_available"}, function(bcap){
             caps.backgrounds = bcap;
         });
-        runQueries(function(){
+        queue_endpoint.runQueries(function(){
             cb(caps);
         }, function(){
             console.log("unable to auth");
@@ -395,7 +415,7 @@ $(document).ready(function(){
             return false;
         }
         command_match(COMMANDS, query, function(args){
-            deferQuery(args, refreshPlaylist, lostConnection);
+            queue_endpoint.deferQuery(args, refreshPlaylist, lostConnection);
             refreshPlaylist();
         });
         return false; // Prevent form submitting
@@ -585,16 +605,16 @@ var authCallback = _.once(function(available){
                         console.log(this.hasCommand("pause"), this.commands);
                         if(this.hasCommand("pause") && this.hasCommand("resume")){
                             if(prev_status == "paused" && status == "playing"){
-                                deferQuery({cmd: "tell_module", args: {uid: this.id, cmd: "resume"}});
+                                queue_endpoint.deferQuery({cmd: "tell_module", args: {uid: this.id, cmd: "resume"}});
                             }else if(prev_status == "playing" && status == "paused"){
-                                deferQuery({cmd: "tell_module", args: {uid:this.id, cmd: "pause"}});
+                                queue_endpoint.deferQuery({cmd: "tell_module", args: {uid:this.id, cmd: "pause"}});
                             }
                         }
 
                         // Stop
                         if(this.hasCommand("stop")){
                             if(status == "stopped"){
-                                deferQuery({cmd: "tell_module", args: {uid:this.id, cmd: "stop"}});
+                                queue_endpoint.deferQuery({cmd: "tell_module", args: {uid:this.id, cmd: "stop"}});
                             }
                         }
                     }
@@ -608,7 +628,7 @@ var authCallback = _.once(function(available){
                     if(!options.parse){ // Not a server update
                         var prev_time = this.previous('time');
                         console.log("seek", time);
-                        deferQuery({cmd: "tell_module", args: {uid: this.id, cmd: "seek_abs", args: {position: time}}});
+                        queue_endpoint.deferQuery({cmd: "tell_module", args: {uid: this.id, cmd: "seek_abs", args: {position: time}}});
                     }
                 }, this);
             }
@@ -618,7 +638,7 @@ var authCallback = _.once(function(available){
             if(this.hasParameter("rate") && this.hasCommand("set_rate")){
                 this.on("change:rate", function(model, rate, options){
                     if(!options.parse){ // Not a server update
-                        deferQuery({cmd: "tell_module", args: {uid: this.id, cmd: "set_rate", args: {rate: rate}}});
+                        queue_endpoint.deferQuery({cmd: "tell_module", args: {uid: this.id, cmd: "set_rate", args: {rate: rate}}});
                     }
                 }, this);
             }
@@ -631,10 +651,10 @@ var authCallback = _.once(function(available){
         sync: function(method, model, options){
             if(method == "read"){
                 if(this.background){
-                    deferQuery({cmd: "bg", args: {parameters: background_capabilities}}, options.success, options.error);
+                    queue_endpoint.deferQuery({cmd: "bg", args: {parameters: background_capabilities}}, options.success, options.error);
                 /* GT - No more "current" vs. queue -- still need to check queue
                 }else if(this.active){
-                    deferQuery({cmd: "cur", args: {parameters: module_capabilities}}, options.success, options.error);
+                    queue_endpoint.deferQuery({cmd: "cur", args: {parameters: module_capabilities}}, options.success, options.error);
                 */
                 }else{
                     console.log(this);
@@ -645,14 +665,14 @@ var authCallback = _.once(function(available){
                 if(this.background){
                     //TODO - You can't actually delete backgrounds
                     console.error("How do I delete a background!?");
-                    deferQuery({cmd: "rm", args: {uids: [model.id]}}, options.success, options.error);
+                    queue_endpoint.deferQuery({cmd: "rm", args: {uids: [model.id]}}, options.success, options.error);
                 }else if(this.active){
-                    //deferQuery
+                    //queue_endpoint.deferQuery
                     // Eh, try anyways
-                    deferQuery({cmd: "rm", args: {uids: [model.id]}}, options.success, options.error);
-                    //deferQuery({cmd: "tell_module", args: {uid: model.id, cmd: "stop"}});
+                    queue_endpoint.deferQuery({cmd: "rm", args: {uids: [model.id]}}, options.success, options.error);
+                    //queue_endpoint.deferQuery({cmd: "tell_module", args: {uid: model.id, cmd: "stop"}});
                 }else{
-                    deferQuery({cmd: "rm", args: {uids: [model.id]}}, options.success, options.error);
+                    queue_endpoint.deferQuery({cmd: "rm", args: {uids: [model.id]}}, options.success, options.error);
                 }
             }else{
                 console.log("ERROR:", "Unable to perform action on queue item:" + method);
@@ -696,7 +716,7 @@ var authCallback = _.once(function(available){
                 console.error("Can only read from Queue");
                 return;
             }
-            deferQuery({cmd: "queue", args: {parameters: module_capabilities}}, options.success, options.error);
+            queue_endpoint.deferQuery({cmd: "queue", args: {parameters: module_capabilities}}, options.success, options.error);
         }
     });
 
@@ -707,7 +727,7 @@ var authCallback = _.once(function(available){
             if(this.hasParameter('vol') && this.hasCommand('set_vol')){
                 this.on('change:vol', function(model, vol, options){
                     if(!options.parse){
-                        deferQuery({cmd: "tell_static", args: {"uid": this.id, "cmd": "set_vol", "args": {"vol": vol}}});
+                        queue_endpoint.deferQuery({cmd: "tell_static", args: {"uid": this.id, "cmd": "set_vol", "args": {"vol": vol}}});
                     }
                 });
             }
@@ -715,6 +735,29 @@ var authCallback = _.once(function(available){
         idAttribute: "uid",
         hasParameter: function(p){ return _.contains(this.parameters, p); },
         hasCommand: function(p){ return _.contains(this.commands, p); }
+    });
+
+    var Volume = Backbone.Model.extend({
+        defaults: {
+            vol: 0,
+        },
+        initialize: function(prop, options){
+            this.on('change:vol', function(model, vol, options){
+                if(!options.parse){
+                    volume_endpoint.deferQuery({cmd: "set_vol", args: { vol: vol }});
+                }
+            });
+        },
+        sync: function(method, model, options){
+            if(method == "read"){
+                console.log('reading vol')
+                volume_endpoint.deferQuery({cmd: "get_vol"}, options.success, options.error);
+            }
+            if(method != "read"){
+                console.error("Can only read from Queue");
+                return;
+            }
+        },
     });
 
     var StaticSet = Backbone.Collection.extend({
@@ -732,7 +775,7 @@ var authCallback = _.once(function(available){
                 console.error("Can only read from StaticSet");
                 return;
             }
-            deferQuery({cmd: "statics", args: {parameters: static_capabilities}}, options.success, options.error);
+            queue_endpoint.deferQuery({cmd: "statics", args: {parameters: static_capabilities}}, options.success, options.error);
         }
 
     });
@@ -744,6 +787,7 @@ var authCallback = _.once(function(available){
                 // statics: new StaticSet(),
                 //active: new CurrentAction(),
                 background: new Background(),
+                volume: new Volume(),
             };
         },
         fetch: function(){
@@ -752,6 +796,7 @@ var authCallback = _.once(function(available){
             //
             //this.get('active').fetch();
             this.get('background').fetch();
+            this.get('volume').fetch();
         }
     });
 
@@ -805,18 +850,18 @@ var authCallback = _.once(function(available){
         },
         keyDown: function(ev){
             var key = $(ev.target).attr('data-key');
-            forceQuery({cmd: "tell_module", args: {uid: this.model.id, cmd: "key_down", args: {key: key}}});
+            queue_endpoint.forceQuery({cmd: "tell_module", args: {uid: this.model.id, cmd: "key_down", args: {key: key}}});
         },
         keyUp: function(ev){
             var key = $(ev.target).attr('data-key');
-            forceQuery({cmd: "tell_module", args: {uid: this.model.id, cmd: "key_up", args: {key: key}}});
+            queue_endpoint.forceQuery({cmd: "tell_module", args: {uid: this.model.id, cmd: "key_up", args: {key: key}}});
         },
         addRelatedYoutube: function(ev){
             var self = this;
             var pushVideo = function(){
                 var related = self.model.get('related');
                 var rel = related.pop();
-                deferQuery({cmd: 'add', args: {type: 'youtube', args: {url: rel.url}}});
+                queue_endpoint.deferQuery({cmd: 'add', args: {type: 'youtube', args: {url: rel.url}}});
                 refreshPlaylist();
             };
             var vid = this.model.get('vid');
@@ -865,7 +910,7 @@ var authCallback = _.once(function(available){
                 update: function(ev, ui){
                     var ordering = self.$("li").map(function(i, e){return $(e).attr('data-view-id')}).toArray();
                     // idk where this could go
-                    deferQuery({cmd: "mv", args:{uids: ordering}});
+                    queue_endpoint.deferQuery({cmd: "mv", args:{uids: ordering}});
                 },
                 start: function(ev, ui){
                     self.no_autorefresh = true;
@@ -919,7 +964,7 @@ var authCallback = _.once(function(available){
         }
     });
 
-    var StaticVolumeView = Backbone.View.extend({
+    var VolumeView = Backbone.View.extend({
         initialize: function(){
             this.render();
             this.listenTo(this.model, "change:vol", this.render);
@@ -978,23 +1023,12 @@ var authCallback = _.once(function(available){
         }
     });
 
-    var StaticSetView = Backbone.View.extend({
-        initialize: function(){
-            this.listenTo(this.collection, "add", function(model){
-                if(model.get('class') == "volume"){
-                    var sv = new StaticVolumeView({model: model});
-                }else if(model.get('class') == "identity"){
-                    var sv = new StaticIdentityView({model: model});
-                }
-            });
-        }
-    });
 
     mz = mz = new Musicazoo();
     var qv = new QueueView({collection: mz.get('queue'), el: $("ol.playlist")});
-    //var cv = new ActiveView({model: mz.get('active'), el: $("ol.current")});
     var bv = new BackgroundView({model: mz.get('background'), el: $("ol.background")});
-    //var ssv = new StaticSetView({collection: mz.get('statics')});
+    var vv = new VolumeView({model: mz.get('volume')});
+
     mz.fetch();
 
     refreshPlaylist = function(){

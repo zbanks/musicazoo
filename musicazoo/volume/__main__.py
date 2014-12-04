@@ -58,6 +58,9 @@ class Volume(service.JSONCommandService):
             pass
         raise service.Return({})
 
+    def shutdown(self):
+        service.ioloop.stop()
+
     commands={
         'set_vol': set_vol,
         'get_vol': get_vol
