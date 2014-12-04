@@ -14,7 +14,7 @@ import traceback
 
 # TODO add appropriate locking so that a module that is in the process of being shutdown doesn't receive additional commands
 
-class Module(object):
+class Module(service.JSONCommandProcessor):
     # Hostname for listening socket
     # i.e. "Who is allowed to connect to the queue?"
     listen_host = 'localhost'
@@ -101,6 +101,11 @@ class Module(object):
         except Exception:
             self.terminate() # ensure process is dead if any sort of error occurs
             raise
+
+        def poll_updates_done(f):
+            if f.exception() is not None:
+                traceback.print_exception(*f.exc_info())
+        service.ioloop.add_future(self.poll_updates(),poll_updates_done) # Listen for updates from module forever
 
     # Called from queue
     # Stops the module, as it has been removed from the queue
@@ -204,24 +209,30 @@ class Module(object):
             traceback.print_exc()
             print "There is probably an orphaned child process!"
 
-    # Register callback for data received on this module's update pipe
+    # Poll for updates forever
+    @service.coroutine
     def poll_updates(self):
-        self.update_stream.read_until('\n',self.got_update)
+        service.listen_for_commands(self.update_stream,self.command)
 
     # Callback for when data received on this module's update pipe
-    def got_update(self,data):
-        print "RECEIVED DATA!" # TODO update this module's parameters dictionary
-        try:
-            json_data = json.loads(data)
-            cmd = json_data.get("cmd")
-            args = json_data.get("args", {})
-            if cmd == "set_parameters":
-                params = args.get("parameters")
-                if isinstance(params, dict):
-                    self.parameters = params
-                    print "UPDATED PARAMETERS", len(params)
-        except:
-            print "Error parsing update data:", data
-        self.poll_updates() # re-register
+    #@coroutine
+    #def got_update(self,data):
+    #    print "RECEIVED DATA!" # TODO update this module's parameters dictionary
+    #    try:
+    #        json_data = json.loads(data)
+    #        cmd = json_data.get("cmd")
+    #        args = json_data.get("args", {})
+    #        if cmd == "set_parameters":
+    #            params = args.get("parameters")
+    #            if isinstance(params, dict):
+    #                self.parameters = params
+    #                print "UPDATED PARAMETERS", len(params)
+    #    except:
+    #        print "Error parsing update data:", data
+    #    self.poll_updates() # re-register
 
+    @service.coroutine
+    def set_parameters(self,parameters):
+        self.parameters.update(parameters)
 
+    commands={'set_parameters':set_parameters}
