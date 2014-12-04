@@ -269,7 +269,6 @@ var Endpoint = function(url){
 }
 
 Endpoint.prototype.deferQuery = function(data, cb, err){
-    console.log("def query", this.url, data);
     this.reqs.push({"data": data, "cb": cb, "err": err});
 }
 
@@ -287,7 +286,6 @@ Endpoint.prototype.runQueries = function(cb, err){
         var cbs = _.pluck(this.reqs, "cb");
         var errs = _.pluck(this.reqs, "cb");
         var datas = _.pluck(this.reqs, "data");
-        console.log("req'ing", this.url);
         $.ajax(this.url, {
             data: JSON.stringify(datas),
             dataType: 'json',
@@ -750,7 +748,6 @@ var authCallback = _.once(function(available){
         },
         sync: function(method, model, options){
             if(method == "read"){
-                console.log('reading vol')
                 volume_endpoint.deferQuery({cmd: "get_vol"}, options.success, options.error);
             }
             if(method != "read"){
