@@ -1,6 +1,7 @@
 import tornado.tcpserver
 from tornado.gen import *
 from tornado.concurrent import *
+import tornado.iostream
 import tornado.ioloop
 import itertools
 import json
@@ -58,6 +59,27 @@ def connection_ready(sock, fd, events):
         connection.setblocking(0)
         handle_connection(connection, address)
 
+@coroutine
+def listen_for_commands(stream,handle_cr,over_cr=None):
+    try:
+        while True:
+            data = yield stream.read_until('\n')
+            parsed = json.loads(data)
+            response = yield handle_cr(parsed)
+            encoded = json.dumps(response)+'\n'
+            yield stream.write(encoded)
+    except tornado.iostream.StreamClosedError:
+        pass
+    except Exception:
+        print "Communication exception!"
+        traceback.print_exc()
+        print "(communication interrupted)"
+    finally:
+        stream.close()
+    if over_cr:
+        yield over_cr()
+
+
 class Service(tornado.tcpserver.TCPServer):
     def __init__(self,port=None):
         if port is not None:
@@ -70,22 +92,10 @@ class Service(tornado.tcpserver.TCPServer):
     def command(self,query):
         raise Return(query)
 
-    @coroutine
     def handle_stream(self,stream,address):
-        try:
-            data = yield stream.read_until('\n')
-            parsed = json.loads(data)
-            response = yield self.command(parsed)
-            encoded = json.dumps(response)+'\n'
-            yield stream.write(encoded)
-        except Exception:
-            print "Communication exception!"
-            traceback.print_exc()
-            print "(communication interrupted)"
-        finally:
-            stream.close()
+        return listen_for_commands(stream,self.command)
 
-class JSONCommandService(Service):
+class JSONCommandProcessor(object):
     @coroutine
     def command(self,line):
         if isinstance(line,list):

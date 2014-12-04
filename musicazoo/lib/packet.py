@@ -10,9 +10,12 @@ def assert_success(response):
     if not isinstance(response,dict) or 'success' not in response:
         print "E",response
         raise Exception("Malformed response")
+    if 'success' not in response:
+        raise Exception("Malformed response")
     if response['success']:
+        if 'result' in response:
+            return response['result']
         return
     if 'error' not in response:
-        print "E",response
         raise Exception("Malformed response")
     raise Exception(response['error'])

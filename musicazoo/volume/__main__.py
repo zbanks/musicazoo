@@ -21,7 +21,7 @@ def human_to_computer(val):
 def computer_to_human(val):
 	return int(100*(float(val)/100)**(1.0/exp))
 
-class Volume(service.JSONCommandService):
+class Volume(service.JSONCommandProcessor, service.Service):
     port=5581
 
     def __init__(self):

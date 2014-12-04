@@ -2,7 +2,7 @@ import musicazoo.lib.service as service
 
 # A queue manages the life and death of modules, through tornado's IOLoop.
 
-class Queue(service.JSONCommandService):
+class Queue(service.JSONCommandProcessor, service.Service):
     port=5580
 
     def __init__(self,modules):
@@ -28,7 +28,7 @@ class Queue(service.JSONCommandService):
         self.last_uid=-1
 
         # JSONCommandService handles all of the low-level TCP connection stuff.
-        service.JSONCommandService.__init__(self)
+        super(Queue,self).__init__()
 
     # Get a new UID for a module.
     def get_uid(self):

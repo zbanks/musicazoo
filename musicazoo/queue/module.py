@@ -14,7 +14,7 @@ import traceback
 
 # TODO add appropriate locking so that a module that is in the process of being shutdown doesn't receive additional commands
 
-class Module(object):
+class Module(service.JSONCommandProcessor):
     # Hostname for listening socket
     # i.e. "Who is allowed to connect to the queue?"
     listen_host = 'localhost'
@@ -64,10 +64,10 @@ class Module(object):
     def setup_connections(self,connections):
         conn1,conn2=tuple(connections)
         self.cmd_stream = tornado.iostream.IOStream(conn1[0])
-        self.cmd_stream.set_close_callback(self.on_disconnect)
+        #self.cmd_stream.set_close_callback(self.on_disconnect)
 
         self.update_stream = tornado.iostream.IOStream(conn2[0])
-        self.update_stream.set_close_callback(self.on_disconnect)
+        #self.update_stream.set_close_callback(self.on_disconnect)
 
     # Handles the majority of object initialization
     # Waits for socket communication to be established
@@ -87,9 +87,6 @@ class Module(object):
                 raise Exception("Could not connect to spawned module")
             self.setup_connections(connections)
 
-            # Set up a callback for push-notifications from the sub-process
-            self.poll_updates()
-
             # Helps the queue keep track of whether a module is playing or suspended
             self.is_on_top=False
 
@@ -101,6 +98,13 @@ class Module(object):
         except Exception:
             self.terminate() # ensure process is dead if any sort of error occurs
             raise
+
+        def poll_updates_done(f):
+            print "Update stream closed!"
+            
+            if f.exception() is not None:
+                traceback.print_exception(*f.exc_info())
+        service.ioloop.add_future(self.poll_updates(),poll_updates_done) # Listen for updates from module forever
 
     # Called from queue
     # Stops the module, as it has been removed from the queue
@@ -150,23 +154,21 @@ class Module(object):
             response_str = yield service.with_timeout(self.cmd_read_timeout,self.cmd_stream.read_until('\n'))
 
         response_dict=json.loads(response_str)
-        packet.assert_success(response_dict)
-        if 'result' in response_dict:
-            raise service.Return(response_dict['result'])
+        raise service.Return(packet.assert_success(response_dict))
 
     # Callback for if either pipe gets terminated
-    def on_disconnect(self):
-        # Unused callback
-        def terminate_done(f):
-            if f.exception() is not None:
-                traceback.print_exception(*f.exc_info())
-            print "done killing child"
+    #def on_disconnect(self):
+    #    # Unused callback
+    #    def terminate_done(f):
+    #        if f.exception() is not None:
+    #            traceback.print_exception(*f.exc_info())
+    #        print "done killing child"
 
-        if self.alive:
-            # If the process was presumed alive, shut it down 
-            print "OH NO, child died!"
-            # This counts as an internal termination as it is still on the queue
-            service.ioloop.add_future(self.internal_terminate(),terminate_done)
+    #    if self.alive:
+    #        # If the process was presumed alive, shut it down 
+    #        print "OH NO, child died!"
+    #        # This counts as an internal termination as it is still on the queue
+    #        service.ioloop.add_future(self.internal_terminate(),terminate_done)
 
     # The queue removed this module, ensure it is completely shutdown
     # No other behaviour is necessary
@@ -204,24 +206,30 @@ class Module(object):
             traceback.print_exc()
             print "There is probably an orphaned child process!"
 
-    # Register callback for data received on this module's update pipe
+    # Poll for updates forever
     def poll_updates(self):
-        self.update_stream.read_until('\n',self.got_update)
+        print "STARTING..."
+        return service.listen_for_commands(self.update_stream,self.command,self.internal_terminate)
 
     # Callback for when data received on this module's update pipe
-    def got_update(self,data):
-        print "RECEIVED DATA!" # TODO update this module's parameters dictionary
-        try:
-            json_data = json.loads(data)
-            cmd = json_data.get("cmd")
-            args = json_data.get("args", {})
-            if cmd == "set_parameters":
-                params = args.get("parameters")
-                if isinstance(params, dict):
-                    self.parameters = params
-                    print "UPDATED PARAMETERS", len(params)
-        except:
-            print "Error parsing update data:", data
-        self.poll_updates() # re-register
+    #@coroutine
+    #def got_update(self,data):
+    #    print "RECEIVED DATA!" # TODO update this module's parameters dictionary
+    #    try:
+    #        json_data = json.loads(data)
+    #        cmd = json_data.get("cmd")
+    #        args = json_data.get("args", {})
+    #        if cmd == "set_parameters":
+    #            params = args.get("parameters")
+    #            if isinstance(params, dict):
+    #                self.parameters = params
+    #                print "UPDATED PARAMETERS", len(params)
+    #    except:
+    #        print "Error parsing update data:", data
+    #    self.poll_updates() # re-register
 
+    @service.coroutine
+    def set_parameters(self,parameters):
+        self.parameters.update(parameters)
 
+    commands={'set_parameters':set_parameters}
