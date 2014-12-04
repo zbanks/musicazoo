@@ -756,7 +756,7 @@ var authCallback = _.once(function(available){
     });
 
     var ActionView = Backbone.View.extend({
-        act_template: Handlebars.compile("<a href='#' class='btn rm de-only'></a>{{{ html }}}<a href='#' class='btn rm bb-only'>rm</a>"),
+        act_template: Handlebars.compile("<a href='#' class='btn rm de-only'></a>{{{ html }}}"),
         events: {
             "click .rm": "remove",
             "click .cmd": "cmd",

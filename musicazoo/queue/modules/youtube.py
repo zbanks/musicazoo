@@ -42,6 +42,10 @@ class YoutubeModule(pymodule.JSONParentPoller):
         print "State:", state
         return result
 
+    @property
+    def state_is_playing(self):
+        return self.state_has_started and not (self.state_is_suspended or self.state_is_paused)
+
     def cmd_init(self, url):
         print "URL:", url
         self.player=Player()
@@ -132,6 +136,19 @@ class YoutubeModule(pymodule.JSONParentPoller):
         self.state_has_started = True
         self.update()
 
+    def update_time(self):
+        t = self.player.time()
+        if t is not None:
+            # TODO: loading state
+            #if not self.state_has_started:
+                #self.state_has_started = True
+                #self.hide_loading_screen()
+            self.duration=self.player.length()
+            self.rate=self.player.get_rate()
+            if t != self.time:
+                self.time = t
+                self.update()
+
     def get_video_info(self):
         url = self.url
         # General configuration
@@ -212,14 +229,20 @@ t.start()
 
 import time
 while True:
-    msg = messages.get()
-    messages.task_done()
-    if msg == "init":
-        mod.get_video_info()
-    elif msg == "play":
-        mod.play()
-    elif msg == "rm":
-        break
+    try: 
+        msg = messages.get(block=True, timeout=0.2)
+    except Queue.Empty:
+        if mod.state_is_playing:
+            mod.update_time()
+
+    else:
+        messages.task_done()
+        if msg == "init":
+            mod.get_video_info()
+        elif msg == "play":
+            mod.play()
+        elif msg == "rm":
+            break
     
 
 print "QUITTING"
