@@ -1034,7 +1034,7 @@ var authCallback = _.once(function(available){
 
     refreshPlaylist();
     // Refresh playlist every 1 seconds
-    setInterval(refreshPlaylist, 5000);
+    setInterval(refreshPlaylist, 1000);
     if(typeof(musicazooLoaded) != "undefined"){
         musicazooLoaded(mz);
     }

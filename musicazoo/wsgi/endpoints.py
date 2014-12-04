@@ -1,7 +1,7 @@
 import util
 
 static_endpoints = {
-    '/':'wsgi/static'
+    '/':'static'
 }
 
 wsgi_endpoints = {

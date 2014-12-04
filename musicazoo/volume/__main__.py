@@ -55,7 +55,7 @@ class Volume(service.JSONCommandService):
         elif osax:
             self.mixer.set_volume(output_volume=v)
         else:
-            pass
+            print "Setting fake volume: ", v
         raise service.Return({})
 
     def shutdown(self):
