@@ -64,10 +64,10 @@ class Module(service.JSONCommandProcessor):
     def setup_connections(self,connections):
         conn1,conn2=tuple(connections)
         self.cmd_stream = tornado.iostream.IOStream(conn1[0])
-        self.cmd_stream.set_close_callback(self.on_disconnect)
+        #self.cmd_stream.set_close_callback(self.on_disconnect)
 
         self.update_stream = tornado.iostream.IOStream(conn2[0])
-        self.update_stream.set_close_callback(self.on_disconnect)
+        #self.update_stream.set_close_callback(self.on_disconnect)
 
     # Handles the majority of object initialization
     # Waits for socket communication to be established
@@ -87,9 +87,6 @@ class Module(service.JSONCommandProcessor):
                 raise Exception("Could not connect to spawned module")
             self.setup_connections(connections)
 
-            # Set up a callback for push-notifications from the sub-process
-            self.poll_updates()
-
             # Helps the queue keep track of whether a module is playing or suspended
             self.is_on_top=False
 
@@ -103,6 +100,8 @@ class Module(service.JSONCommandProcessor):
             raise
 
         def poll_updates_done(f):
+            print "Update stream closed!"
+            
             if f.exception() is not None:
                 traceback.print_exception(*f.exc_info())
         service.ioloop.add_future(self.poll_updates(),poll_updates_done) # Listen for updates from module forever
@@ -155,23 +154,21 @@ class Module(service.JSONCommandProcessor):
             response_str = yield service.with_timeout(self.cmd_read_timeout,self.cmd_stream.read_until('\n'))
 
         response_dict=json.loads(response_str)
-        packet.assert_success(response_dict)
-        if 'result' in response_dict:
-            raise service.Return(response_dict['result'])
+        raise service.Return(packet.assert_success(response_dict))
 
     # Callback for if either pipe gets terminated
-    def on_disconnect(self):
-        # Unused callback
-        def terminate_done(f):
-            if f.exception() is not None:
-                traceback.print_exception(*f.exc_info())
-            print "done killing child"
+    #def on_disconnect(self):
+    #    # Unused callback
+    #    def terminate_done(f):
+    #        if f.exception() is not None:
+    #            traceback.print_exception(*f.exc_info())
+    #        print "done killing child"
 
-        if self.alive:
-            # If the process was presumed alive, shut it down 
-            print "OH NO, child died!"
-            # This counts as an internal termination as it is still on the queue
-            service.ioloop.add_future(self.internal_terminate(),terminate_done)
+    #    if self.alive:
+    #        # If the process was presumed alive, shut it down 
+    #        print "OH NO, child died!"
+    #        # This counts as an internal termination as it is still on the queue
+    #        service.ioloop.add_future(self.internal_terminate(),terminate_done)
 
     # The queue removed this module, ensure it is completely shutdown
     # No other behaviour is necessary
@@ -210,9 +207,9 @@ class Module(service.JSONCommandProcessor):
             print "There is probably an orphaned child process!"
 
     # Poll for updates forever
-    @service.coroutine
     def poll_updates(self):
-        service.listen_for_commands(self.update_stream,self.command)
+        print "STARTING..."
+        return service.listen_for_commands(self.update_stream,self.command,self.internal_terminate)
 
     # Callback for when data received on this module's update pipe
     #@coroutine

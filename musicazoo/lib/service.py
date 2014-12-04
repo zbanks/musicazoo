@@ -1,6 +1,7 @@
 import tornado.tcpserver
 from tornado.gen import *
 from tornado.concurrent import *
+import tornado.iostream
 import tornado.ioloop
 import itertools
 import json
@@ -59,7 +60,7 @@ def connection_ready(sock, fd, events):
         handle_connection(connection, address)
 
 @coroutine
-def listen_for_commands(stream,handle_cr):
+def listen_for_commands(stream,handle_cr,over_cr=None):
     try:
         while True:
             data = yield stream.read_until('\n')
@@ -67,7 +68,7 @@ def listen_for_commands(stream,handle_cr):
             response = yield handle_cr(parsed)
             encoded = json.dumps(response)+'\n'
             yield stream.write(encoded)
-    except StreamClosedError:
+    except tornado.iostream.StreamClosedError:
         pass
     except Exception:
         print "Communication exception!"
@@ -75,6 +76,8 @@ def listen_for_commands(stream,handle_cr):
         print "(communication interrupted)"
     finally:
         stream.close()
+    if over_cr:
+        yield over_cr()
 
 
 class Service(tornado.tcpserver.TCPServer):
