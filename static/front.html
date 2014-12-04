@@ -45,11 +45,11 @@
                     -->
                 {{/if_eq}}
                 <!-- <a href="http://musicazoo.mit.edu/add?addtxt={{ url }}" class="btn action-set">fwd</a> -->
-
             {{else}}
                 <a href="{{ url }}"> (Loading youtube video...) </a>
             {{/if_eq}}
-        <a href="#" class="btn action-set" data-property="status" data-value="stopped">stop</a>
+        <!-- <a href="#" class="btn action-set" data-property="status" data-value="stopped">stop</a> -->
+        <a href='#' class='btn rm bb-only'>rm</a>
         <div class="video-progress">
             <div class="video-progress-bar" style="width: {{percent time of=duration}}%"></div>
         </div>
@@ -83,7 +83,8 @@
                 <a href="#" class="btn action-set" data-property="status" data-value="playing">resume</a>
             {{/if_eq}}
         {{/if_eq}}
-        <a href="#" class="btn action-set" data-property="status" data-value="stopped">stop</a>
+        <!-- <a href="#" class="btn action-set" data-property="status" data-value="stopped">stop</a> -->
+        <a href='#' class='btn rm bb-only'>rm</a>
         <div class="video-progress">
             <div class="video-progress-bar" style="width: {{percent time of=duration}}%"></div>
         </div>
@@ -100,18 +101,20 @@
         {{#if_eq status neq='stopped' }}
             {{ long_description }}
             {{#if_eq status neq='added' }}
-                <a href="#" class="btn action-set" data-property="status" data-value="stopped">stop</a>
+                <!-- <a href="#" class="btn action-set" data-property="status" data-value="stopped">stop</a> -->
             {{/if_eq}}
         {{/if_eq}}
+        <a href='#' class='btn rm bb-only'>rm</a>
         <!-- {{ status }} -->
     </script>
     <script class="btc-active-template" type="text/x-handlebars-template">
         {{#if_eq status neq='stopped' }}
             BTC Price
             {{#if_eq status neq='added' }}
-                <a href="#" class="btn action-set" data-property="status" data-value="stopped">stop</a>
+                <!-- <a href="#" class="btn action-set" data-property="status" data-value="stopped">stop</a> -->
             {{/if_eq}}
         {{/if_eq}}
+        <a href='#' class='btn rm bb-only'>rm</a>
         <!-- {{ status }} -->
     </script>
     <script class="vba-active-template" type="text/x-handlebars-template">
@@ -135,7 +138,8 @@
                 <a class="btn kbd {{pressed 'turbo' list=keys_down}}" data-key="turbo">turbo</a>
             </div>
         {{/if_eq}}
-        <a href="#" class="btn action-set" data-property="status" data-value="stopped">stop</a>
+        <!-- <a href="#" class="btn action-set" data-property="status" data-value="stopped">stop</a> -->
+        <a href='#' class='btn rm bb-only'>rm</a>
         <!-- {{ status }} -->
     </script>
     <script class="text-template" type="text/x-handlebars-template">
@@ -173,7 +177,7 @@
             <p>Musicazoo is cool and stuff</p>
         </div>
 
-        <h1 class="title">&nbsp;</h1>
+        <h1 class="title">Musicazoo #FIXME</h1>
 
         <div class="controls">
             <a href="#" class="help">Help</a>

@@ -1,6 +1,7 @@
 import json
 import socket
 import sys
+import threading
 import traceback
 
 import musicazoo.lib.packet as packet
@@ -66,6 +67,7 @@ class ParentConnection(object):
 class JSONParentPoller(object):
     def __init__(self):
         self.connection = ParentConnection()
+        self.update_lock = threading.Lock()
 
     def serialize(self):
         return {}
@@ -96,7 +98,8 @@ class JSONParentPoller(object):
             self.connection.send_resp(packet.error(str(e)))
 
     def update(self, params=None):
-        if params is None:
-            params = self.serialize()
-        data = {"cmd": "set_parameters", "args": {"parameters": params}}
-        return self.connection.send_update(data)
+        with self.update_lock:
+            if params is None:
+                params = self.serialize()
+            data = {"cmd": "set_parameters", "args": {"parameters": params}}
+            return self.connection.send_update(data)

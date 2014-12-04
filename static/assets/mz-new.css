@@ -41,7 +41,7 @@ div.playlist ol li{
 	margin: 6px 0;
 }
 
-div.playlist ol li.current {
+div.playlist ol.playlist :first-child {
 	opacity: 1;
 }
 
