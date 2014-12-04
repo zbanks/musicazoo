@@ -494,7 +494,7 @@ $(document).ready(function(){
 var authCallback = _.once(function(available){
     var modules = _({
         "youtube": {
-            commands: ["seek_abs", "seek_rel", "suspend", "pause", "resume"],
+            commands: ["seek_abs", "seek_rel", "pause", "resume"],
             parameters: [
                 "url", "title", "duration", "site", "media", "thumbnail", "description",
                 "time", "status"
@@ -582,6 +582,7 @@ var authCallback = _.once(function(available){
                         var prev_status = this.previous('status');
 
                         // Play/pause switch
+                        console.log(this.hasCommand("pause"), this.commands);
                         if(this.hasCommand("pause") && this.hasCommand("resume")){
                             if(prev_status == "paused" && status == "playing"){
                                 deferQuery({cmd: "tell_module", args: {uid: this.id, cmd: "resume"}});
@@ -1002,7 +1003,7 @@ var authCallback = _.once(function(available){
 
     refreshPlaylist();
     // Refresh playlist every 1 seconds
-    setInterval(refreshPlaylist, 1000);
+    setInterval(refreshPlaylist, 5000);
     if(typeof(musicazooLoaded) != "undefined"){
         musicazooLoaded(mz);
     }
