@@ -26,7 +26,7 @@ class Module(service.JSONCommandProcessor):
     cmd_write_timeout=datetime.timedelta(milliseconds=100)
     cmd_read_timeout=datetime.timedelta(milliseconds=100)
     natural_death_timeout=datetime.timedelta(milliseconds=100) # give SIGTERM after .1 sec
-    sigterm_timeout=datetime.timedelta(milliseconds=500) # give SIGKILL after 1 sec
+    sigterm_timeout=datetime.timedelta(milliseconds=500) # give SIGKILL after .5 sec
 
     # Make a new instance of this module.
     # This constructor is fairly bare because it is not a coroutine.
@@ -110,7 +110,7 @@ class Module(service.JSONCommandProcessor):
     @service.coroutine
     def remove(self):
         yield self.send_cmd("rm")
-        yield self.external_terminate()
+        yield self.terminate()
 
     # Called from queue
     # Plays the module, as it has reached the top of the queue
@@ -148,9 +148,13 @@ class Module(service.JSONCommandProcessor):
 
         toe=None
         # Lock on the command pipe so we ensure sequential req/rep transactions
-        with (yield self.cmd_lock.acquire()):
-            yield service.with_timeout(self.cmd_write_timeout,self.cmd_stream.write(cmd_str))
-            response_str = yield service.with_timeout(self.cmd_read_timeout,self.cmd_stream.read_until('\n'))
+        try:
+            with (yield self.cmd_lock.acquire()):
+                yield service.with_timeout(self.cmd_write_timeout,self.cmd_stream.write(cmd_str))
+                response_str = yield service.with_timeout(self.cmd_read_timeout,self.cmd_stream.read_until('\n'))
+        except service.TimeoutError:
+            yield self.terminate_and_remove()
+            raise Exception("Timeout sending message to module")
 
         response_dict=json.loads(response_str)
         raise service.Return(packet.assert_success(response_dict))
@@ -169,15 +173,10 @@ class Module(service.JSONCommandProcessor):
     #        # This counts as an internal termination as it is still on the queue
     #        service.ioloop.add_future(self.internal_terminate(),terminate_done)
 
-    # The queue removed this module, ensure it is completely shutdown
-    # No other behaviour is necessary
-    def external_terminate(self):
-        return self.terminate()
-
     # This module terminated independently of the queue
     # Ensure it is completely shutdown, and then remove it from the queue
     @service.coroutine
-    def internal_terminate(self):
+    def terminate_and_remove(self):
         yield self.terminate()
         yield self.remove_function()
 
@@ -208,7 +207,7 @@ class Module(service.JSONCommandProcessor):
     # Poll for updates forever
     def poll_updates(self):
         print "STARTING..."
-        return service.listen_for_commands(self.update_stream,self.command,self.internal_terminate)
+        return service.listen_for_commands(self.update_stream,self.command,self.terminate_and_remove)
 
     # Callback for when data received on this module's update pipe
     #@coroutine
