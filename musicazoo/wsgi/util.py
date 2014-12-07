@@ -2,11 +2,12 @@ import werkzeug
 import json
 import socket
 
-def wsgi_control(addr,port):
-    def zmq_query(inp):
+def wsgi_control(addr,port,timeout=2):
+
+    def query(inp):
         data=json.dumps(inp)
         s=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.settimeout(2)
+        s.settimeout(timeout)
         s.connect((addr,port))
         s.sendall(data+'\n')
         result=''
@@ -23,7 +24,7 @@ def wsgi_control(addr,port):
         if request.headers.get('content-type') == 'text/json':
             inp=json.loads(request.data)
             try:
-                outp=zmq_query(inp)
+                outp=query(inp)
             except Exception as e:
                 return werkzeug.exceptions.InternalServerError(e)
             return werkzeug.Response(json.dumps(outp),content_type='text/json')

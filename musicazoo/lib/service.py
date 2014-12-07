@@ -10,6 +10,7 @@ import time
 import musicazoo.lib.packet as packet
 from toro import *
 import datetime
+import socket
 
 ioloop=tornado.ioloop.IOLoop.instance()
 
@@ -79,6 +80,24 @@ def listen_for_commands(stream,handle_cr,over_cr=None):
     if over_cr:
         yield over_cr()
 
+@coroutine
+def json_query(addr,port,inp,timeout=2):
+    @coroutine
+    def talk(stream):
+        yield stream.connect((addr,port))
+        encoded = json.dumps(inp)+'\n'
+        yield stream.write(encoded)
+        data = yield stream.read_until('\n')
+        decoded = json.loads(data)
+        raise Return(decoded)
+
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    stream = tornado.iostream.IOStream(s)
+    try:
+        result = yield with_timeout(datetime.timedelta(seconds=timeout),talk(stream))
+    finally:
+        stream.close()
+    raise Return(result)
 
 class Service(tornado.tcpserver.TCPServer):
     def __init__(self,port=None):

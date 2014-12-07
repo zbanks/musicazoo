@@ -2,7 +2,6 @@ import musicazoo.lib.service as service
 import musicazoo.lib.packet as packet
 import socket
 import tornado.iostream
-import tornado.ioloop
 import subprocess
 import json
 import datetime

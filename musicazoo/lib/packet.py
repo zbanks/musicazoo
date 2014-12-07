@@ -1,3 +1,5 @@
+import json
+
 def error(err):
     return {'success':False,'error':err}
 
@@ -19,3 +21,5 @@ def assert_success(response):
     if 'error' not in response:
         raise Exception("Malformed response")
     raise Exception(response['error'])
+
+
