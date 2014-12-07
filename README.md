@@ -10,7 +10,8 @@ cd musicazoo
 pip install -r requirements.txt
 ```
 
-## Run
+## Run without installing
+```
 . init.sh
 ./musicazoo.sh
 ```
@@ -33,4 +34,7 @@ python musicazoo/queue
 python musicazoo/volume
 ```
 
-You may also find debug/raw.py useful.
+You may also find `debug/raw.py` useful.
+
+## Installing
+Coming soon!
