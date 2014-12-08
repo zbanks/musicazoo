@@ -8,7 +8,7 @@ import requests
 if len(sys.argv)>1:
 	endpoint=sys.argv[1]
 else:
-	endpoint='http://localhost:8080/queue'
+	endpoint='http://localhost:8080/nlp'
 
 def do_command(cmd_list):
     json_data = json.dumps(cmd_list)

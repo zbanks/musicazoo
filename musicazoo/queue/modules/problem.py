@@ -10,9 +10,10 @@ class ProblematicModule(pymodule.JSONParentPoller):
         self.run=True
         super(ProblematicModule, self).__init__()
 
-    def cmd_init(self, noinit=False, noquit=False, noterm=False, noresponse=False):
+    def cmd_init(self, noinit=False, noquit=False, noterm=False, noresponse=False, tooslow=False):
         self.noquit=noquit
         self.noresponse=noresponse
+        self.tooslow=tooslow
         if noterm:
             signal.signal(signal.SIGTERM, handler)
         if noinit:
@@ -29,6 +30,10 @@ class ProblematicModule(pymodule.JSONParentPoller):
     def cmd_play(self):
         pass
 
+    def do_pause(self):
+        if self.tooslow:
+            time.sleep(3)
+
     def cmd_suspend(self):
         pass
 
@@ -36,7 +41,8 @@ class ProblematicModule(pymodule.JSONParentPoller):
         'init':cmd_init,
         'rm':cmd_rm,
         'play':cmd_play,
-        'suspend':cmd_suspend
+        'suspend':cmd_suspend,
+        'do_pause':do_pause
     }
 
 mod = ProblematicModule()
