@@ -22,7 +22,7 @@ def computer_to_human(val):
 class Volume(object):
     def __init__(self):
         if alsaaudio:
-            self.mixer=alsaaudio.Mixer(control='PCM')
+            self.mixer=alsaaudio.Mixer()
         elif osax:
             self.mixer = osax.OSAX()
         else:
