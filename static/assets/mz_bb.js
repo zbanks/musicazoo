@@ -312,20 +312,20 @@ Endpoint.prototype.runQueries = function(cb, err){
                 if(cb){
                     cb();
                 }
-                self.timeout = window.setTimeout(_.bind(self.runQueries, self), 0); // Defer
+                self.timeout = window.setTimeout(function(){ self.runQueries(); }, 0); // Defer
             },
             error: function(){
                 //lostConnection();
-                this.onDead && this.onDead();
+                self.onDead && self.onDead();
                 _.each(errs, function(x){ if(x){ x(); } });
-                this.timeout = window.setTimeout(_.bind(this.runQueries, this), 500); // Connection dropped?
+                self.timeout = window.setTimeout(function(){ self.runQueries(); }, 500); // Connection dropped?
                 if(err){
                     err();
                 }
             }
         });
     }else{
-        this.timeout = window.setTimeout(_.bind(this.runQueries, this), 50);
+        this.timeout = window.setTimeout(function(){ self.runQueries(); }, 50);
     }
     this.reqs = [];
 }
@@ -344,8 +344,8 @@ function lostConnection(){
 var queue_endpoint = new Endpoint("/queue");
 var volume_endpoint = new Endpoint("/vol");
 
-queue_endpoint.onAlive = regainConnection();
-queue_endpoint.onDead = lostConnection();
+queue_endpoint.onAlive = regainConnection;
+queue_endpoint.onDead = lostConnection;
 
 function authenticate(cb){
     var doAuth = function(){
