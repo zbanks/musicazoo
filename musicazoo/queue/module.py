@@ -151,9 +151,13 @@ class Module(service.JSONCommandProcessor):
             with (yield self.cmd_lock.acquire()):
                 yield service.with_timeout(self.cmd_write_timeout,self.cmd_stream.write(cmd_str))
                 response_str = yield service.with_timeout(self.cmd_read_timeout,self.cmd_stream.read_until('\n'))
-        except service.TimeoutError:
+        except (service.TimeoutError,tornado.iostream.StreamClosedError) as e:
             yield self.terminate_and_remove()
-            raise Exception("Timeout sending message to module")
+            if isinstance(e,service.TimeoutError):
+                raise Exception("Timeout sending message to module")
+            if isinstance(e,tornado.iostream.StreamClosedError):
+                raise Exception("Pipe to module unexpectedly closed")
+            raise
 
         response_dict=json.loads(response_str)
         raise service.Return(packet.assert_success(response_dict))

@@ -68,6 +68,7 @@ class JSONParentPoller(object):
     def __init__(self):
         self.connection = ParentConnection()
         self.update_lock = threading.Lock()
+        super(JSONParentPoller,self).__init__()
 
     def serialize(self):
         return {}
