@@ -9,7 +9,7 @@ setup(
     author='Zach Banks',
     author_email='zbanks@mit.edu',
     url='https://github.com/zbanks/musicazoo',
-    packages=['musicazoo', 'musicazoo.wsgi', 'musicazoo.queue', 'musicazoo.volume', 'musicazoo.lib'],
+    packages=['musicazoo', 'musicazoo.wsgi', 'musicazoo.queue', 'musicazoo.volume', 'musicazoo.lib', 'musicazoo.nlp'],
     scripts=[
         "bin/musicazoo", "bin/mz"
     ],
