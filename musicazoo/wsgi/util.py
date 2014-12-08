@@ -2,7 +2,7 @@ import werkzeug
 import json
 import socket
 
-def wsgi_control(addr,port,timeout=2):
+def wsgi_control(addr,port,timeout=10):
 
     def query(inp):
         data=json.dumps(inp)

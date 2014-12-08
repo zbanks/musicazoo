@@ -19,8 +19,9 @@ class Text(Module):
     process = ['python',os.path.join(cwd,'modules/text.py')]
 
 modules = [Youtube, Problem, Text]
+backgrounds = [Youtube, Problem, Text]
 
-q=musicazoo.queue.Queue(modules)
+q=musicazoo.queue.Queue(modules, backgrounds)
 
 def shutdown_handler(signum,frame):
     print
