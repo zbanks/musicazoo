@@ -182,8 +182,7 @@ stop|stfu|skip|next - Remove the top video
 pop|undo|oops - Remove the bottom video
 bump - Move the bottom video to the top
 q|queue - List the queue
-Anything else - Queue Youtube video
-""")
+Anything else - Queue Youtube video""")
 
     commands={
         'do': do,
