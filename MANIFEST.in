@@ -1,0 +1,5 @@
+recursive-include static *.html *.js *.css *.png
+include bin/*
+include run_musicazoo.sh
+include requirements.txt
+prune musicazoo-old
