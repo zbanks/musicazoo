@@ -2,15 +2,19 @@
 
 from distutils.core import setup
 
+with open("requirements.txt") as f:
+    required = f.read().splitlines()
+
 setup(
     name='Musicazoo',
-    version='5.0',
+    version='5.0.2',
     description='Modular media player',
     author='Zach Banks',
     author_email='zbanks@mit.edu',
     url='https://github.com/zbanks/musicazoo',
     packages=['musicazoo', 'musicazoo.wsgi', 'musicazoo.queue', 'musicazoo.volume', 'musicazoo.lib', 'musicazoo.nlp'],
-    download_url="https://github.com/zbanks/musicazoo/tarball/5.0.1",
+    download_url="https://github.com/zbanks/musicazoo/tarball/5.0.2",
+    installs_required=required,
     scripts=[
         "bin/musicazoo", "bin/mz"
     ],
