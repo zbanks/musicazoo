@@ -25,8 +25,8 @@ class Module(service.JSONCommandProcessor):
     connect_timeout=datetime.timedelta(milliseconds=500)
     cmd_write_timeout=datetime.timedelta(milliseconds=100)
     cmd_read_timeout=datetime.timedelta(milliseconds=100)
-    natural_death_timeout=datetime.timedelta(milliseconds=100) # give SIGTERM after .1 sec
-    sigterm_timeout=datetime.timedelta(milliseconds=500) # give SIGKILL after 1 sec
+    natural_death_timeout=datetime.timedelta(milliseconds=1000) # give SIGTERM after 1 sec
+    sigterm_timeout=datetime.timedelta(milliseconds=3000) # give SIGKILL after 3 sec
 
     # Make a new instance of this module.
     # This constructor is fairly bare because it is not a coroutine.
