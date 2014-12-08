@@ -8,7 +8,6 @@ from musicazoo.lib.graphics import FullScreenGraphics
 PADY=10
 PADX=10
 
-
 class TextAndSound(FullScreenGraphics):
 	def __init__(self,text):
 		super(TextAndSound, self).__init__()

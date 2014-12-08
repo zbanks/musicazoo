@@ -14,7 +14,11 @@ class Problem(Module):
     TYPE_STRING='problem'
     process = ['python',os.path.join(cwd,'modules/problem.py')]
 
-modules = [Youtube, Problem]
+class Text(Module):
+    TYPE_STRING='text'
+    process = ['python',os.path.join(cwd,'modules/text.py')]
+
+modules = [Youtube, Problem, Text]
 
 q=musicazoo.queue.Queue(modules)
 
