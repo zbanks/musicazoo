@@ -5,6 +5,9 @@ import traceback
 import socket
 import re
 import musicazoo.lib.packet as packet
+import tornado.httpclient
+import urllib
+import json
 
 class NLP(service.JSONCommandProcessor, service.Service):
     port=5582
@@ -19,6 +22,28 @@ class NLP(service.JSONCommandProcessor, service.Service):
     def __init__(self):
         print "NLP started."
         super(NLP, self).__init__()
+
+    @service.coroutine
+    def youtube_lucky_args(self,q):
+        http_client = tornado.httpclient.AsyncHTTPClient()
+        # Return the args dict for the first youtube result for 'match'
+        youtube_req_url = "http://gdata.youtube.com/feeds/api/videos"
+        youtube_data = {
+            "v": 2,
+            "orderby": "relevance",
+            "alt": "jsonc",
+            "q": q,
+            "max-results": 5
+        }
+        form_data=urllib.urlencode(youtube_data)
+        
+        result = yield http_client.fetch(youtube_req_url+"?"+form_data)
+        youtube_data = json.loads(result.body)
+
+        yi=youtube_data['data']['items']
+
+        if len(yi)>0:
+            raise service.Return(youtube_data["data"]["items"][0])
 
     @service.coroutine
     def queue_cmd(self,cmd,args={},assert_success=True):
@@ -87,40 +112,53 @@ class NLP(service.JSONCommandProcessor, service.Service):
     def cmd_queue(self,q):
         queue=yield self.queue_cmd("queue",{"parameters":self.pretty_params})
         if len(queue)==0:
-            raise service.Return("Queue is empty!")
-        result = '\n'.join(["{0}. {1}".format(n+1,self.pretty(mod)) for (n,mod) in zip(range(len(queue)),queue)])
+            raise Exception("Queue is empty!")
+        result = '\n'.join([u"{0}. {1}".format(n+1,self.pretty(mod)) for (n,mod) in zip(range(len(queue)),queue)])
         raise service.Return(result)
 
     @service.coroutine
     def cmd_rm_top(self,q):
         queue=yield self.queue_cmd("queue",{"parameters":self.pretty_params})
         if len(queue)==0:
-            raise service.Return("Queue is empty!")
+            raise Exception("Queue is empty!")
         mod=queue[0]
         yield self.queue_cmd("rm",{"uids":[mod['uid']]})
-        raise service.Return("Removed {0}".format(self.pretty(mod)))
+        raise service.Return(u"Removed {0}".format(self.pretty(mod)))
 
     @service.coroutine
     def cmd_rm_bot(self,q):
         queue=yield self.queue_cmd("queue",{"parameters":self.pretty_params})
         if len(queue)==0:
-            raise service.Return("Queue is empty!")
+            raise Exception("Queue is empty!")
         mod=queue[-1]
         yield self.queue_cmd("rm",{"uids":[mod['uid']]})
-        raise service.Return("Removed {0}".format(self.pretty(mod)))
+        raise service.Return(u"Removed {0}".format(self.pretty(mod)))
 
     @service.coroutine
     def cmd_bump(self,q):
         queue=yield self.queue_cmd("queue",{"parameters":self.pretty_params})
         if len(queue)==0:
-            raise service.Return("Queue is empty!")
+            raise Exception("Queue is empty!")
         if len(queue)==1:
-            raise service.Return("Only one thing on the queue!")
+            raise Exception("Only one thing on the queue!")
         old_uids=[mod['uid'] for mod in queue]
         mod_bot=queue[-1]
         new_uids=old_uids[-1:]+old_uids[0:-1]
         yield self.queue_cmd("mv",{"uids":[mod['uid']]})
-        raise service.Return("Bumped {0} to the top".format(self.pretty(mod_bot)))
+        raise service.Return(u"Bumped {0} to the top".format(self.pretty(mod_bot)))
+
+    @service.coroutine
+    def cmd_yt(self,q,kw):
+        result=yield self.youtube_lucky_args(kw)
+
+        if not result:
+            raise Exception('No Youtube results found.')
+        title=result['title']
+        url='http://youtube.com/watch?v={0}'.format(result['id'])
+
+        yield self.queue_cmd("add",{"type":"youtube","args":{"url":url}})
+
+        raise service.Return(u'Queued "{0}"'.format(title))
 
     def pretty(self,mod):
         print mod
@@ -168,7 +206,7 @@ Anything else - Queue Youtube video
         (r'^bump$',cmd_bump),
         (r'^q$',cmd_queue),
         (r'^queue$',cmd_queue),
-        #(r'^(.+)$',cmd_yt),
+        (r'^(.+)$',cmd_yt),
     ]
 
 nlp = NLP()
