@@ -25,7 +25,7 @@ class Module(service.JSONCommandProcessor):
     cmd_write_timeout=datetime.timedelta(milliseconds=100)
     cmd_read_timeout=datetime.timedelta(milliseconds=100)
     natural_death_timeout=datetime.timedelta(milliseconds=1000) # give SIGTERM after 1 sec
-    sigterm_timeout=datetime.timedelta(milliseconds=3000) # give SIGKILL after 3 sec
+    sigterm_timeout=datetime.timedelta(milliseconds=1000) # give SIGKILL after 1 sec
 
     # Make a new instance of this module.
     # This constructor is fairly bare because it is not a coroutine.
@@ -42,13 +42,10 @@ class Module(service.JSONCommandProcessor):
         s1.bind((self.listen_host, 0))
         s1.listen(0)
         self.cmd_port = s1.getsockname()[1]
-        print "Command port:", self.cmd_port
-
         s2=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s2.bind((self.listen_host, 0))
         s2.listen(0)
         self.update_port = s2.getsockname()[1]
-        print "Update port:", self.update_port
         return [service.accept(s1),service.accept(s2)]
 
     # Helper function for new()
@@ -209,7 +206,6 @@ class Module(service.JSONCommandProcessor):
 
     # Poll for updates forever
     def poll_updates(self):
-        print "STARTING..."
         return service.listen_for_commands(self.update_stream,self.command,self.terminate_and_remove)
 
     # Callback for when data received on this module's update pipe
