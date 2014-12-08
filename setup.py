@@ -10,6 +10,7 @@ setup(
     author_email='zbanks@mit.edu',
     url='https://github.com/zbanks/musicazoo',
     packages=['musicazoo', 'musicazoo.wsgi', 'musicazoo.queue', 'musicazoo.volume', 'musicazoo.lib', 'musicazoo.nlp'],
+    download_url="https://github.com/zbanks/musicazoo/tarball/5.0.1",
     scripts=[
         "bin/musicazoo", "bin/mz"
     ],
