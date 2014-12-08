@@ -129,7 +129,7 @@ class YoutubeModule(pymodule.JSONParentPoller):
 
     def play(self):
         def ev_end(ev):
-            message.put("rm")
+            messages.put("rm")
 
         def ev_time(ev):
             self.time = ev.u.new_time / 1000.
