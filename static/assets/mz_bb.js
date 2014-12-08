@@ -908,6 +908,7 @@ var authCallback = _.once(function(available){
                     var ordering = self.$("li").map(function(i, e){return $(e).attr('data-view-id')}).toArray();
                     // idk where this could go
                     queue_endpoint.deferQuery({cmd: "mv", args:{uids: ordering}});
+                    this.model.fetch();
                 },
                 start: function(ev, ui){
                     self.no_autorefresh = true;

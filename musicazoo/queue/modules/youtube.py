@@ -5,13 +5,13 @@ import youtube_dl
 import Queue
 
 import musicazoo.lib.packet as packet
+import musicazoo.lib.vlc as vlc
 import musicazoo.queue.pymodule as pymodule
+
+from musicazoo.lib.watch_dl import WatchCartoonOnlineIE
 
 from youtube_dl.compat import compat_cookiejar, compat_urllib_request
 from youtube_dl.utils import make_HTTPS_handler, YoutubeDLHandler
-from musicazoo.lib.vlc_player_compat import Player
-
-from musicazoo.lib.watch_dl import WatchCartoonOnlineIE
 
 messages = Queue.Queue()
 
@@ -47,7 +47,6 @@ class YoutubeModule(pymodule.JSONParentPoller):
 
     def cmd_init(self, url):
         print "URL:", url
-        self.player=Player()
 
         # Has the youtube url/data been fetched?
         self.state_is_ready = False 
@@ -77,8 +76,9 @@ class YoutubeModule(pymodule.JSONParentPoller):
     def cmd_play(self):
         print "Play"
         if self.state_has_started:
-            self.player.play()
-            self.state_is_paused = False
+            if not self.state_is_paused:
+                self.vlc_mp.play()
+                self.state_is_paused = False
         else:
             messages.put("play")
         self.state_is_suspended = False
@@ -87,21 +87,24 @@ class YoutubeModule(pymodule.JSONParentPoller):
     def cmd_suspend(self):
         print "Suspend"
         if self.state_has_started:
-            self.player.pause()
+            if self.vlc_mp.is_playing():
+                self.vlc_mp.pause()
+            self.state_is_paused = True
         self.state_is_suspended = True
         self.update()
 
     def cmd_resume(self):
         print "Resume"
         if self.state_has_started:
-            self.player.play()
+            self.vlc_mp.play()
             self.state_is_paused = False
             self.update()
 
     def cmd_pause(self):
         print "Pause"
         if self.state_has_started:
-            self.player.pause()
+            if self.vlc_mp.is_playing():
+                self.vlc_mp.pause()
             self.state_is_paused = True
             self.update()
 
@@ -112,40 +115,47 @@ class YoutubeModule(pymodule.JSONParentPoller):
         #messages.join()
 
     def cmd_seek_abs(self, position):
-        if self.player.up():
-            self.player.seek_abs(position)
+        self.vlc_mp.set_time(int(position*1000))
 
-    def cmd_seek_rel(self, position):
-        if not self.player.up():
-            self.player.seek_rel(position)
+    def cmd_seek_rel(self, delta):
+        cur_time = self.vlc_mp.get_time()
+        if cur_time < 0:
+            return
+        self.vlc_mp.set_time(cur_time+int(delta*1000))
 
     def stop(self):
-        self.player.stop()
-        self.update()
+        self.vlc_mp.stop()
+        #self.update()
 
     def play(self):
-        self.player.load(self.media,cookies=self.cookies)
+        def ev_end(ev):
+            message.put("rm")
+
+        def ev_time(ev):
+            self.time = ev.u.new_time / 1000.
+            self.update()
+
+        def ev_length(ev):
+            self.duration = ev.u.new_length / 1000.
+            self.update()
+
+        os.environ["DISPLAY"] = ":0"
+        self.vlc_i = vlc.Instance(['-f','--no-video-title-show','--no-xlib'])
+        self.vlc_mp = self.vlc_i.media_player_new()
+        self.vlc_ev = self.vlc_mp.event_manager()
+
+        self.vlc_ev.event_attach(vlc.EventType.MediaPlayerEndReached, ev_end)
+        self.vlc_ev.event_attach(vlc.EventType.MediaPlayerTimeChanged, ev_time)
+        self.vlc_ev.event_attach(vlc.EventType.MediaPlayerLengthChanged, ev_length)
+
+        vlc_media=self.vlc_i.media_new_location(self.media)
+        self.vlc_mp.set_media(vlc_media)
+        self.vlc_mp.set_xwindow(0)
+        self.vlc_mp.set_fullscreen(True)
+        self.vlc_mp.play()
+
         self.state_has_started = True
         self.update()
-
-    def update_time(self):
-        if self.state_has_started and not self.player.up():
-            # Done!
-            messages.put("rm")
-            #messages.join()
-            return
-        t = self.player.time()
-        if t is not None:
-            # TODO: loading state
-            #if not self.state_has_started:
-                #self.state_has_started = True
-                #self.hide_loading_screen()
-            self.duration=self.player.length()
-            self.rate=self.player.get_rate()
-            if t != self.time:
-                self.time = t
-                self.update()
-
 
     def get_video_info(self):
         url = self.url
@@ -227,22 +237,17 @@ t.start()
 
 import time
 while True:
-    try: 
-        msg = messages.get(block=True, timeout=0.2)
-    except Queue.Empty:
-        if mod.state_is_playing:
-            mod.update_time()
-
-    else:
-        messages.task_done()
-        if msg == "init":
-            mod.get_video_info()
-        elif msg == "play":
-            mod.play()
-        elif msg == "rm":
-            mod.stop()
-            break
+    msg = messages.get(block=True)
+    messages.task_done()
+    if msg == "init":
+        mod.get_video_info()
+    elif msg == "play":
+        mod.play()
+    elif msg == "rm":
+        print "QUITTING", time.time()
+        mod.stop()
+        break
     
 
-print "QUITTING"
 mod.close()
+print "CLOSED", time.time()
