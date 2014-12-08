@@ -39,7 +39,7 @@ class TextModule(pymodule.JSONParentPoller,threading.Thread):
 
     def cmd_suspend(self):
         self.fsg.sync(self.fsg.hide)
-        self.remaining_time=self.start_time-time.time()
+        self.remaining_time -= time.time()-self.start_time
         if self.remaining_time <= 0:
             self.fsg.sync(self.fsg.over)
 

@@ -5,24 +5,25 @@ import musicazoo.lib.service as service
 class Queue(service.JSONCommandProcessor, service.Service):
     port=5580
 
-    def __init__(self,modules):
+    def __init__(self,modules,backgrounds):
         print "Queue started."
         # Create lookup table of possible modules & backgrounds
         self.modules_available_dict = dict([(m.TYPE_STRING,m) for m in modules])
-        #TODO
-        self.backgrounds_available_dict = {} 
+        self.backgrounds_available_dict = dict([(b.TYPE_STRING,b) for b in backgrounds])
 
         # queue is the actual queue of modules
         self.queue=[]
+        # bg is the module running in the background
+        self.bg = None
         # queue_lock is a synchronization object so that multiple clients don't try to alter the queue at the same time
+        # (also includes background)
         self.queue_lock=service.Lock()
+
         # old_queue is used to take diffs of the queue (and from there, send appropriate messages to affected modules.)
         # whenever the queue is unlocked, it should equal the queue.
         self.old_queue=[]
-
-        # bg is the module running in the background
-        #TODO
-        self.bg = None
+        # Same with old_bg
+        self.old_bg=None
 
         # Each module on the queue gets a unique ID, this variable allocates those
         self.last_uid=-1
@@ -136,12 +137,29 @@ class Queue(service.JSONCommandProcessor, service.Service):
         raise service.Return({'uid':uid})
 
     # Called from client
+    # Create a new background and add it to the queue
+    # May take a little while as background is spawned and constructed.
+    @service.coroutine
+    def set_bg(self,type,args={}):
+        uid=self.get_uid()
+        if type not in self.backgrounds_available_dict:
+            raise Exception("Unrecognized module name")
+        bg_inst=self.backgrounds_available_dict[type](self.get_remover(uid))
+        yield bg_inst.new(args)
+        with (yield self.queue_lock.acquire()):
+            self.bg=(uid,bg_inst)
+            yield self.queue_updated()
+        raise service.Return({'uid':uid})
+
+    # Called from client
     # Removes some modules from the queue
     # May take a little while as the modules are destroyed.
     @service.coroutine
     def rm(self,uids):
         with (yield self.queue_lock.acquire()):
             self.queue=[(uid,obj) for (uid,obj) in self.queue if uid not in [int(u) for u in uids]]
+            if self.bg is not None and self.bg[0] in uids:
+                self.bg=None
             yield self.queue_updated()
 
     # Called from client
@@ -174,13 +192,27 @@ class Queue(service.JSONCommandProcessor, service.Service):
             again=False
             cur_uids=[uid for (uid,obj) in self.queue]
             to_remove=[((uid,obj),obj.remove) for (uid,obj) in self.old_queue if uid not in cur_uids and obj.alive]
+            if self.bg:
+                bg_uid,bg_obj=self.bg
+            if self.old_bg:
+                old_bg_uid,old_bg_obj=self.old_bg
+            if self.old_bg is not None and (self.bg is None or bg_uid != old_bg_uid) and old_bg_obj.alive:
+                to_remove.append(((old_bg_uid,old_bg_obj),old_bg_obj.remove))
             to_play=[]
             if len(self.queue) > 0:
                 uid,obj=self.queue[0]
                 if not obj.is_on_top:
                     to_play=[((uid,obj),obj.play)]
+            elif self.bg:
+                if not bg_obj.is_on_top:
+                    to_play=[((bg_uid,bg_obj),bg_obj.play)]
+
             to_suspend=[((uid,obj),obj.suspend) for (uid,obj) in self.queue[1:] if obj.is_on_top]
+            if len(self.queue) > 0 and self.bg:
+                to_suspend.append(((bg_uid,bg_obj),bg_obj.suspend))
+
             self.old_queue=self.queue
+            self.old_bg=self.bg
 
             actions=to_remove+to_suspend+to_play
             try:
@@ -197,6 +229,8 @@ class Queue(service.JSONCommandProcessor, service.Service):
                 print "Removing bad modules:",bad_modules
                 yield [obj.terminate() for uid,obj in bad_modules]
                 self.queue=[(uid,obj) for uid,obj in self.queue if uid not in [uid2 for uid2,obj2 in bad_modules]]
+                if self.bg[0] in [uid for uid,obj in bad_modules]:
+                    self.bg=None
                 again=True
 
     # Returns a coroutine that may be executed to remove the current module from the queue
@@ -207,6 +241,8 @@ class Queue(service.JSONCommandProcessor, service.Service):
         def remove_self():
             with (yield self.queue_lock.acquire()):
                 self.queue=[(uid,obj) for (uid,obj) in self.queue if uid != my_uid]
+                if self.bg is not None and self.bg[0] == my_uid:
+                    self.bg=None
                 yield self.queue_updated()
         return remove_self
 
@@ -219,35 +255,8 @@ class Queue(service.JSONCommandProcessor, service.Service):
     def killall(self):
         with (yield self.queue_lock.acquire()):
             self.queue=[]
+            self.bg=None
             yield self.queue_updated()
-
-## EVERYTHING BELOW HERE IS TRASH
-    """
-    def set_bg(self,type,args={}):
-        uid=self.backgrounds.get_uid()
-        mod_inst=self.backgrounds.instantiate(type,self,uid,args)
-        if self.bg is not None:
-            (bg_uid,bg_obj)=self.bg
-            bg_obj.close()
-        self.bg=(uid,mod_inst)
-        self.bg_visible=False
-        self.update_bg()
-        return {'uid':uid}
-
-    def update_bg(self,parameters={}):
-        if self.bg is None:
-            return
-        
-        (bg_uid,bg_obj)=self.bg
-        if self.cur is None:
-            if not self.bg_visible:
-                bg_obj.show()
-                self.bg_visible=True
-        else:
-            if self.bg_visible:
-                bg_obj.hide()
-                self.bg_visible=False
-"""
 
     commands = {
         'rm':rm,
@@ -255,7 +264,7 @@ class Queue(service.JSONCommandProcessor, service.Service):
         'add':add,
         'queue':get_queue,
         'bg':get_bg,
-#        'set_bg':set_bg,
+        'set_bg':set_bg,
         'modules_available':modules_available,
         'backgrounds_available':backgrounds_available,
         'tell_module':tell_module,
