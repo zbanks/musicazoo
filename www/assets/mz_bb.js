@@ -681,12 +681,22 @@ var authCallback = _.once(function(capabilities){
         initialize: function(prop, options){
             this.parameters = statics[prop.uid].parameters;
             this.commands = statics[prop.uid].commands;
-            if(this.hasParameter('vol') && this.hasCommand('set_vol')){
+            this.type = statics[prop.uid].class;
+
+            if(this.type == "volume"){
                 this.on('change:vol', function(model, vol, options){
                     if(!options.parse){
                         deferQuery({cmd: "tell_static", args: {"uid": this.id, "cmd": "set_vol", "args": {"vol": vol}}});
                     }
                 });
+            }else if(this.type == "lux"){
+                var self = this;
+                this.setLight = function(name, relay, state){
+                    deferQuery({cmd: "tell_static", args: {"uid": self.id, "cmd": "set_state", "args": {"relay": relay, "name": name, "new_state": state}}});
+                }
+                this.toggleLight = function(name, relay){
+                    deferQuery({cmd: "tell_static", args: {"uid": self.id, "cmd": "set_state", "args": {"relay": relay, "name": name, "new_state": !self.get('state')[name][relay]}}});
+                }
             }
         },
         idAttribute: "uid",
@@ -966,12 +976,39 @@ var authCallback = _.once(function(capabilities){
         }
     });
 
-    mz = mz = new Musicazoo();
+    mz = new Musicazoo();
     var qv = new QueueView({collection: mz.get('queue'), el: $("ol.playlist")});
     var cv = new ActiveView({model: mz.get('active'), el: $("ol.current")});
     var bv = new BackgroundView({model: mz.get('background'), el: $("ol.background")});
     var ssv = new StaticSetView({collection: mz.get('statics')});
     mz.fetch();
+
+    getStatic = function(stype){
+        return mz.get('statics').find(function(s){ return s.type == stype });
+    }
+
+    /*
+     * With great power comes great responsibility
+     * - Uncle Ben's Flavorful Rice
+     *
+     *
+     * ...but seriously don't fuck it up:
+     *
+     * - Don't toggle a light more than once every 2 seconds
+     * - Make sure all the lights are back on during the day
+     * - Something something fire code
+     * - Don't piss off your neighbors (unless it's really funny)
+     *
+     */
+    toggleLight = function(name, relay){
+        return getStatic("lux").toggleLight(name, relay);
+    }
+    
+    toggleAllLights = function(name){
+        for(var i = 0; i < 12; i++){
+            toggleLight(name, i);
+        }
+    }
 
     refreshPlaylist = function(){
         mz.fetch();
