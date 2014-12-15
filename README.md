@@ -1,6 +1,16 @@
 Musicazoo
 =========
 
+## Quickstart
+```
+sudo pip install musicazoo
+musicazoo
+```
+then, navigate to [http://localhost:8080/index.html](http://localhost:8080/index.html) in a web browser.
+Alternatively, from the command line:
+```
+mz help
+```
 
 ## Setup
 
@@ -24,14 +34,16 @@ Musicazoo is split into several parts:
 * Web server (a WSGI object)
 * Queue (handles life, death, and control of modules)
 * Volume (handles volume control)
+* NLP (exposes a plain-text command interface)
 
 It is probably helpful to debug these without supervisor, in which case you should simply run each one in a separate terminal.
 
 ```
 . init.sh
-python musicazoo/wsgi
-python musicazoo/queue
-python musicazoo/volume
+python -m musicazoo.wsgi
+python -m musicazoo.queue
+python -m musicazoo.volume
+python -m musicazoo.nlp
 ```
 
 You may also find `debug/raw.py` useful.
