@@ -11,8 +11,6 @@ import traceback
 # The actual code for a module runs in a sub-process.
 # This class contains the infrastructure for starting, stopping, and communicating with that sub-process.
 
-# TODO add appropriate locking so that a module that is in the process of being shutdown doesn't receive additional commands
-
 class Module(service.JSONCommandProcessor):
     # Hostname for listening socket
     # i.e. "Who is allowed to connect to the queue?"
@@ -106,7 +104,7 @@ class Module(service.JSONCommandProcessor):
     @service.coroutine
     def remove(self):
         yield self.send_cmd("rm")
-        yield self.terminate()
+        self.terminate()
 
     # Called from queue
     # Plays the module, as it has reached the top of the queue
@@ -149,7 +147,7 @@ class Module(service.JSONCommandProcessor):
                 yield service.with_timeout(self.cmd_write_timeout,self.cmd_stream.write(cmd_str))
                 response_str = yield service.with_timeout(self.cmd_read_timeout,self.cmd_stream.read_until('\n'))
         except (service.TimeoutError,tornado.iostream.StreamClosedError) as e:
-            yield self.terminate_and_remove()
+            self.terminate()
             if isinstance(e,service.TimeoutError):
                 raise Exception("Timeout sending message to module")
             if isinstance(e,tornado.iostream.StreamClosedError):
@@ -173,20 +171,26 @@ class Module(service.JSONCommandProcessor):
     #        # This counts as an internal termination as it is still on the queue
     #        service.ioloop.add_future(self.internal_terminate(),terminate_done)
 
-    # This module terminated independently of the queue
-    # Ensure it is completely shutdown, and then remove it from the queue
-    @service.coroutine
-    def terminate_and_remove(self):
-        yield self.terminate()
-        yield self.remove_function()
+    # This function schedules a module's death and returns immediately.
+    # It also removes the module from the queue if it is on it.
+    def terminate(self):
+        if not self.alive:
+            return # Already dead
+        self.alive=False
+
+        def remove_from_queue_done(f):
+            pass
+
+        def terminate_process_done(f):
+            pass
+
+        service.ioloop.add_future(self.remove_function(),remove_from_queue_done)
+        service.ioloop.add_future(self.terminate_process(),terminate_process_done)
 
     # Ensure this module's sub-process is dead
     # Like, no really.
     @service.coroutine
-    def terminate(self):
-        if not self.alive:
-            raise service.Return()
-        self.alive=False
+    def terminate_process(self):
         try:
             self.cmd_stream.close()
             self.update_stream.close()
@@ -206,24 +210,7 @@ class Module(service.JSONCommandProcessor):
 
     # Poll for updates forever
     def poll_updates(self):
-        return service.listen_for_commands(self.update_stream,self.command,self.terminate_and_remove)
-
-    # Callback for when data received on this module's update pipe
-    #@coroutine
-    #def got_update(self,data):
-    #    print "RECEIVED DATA!" # TODO update this module's parameters dictionary
-    #    try:
-    #        json_data = json.loads(data)
-    #        cmd = json_data.get("cmd")
-    #        args = json_data.get("args", {})
-    #        if cmd == "set_parameters":
-    #            params = args.get("parameters")
-    #            if isinstance(params, dict):
-    #                self.parameters = params
-    #                print "UPDATED PARAMETERS", len(params)
-    #    except:
-    #        print "Error parsing update data:", data
-    #    self.poll_updates() # re-register
+        return service.listen_for_commands(self.update_stream,self.command,self.terminate)
 
     @service.coroutine
     def set_parameters(self,parameters):
