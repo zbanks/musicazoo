@@ -174,18 +174,17 @@ class Module(service.JSONCommandProcessor):
     # This function schedules a module's death and returns immediately.
     # It also removes the module from the queue if it is on it.
     def terminate(self):
-        if not self.alive:
-            return # Already dead
-        self.alive=False
+        if self.alive:
+            self.alive=False
 
-        def remove_from_queue_done(f):
-            pass
+            def remove_from_queue_done(f):
+                pass
 
-        def terminate_process_done(f):
-            pass
+            def terminate_process_done(f):
+                pass
 
-        service.ioloop.add_future(self.remove_function(),remove_from_queue_done)
-        service.ioloop.add_future(self.terminate_process(),terminate_process_done)
+            service.ioloop.add_future(self.remove_function(),remove_from_queue_done)
+            service.ioloop.add_future(self.terminate_process(),terminate_process_done)
 
     # Ensure this module's sub-process is dead
     # Like, no really.
@@ -216,4 +215,7 @@ class Module(service.JSONCommandProcessor):
     def set_parameters(self,parameters):
         self.parameters.update(parameters)
 
-    commands={'set_parameters':set_parameters}
+    commands={
+        'set_parameters':set_parameters,
+        'rm':service.coroutine(terminate),
+    }

@@ -4,19 +4,17 @@ from musicazoo.queue.module import Module
 import os
 import signal
 
-cwd=os.path.dirname(__file__)
-
 class Youtube(Module):
     TYPE_STRING='youtube'
-    process = ['python',os.path.join(cwd,'modules/youtube.py')]
+    process = ['python','-m','musicazoo.queue.modules.youtube']
 
 class Problem(Module):
     TYPE_STRING='problem'
-    process = ['python',os.path.join(cwd,'modules/problem.py')]
+    process = ['python','-m','musicazoo.queue.modules.problem']
 
 class Text(Module):
     TYPE_STRING='text'
-    process = ['python',os.path.join(cwd,'modules/text.py')]
+    process = ['python','-m','musicazoo.queue.modules.text']
 
 modules = [Youtube, Problem, Text]
 backgrounds = [Youtube, Problem, Text]
