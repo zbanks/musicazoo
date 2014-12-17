@@ -8,6 +8,7 @@ import time
 
 import text2speech
 import text2screen
+import preprocessing
 
 text2speech_engines = {
     'google':text2speech.google,
@@ -15,7 +16,19 @@ text2speech_engines = {
 
 text2screen_engines = {
     'splash':text2screen.splash,
+    'paragraph':text2screen.paragraph,
+    'email':text2screen.email,
 }
+
+screen_preprocessors = {
+}
+
+speech_preprocessors = {
+    'pronounce':preprocessing.pronounce,
+    'pronounce_email':preprocessing.pronounce_email,
+    'pronounce_fortune':preprocessing.pronounce_fortune,
+}
+
 
 class TextModule(pymodule.JSONParentPoller,threading.Thread):
     def __init__(self):
@@ -33,24 +46,36 @@ class TextModule(pymodule.JSONParentPoller,threading.Thread):
         self.join()
 
     def compute_tts(self):
-        self.speech = text2speech_engines[self.text2speech](self.text,**self.text2speech_args)
+        self.speech = text2speech_engines[self.text2speech](self.speech_text,**self.text2speech_args)
         self.vlc_i = musicazoo.lib.vlc.Instance()
         self.vlc_mp = self.vlc_i.media_player_new()
         self.vlc_media = self.vlc_i.media_new_path(self.speech.name)
         self.vlc_mp.set_media(self.vlc_media)
         self.tts_ready=True
 
-    def cmd_init(self,text,duration=None,text2screen='splash',text2speech=None,text2screen_args={},text2speech_args={}):
+    def cmd_init(self,text,duration=None,text2screen='splash',text2speech='google',screen_preprocessor=None,speech_preprocessor='pronounce',text2screen_args={},text2speech_args={}):
         self.text2speech = text2speech
         self.text2speech_args = text2speech_args
         self.text = text
         self.text2screen = text2screen
+        self.speech_preprocessor = speech_preprocessor
+        self.screen_preprocessor = screen_preprocessor
 
-        text2screen_engines[text2screen](self.fsg,text,**text2screen_args)
+        if screen_preprocessor:
+            self.screen_text = screen_preprocessors[screen_preprocessor](text)
+        else:
+            self.screen_text = text
+
+        text2screen_engines[text2screen](self.fsg,self.screen_text,**text2screen_args)
 
         self.speech = None
 
         if text2speech:
+            if speech_preprocessor:
+                self.speech_text = speech_preprocessors[speech_preprocessor](text)
+            else:
+                self.speech_text = text
+
             self.tts_ready=False
             self.tts_done=False
             self.tts_play=False
