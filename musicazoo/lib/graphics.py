@@ -9,9 +9,9 @@ class FullScreenGraphics(Tkinter.Tk):
         self.width,self.height=self.winfo_screenwidth(),self.winfo_screenheight()
         self.attributes('-fullscreen', True)
         self.bind("<Escape>", self.over)
-        self.shown=False
-        self.visible_afters=[]
-        self.last_visible_time=0
+        self.playing=False
+        self.playing_afters=[]
+        self.last_play_time=0
 
     def run(self):
         self.mainloop()
@@ -23,49 +23,55 @@ class FullScreenGraphics(Tkinter.Tk):
         self.destroy()
 
     def show(self):
-        if self.shown:
-            return
         try:
             os.system("xset dpms force on")
         except Exception:
             pass
         self.deiconify()
         self.update()
-        self.shown=True
-        self.last_show_time=time.time()
-        self.destroy_visible_afters()
+        self.play()
 
     def hide(self):
-        if not self.shown:
-            return
         self.withdraw()
         self.update()
-        self.shown=False
-        self.last_visible_time += time.time() - self.last_show_time
-        self.reincarnate_visible_afters()
+        self.pause()
+
+    def pause(self):
+        if not self.playing:
+            return
+        self.playing=False
+        self.last_play_time += time.time() - self.last_show_time
+        self.destroy_playing_afters()
+
+    def play(self):
+        if self.playing:
+            return
+        self.playing=True
+        self.last_show_time=time.time()
+        self.reincarnate_playing_afters()
 
     def sync(self,cmd):
         self.after(0,cmd)
 
-    def destroy_visible_afters(self):
-        for (msecs,func,handle) in self.visible_afters:
-            self.cancel_after(handle)
+    def destroy_playing_afters(self):
+        for (msecs,func,handle) in self.playing_afters:
+            self.after_cancel(handle)
 
-    def reincarnate_visible_afters(self):
-        t=int(self.last_visible_time*1000)
-        self.visible_afters = [(msecs,func,self.after(max(msecs-t,0),func)) for (msecs,func,handle) in self.visible_afters if msecs-t > 0]
+    def reincarnate_playing_afters(self):
+        t=int(self.last_play_time*1000)
+        self.playing_afters = [(msecs,func,self.after(max(msecs-t,0),func)) for (msecs,func,handle) in self.playing_afters if msecs-t > 0]
 
-    def visible_time(self):
-        if self.shown:
-            return self.last_visible_time+time.time()-self.last_show_time
-        return self.last_visible_time
+    def play_time(self):
+        if self.playing:
+            return self.last_play_time+time.time()-self.last_show_time
+        return self.last_play_time
 
-    def after_visible(self,msecs,func):
-        if self.shown:
+    def after_playing(self,msecs,func):
+        if self.playing:
             handle=self.after(msecs,func)
-            self.visible_afters.append((msecs+int(self.visible_time()*1000),func,handle))
+            self.playing_afters.append((msecs+int(self.play_time()*1000),func,handle))
         else:
-            self.visible_afters.append((msecs+int(self.last_visible_time*1000),func,None))
+            self.playing_afters.append((msecs+int(self.last_play_time*1000),func,None))
 
 if __name__=='__main__':
     fsg=FullScreenGraphics()
