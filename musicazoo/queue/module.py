@@ -215,7 +215,14 @@ class Module(service.JSONCommandProcessor):
     def set_parameters(self,parameters):
         self.parameters.update(parameters)
 
+    @service.coroutine
+    def unset_parameters(self,parameters):
+        for parameter in parameters:
+            self.parameters.pop(parameter, None)
+
     commands={
         'set_parameters':set_parameters,
+        'unset_parameters':unset_parameters,
         'rm':service.coroutine(terminate),
     }
+

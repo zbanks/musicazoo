@@ -1,13 +1,14 @@
 import Tkinter
+import musicazoo.settings as sets
 
-def splash(fsg,text,bg="black",fg="white",font="Helvetica",size=72):
+def splash(fsg,text,bg=sets.bg_color,fg=sets.fg_color,font="Helvetica",size=72):
     c=Tkinter.Canvas(fsg,width=fsg.width,height=fsg.height,highlightthickness=0,bg=bg)
     c.pack()
 
     coord = fsg.center()
     arc = c.create_text(coord, text=text, fill=fg, justify=Tkinter.CENTER, font=(font,size))
 
-def paragraph(fsg,text,bg="black",fg="white",font="Mono",size=32,padx=10,pady=10):
+def paragraph(fsg,text,bg=sets.bg_color,fg=sets.fg_color,font="Mono",size=32,padx=10,pady=10):
     #c=Tkinter.Canvas(fsg,width=fsg.width,height=fsg.height,highlightthickness=0,bg=bg)
     #c.pack()
 
@@ -24,7 +25,7 @@ def paragraph(fsg,text,bg="black",fg="white",font="Mono",size=32,padx=10,pady=10
     textbox.insert(Tkinter.END, text)
     textbox.pack(side=Tkinter.TOP, fill=Tkinter.BOTH, padx=padx, pady=pady)
 
-def email(fsg,text,bg="black",fg="white",font="Arial",sender_size=36,subject_size=48,body_size=32,padx=10,pady=0):
+def email(fsg,text,bg=sets.bg_color,fg=sets.fg_color,font="Arial",sender_size=36,subject_size=48,body_size=32,padx=10,pady=0):
     sender = text['sender']
     subject = text['subject']
     body = text['body']
