@@ -227,9 +227,10 @@ class Queue(service.JSONCommandProcessor, service.Service):
                         print "- {0} raised {1}".format(uid,f.exception())
                 bad_modules=[mod for mod,f in actions if f.exception()]
                 print "Removing bad modules:",bad_modules
-                yield [obj.terminate() for uid,obj in bad_modules]
+                for uid,obj in bad_modules:
+                    obj.terminate()
                 self.queue=[(uid,obj) for uid,obj in self.queue if uid not in [uid2 for uid2,obj2 in bad_modules]]
-                if self.bg[0] in [uid for uid,obj in bad_modules]:
+                if self.bg is not None and self.bg[0] in [uid for uid,obj in bad_modules]:
                     self.bg=None
                 again=True
 

@@ -61,7 +61,7 @@ def connection_ready(sock, fd, events):
         handle_connection(connection, address)
 
 @coroutine
-def listen_for_commands(stream,handle_cr,over_cr=None):
+def listen_for_commands(stream,handle_cr,over_fn=None):
     try:
         while True:
             data = yield stream.read_until('\n')
@@ -77,8 +77,8 @@ def listen_for_commands(stream,handle_cr,over_cr=None):
         print "(communication interrupted)"
     finally:
         stream.close()
-    if over_cr:
-        yield over_cr()
+    if over_fn:
+        over_fn()
 
 @coroutine
 def json_query(addr,port,inp,timeout=2):
