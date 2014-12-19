@@ -61,6 +61,17 @@ class TextModule(pymodule.JSONParentPoller,threading.Thread):
         self.speech_preprocessor = speech_preprocessor
         self.screen_preprocessor = screen_preprocessor
 
+        self.connection.send_update({"cmd":"set_parameters","args":{"parameters":{
+            "text":text,
+            "duration":duration,
+            "text2screen":text2screen,
+            "text2speech":text2speech,
+            "screen_preprocessor":screen_preprocessor,
+            "speech_preprocessor":speech_preprocessor,
+            "text2screen_args":text2screen_args,
+            "text2speech_args":text2speech_args,
+        }}})
+
         if screen_preprocessor:
             self.screen_text = screen_preprocessors[screen_preprocessor](text)
         else:
