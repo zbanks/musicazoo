@@ -104,7 +104,8 @@ class TextModule(pymodule.JSONParentPoller,threading.Thread):
         else:
             self.duration = duration
 
-        self.remaining_time=self.duration
+        if self.text2speech is None:
+            self.fsg.after_visible(int(self.duration*1000),self.fsg.over)
 
     def cmd_rm(self):
         self.fsg.sync(self.fsg.over)
@@ -122,7 +123,7 @@ class TextModule(pymodule.JSONParentPoller,threading.Thread):
         if self.vlc_mp.get_state() in [musicazoo.lib.vlc.State.Ended,musicazoo.lib.vlc.State.Stopped,musicazoo.lib.vlc.State.Error] and self.tts_play:
             self.speech.close()
             self.tts_done=True
-            self.over_handle = self.fsg.after(int(self.remaining_time*1000),self.fsg.over)
+            self.fsg.after_visible(int(self.duration*1000),self.fsg.over)
             self.start_time=time.time()
         else:
             self.fsg.after(100,self.tts_wait_over)
@@ -132,9 +133,6 @@ class TextModule(pymodule.JSONParentPoller,threading.Thread):
             if self.tts_ready:
                 self.vlc_mp.play()
             self.tts_play=True
-        else:
-            self.over_handle = self.fsg.after(int(self.remaining_time*1000),self.fsg.over)
-            self.start_time=time.time()
 
     def cmd_play(self):
         self.cmd_resume()
@@ -145,11 +143,6 @@ class TextModule(pymodule.JSONParentPoller,threading.Thread):
             if self.tts_ready:
                 self.vlc_mp.pause()
             self.tts_play=False
-        else:
-            self.fsg.after_cancel(self.over_handle)
-            self.remaining_time -= time.time()-self.start_time
-            if self.remaining_time <= 0:
-                self.fsg.sync(self.fsg.over)
 
     def cmd_suspend(self):
         self.cmd_pause()
