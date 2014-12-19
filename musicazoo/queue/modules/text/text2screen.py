@@ -9,9 +9,6 @@ def splash(fsg,text,bg=sets.bg_color,fg=sets.fg_color,font="Helvetica",size=72):
     arc = c.create_text(coord, text=text, fill=fg, justify=Tkinter.CENTER, font=(font,size))
 
 def paragraph(fsg,text,bg=sets.bg_color,fg=sets.fg_color,font="Mono",size=32,padx=10,pady=10):
-    #c=Tkinter.Canvas(fsg,width=fsg.width,height=fsg.height,highlightthickness=0,bg=bg)
-    #c.pack()
-
     fsg.config(bg=bg)
 
     textbox = Tkinter.Text(fsg,
