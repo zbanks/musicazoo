@@ -22,13 +22,10 @@ def paragraph(fsg,text,bg=sets.bg_color,fg=sets.fg_color,font="Mono",size=32,pad
     textbox.insert(Tkinter.END, text)
     textbox.pack(side=Tkinter.TOP, fill=Tkinter.BOTH, padx=padx, pady=pady)
 
-def email(fsg,text,bg=sets.bg_color,fg=sets.fg_color,font="Arial",sender_size=36,subject_size=48,body_size=32,padx=10,pady=0):
+def email(fsg,text,bg=sets.bg_color,fg=sets.fg_color,font="Arial",sender_size=36,subject_size=48,body_size=32,padx=10,pady=0,scroll_beginning_dead_time=18,scroll_end_dead_time=-3):
     sender = text['sender']
     subject = text['subject']
     body = text['body']
-
-    #fsg.beginning_dead_time=18
-    #fsg.end_dead_time=-3
 
     fsg.configure(bg=bg)
 
@@ -60,3 +57,20 @@ def email(fsg,text,bg=sets.bg_color,fg=sets.fg_color,font="Arial",sender_size=36
 
     widget_body.insert(Tkinter.END, body)
     widget_body.pack(side=Tkinter.TOP, fill=Tkinter.BOTH, padx=padx, pady=pady)
+
+    def calc_pos(t,dur):
+        if t < scroll_beginning_dead_time:
+            fraction = 0
+        elif t < dur - scroll_end_dead_time:
+            fraction = (t - scroll_beginning_dead_time) / (dur - scroll_end_dead_time - scroll_beginning_dead_time)
+        else:
+            fraction = 1
+        return fraction
+
+    def do_scroll():
+        if fsg.vlc_duration is not None:
+            pos=calc_pos(fsg.play_time()-fsg.vlc_time_started,fsg.vlc_duration)
+            widget_body.yview_moveto(pos)
+        fsg.after_playing(10,do_scroll)
+
+    fsg.sync(do_scroll)

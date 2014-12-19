@@ -72,6 +72,9 @@ class TextModule(pymodule.JSONParentPoller,threading.Thread):
             "text2speech_args":text2speech_args,
         }}})
 
+        self.fsg.vlc_duration=None
+        self.fsg.vlc_time_started=None
+
         if screen_preprocessor:
             self.screen_text = screen_preprocessors[screen_preprocessor](text)
         else:
@@ -117,6 +120,7 @@ class TextModule(pymodule.JSONParentPoller,threading.Thread):
         if self.tts_ready:
             if self.tts_play:
                 self.vlc_mp.play()
+                self.fsg.vlc_time_started=self.fsg.play_time()
             self.tts_wait_over()
         else:
             self.fsg.after(100,self.tts_wait_ready)
@@ -126,8 +130,11 @@ class TextModule(pymodule.JSONParentPoller,threading.Thread):
             self.speech.close()
             self.tts_done=True
             self.fsg.after_playing(int(self.duration*1000),self.fsg.over)
-            self.start_time=time.time()
         else:
+            if self.fsg.vlc_duration is None:
+                d=self.vlc_mp.get_length()
+                if d != 0:
+                    self.fsg.vlc_duration=float(d)/1000.
             self.fsg.after(100,self.tts_wait_over)
 
     def cmd_resume(self):
