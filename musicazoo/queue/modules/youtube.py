@@ -71,7 +71,7 @@ class YoutubeModule(pymodule.JSONParentPoller):
         self.cookies=None
         self.rate=None
         messages.put("init")
-        self.update()
+        self.update(self.serialize()) # TODO fix this
 
     def cmd_play(self):
         print "Play"
@@ -82,7 +82,7 @@ class YoutubeModule(pymodule.JSONParentPoller):
         else:
             messages.put("play")
         self.state_is_suspended = False
-        self.update()
+        self.update(self.serialize()) # TODO fix this
 
     def cmd_suspend(self):
         print "Suspend"
@@ -91,14 +91,14 @@ class YoutubeModule(pymodule.JSONParentPoller):
                 self.vlc_mp.pause()
             #self.state_is_paused = True
         self.state_is_suspended = True
-        self.update()
+        self.update(self.serialize()) # TODO fix this
 
     def cmd_resume(self):
         print "Resume"
         if self.state_has_started:
             self.vlc_mp.play()
             self.state_is_paused = False
-            self.update()
+            self.update(self.serialize()) # TODO fix this
 
     def cmd_pause(self):
         print "Pause"
@@ -106,7 +106,7 @@ class YoutubeModule(pymodule.JSONParentPoller):
             if self.vlc_mp.is_playing():
                 self.vlc_mp.pause()
             self.state_is_paused = True
-            self.update()
+            self.update(self.serialize()) # TODO fix this
 
     def cmd_rm(self):
         print "Remove"
@@ -125,7 +125,7 @@ class YoutubeModule(pymodule.JSONParentPoller):
 
     def stop(self):
         self.vlc_mp.stop()
-        #self.update()
+        #self.update() # nooo
 
     def play(self):
         def ev_end(ev):
@@ -133,11 +133,11 @@ class YoutubeModule(pymodule.JSONParentPoller):
 
         def ev_time(ev):
             self.time = ev.u.new_time / 1000.
-            self.update()
+            self.update(self.serialize()) # TODO fix this
 
         def ev_length(ev):
             self.duration = ev.u.new_length / 1000.
-            self.update()
+            self.update(self.serialize()) # TODO fix this
 
         os.environ["DISPLAY"] = ":0"
         self.vlc_i = vlc.Instance(['-f','--no-video-title-show','--no-xlib'])
@@ -155,7 +155,7 @@ class YoutubeModule(pymodule.JSONParentPoller):
         self.vlc_mp.play()
 
         self.state_has_started = True
-        self.update()
+        self.update(self.serialize()) # TODO fix this
 
     def get_video_info(self):
         url = self.url
@@ -207,7 +207,7 @@ class YoutubeModule(pymodule.JSONParentPoller):
             self.vid=vinfo['id']
 
         self.state_is_ready = True
-        self.update()
+        self.update(self.serialize()) # TODO fix this
         return True
 
     commands={

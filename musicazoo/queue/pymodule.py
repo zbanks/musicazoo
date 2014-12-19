@@ -67,11 +67,9 @@ class ParentConnection(object):
 class JSONParentPoller(object):
     def __init__(self):
         self.connection = ParentConnection()
-        self.update_lock = threading.Lock()
+        self.update_lock = threading.Lock() # TODO this shouldn't live here, nothing here has to do with threads
+        # if modules need this then it's a personal problem
         super(JSONParentPoller,self).__init__()
-
-    def serialize(self):
-        return {}
 
     def close(self):
         return self.connection.close()
@@ -98,9 +96,7 @@ class JSONParentPoller(object):
             traceback.print_exc()
             self.connection.send_resp(packet.error(str(e)))
 
-    def update(self, params=None):
+    def update(self, params):
         with self.update_lock:
-            if params is None:
-                params = self.serialize()
             data = {"cmd": "set_parameters", "args": {"parameters": params}}
             return self.connection.send_update(data)
