@@ -17,6 +17,7 @@ messages = Queue.Queue()
 
 class YoutubeModule(pymodule.JSONParentPoller):
     def __init__(self):
+        self.thread_stopped = False 
         super(YoutubeModule, self).__init__()
 
     def serialize(self):
@@ -115,17 +116,21 @@ class YoutubeModule(pymodule.JSONParentPoller):
         #messages.join()
 
     def cmd_seek_abs(self, position):
-        self.vlc_mp.set_time(int(position*1000))
+        #TODO: if the video hasn't started, then cache the position and set it as soon as the video starts
+        if self.state_has_started:
+            self.vlc_mp.set_time(int(position*1000))
 
     def cmd_seek_rel(self, delta):
-        cur_time = self.vlc_mp.get_time()
-        if cur_time < 0:
-            return
-        self.vlc_mp.set_time(cur_time+int(delta*1000))
+        if self.state_has_started:
+            cur_time = self.vlc_mp.get_time()
+            if cur_time < 0:
+                return
+            self.vlc_mp.set_time(cur_time+int(delta*1000))
 
     def stop(self):
         self.vlc_mp.stop()
-        #self.update()
+        self.thread_stopped = True
+        self.update_rm()
 
     def play(self):
         def ev_end(ev):
@@ -228,14 +233,16 @@ import sys
 import threading
 
 def serve_forever():
-    while True:
-        mod.handle_one_command()
+    while not mod.thread_stopped:
+        try:
+            mod.handle_one_command()
+        except socket.error:
+            break
 
 t=threading.Thread(target=serve_forever)
 t.daemon=True
 t.start()
 
-import time
 while True:
     msg = messages.get(block=True)
     messages.task_done()
@@ -244,10 +251,7 @@ while True:
     elif msg == "play":
         mod.play()
     elif msg == "rm":
-        print "QUITTING", time.time()
         mod.stop()
         break
     
-
 mod.close()
-print "CLOSED", time.time()

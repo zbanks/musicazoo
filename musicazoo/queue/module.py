@@ -19,11 +19,11 @@ class Module(service.JSONCommandProcessor):
     # i.e. "Where does the queue process live?"
     connect_host = 'localhost'
 
-    connect_timeout=datetime.timedelta(milliseconds=500)
-    cmd_write_timeout=datetime.timedelta(milliseconds=100)
-    cmd_read_timeout=datetime.timedelta(milliseconds=100)
-    natural_death_timeout=datetime.timedelta(milliseconds=1000) # give SIGTERM after 1 sec
-    sigterm_timeout=datetime.timedelta(milliseconds=1000) # give SIGKILL after 1 sec
+    connect_timeout=datetime.timedelta(milliseconds=2000)
+    cmd_write_timeout=datetime.timedelta(milliseconds=1000)
+    cmd_read_timeout=datetime.timedelta(milliseconds=1000)
+    natural_death_timeout=datetime.timedelta(milliseconds=3000) # give SIGTERM after 1 sec
+    sigterm_timeout=datetime.timedelta(milliseconds=5000) # give SIGKILL after 1 sec
 
     # Make a new instance of this module.
     # This constructor is fairly bare because it is not a coroutine.

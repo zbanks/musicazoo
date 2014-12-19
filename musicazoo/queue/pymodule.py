@@ -104,3 +104,8 @@ class JSONParentPoller(object):
                 params = self.serialize()
             data = {"cmd": "set_parameters", "args": {"parameters": params}}
             return self.connection.send_update(data)
+
+    def update_rm(self):
+        with self.update_lock:
+            data = {"cmd": "rm"}
+            return self.connection.send_update(data)

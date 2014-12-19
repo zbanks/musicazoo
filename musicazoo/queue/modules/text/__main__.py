@@ -41,7 +41,7 @@ class TextModule(pymodule.JSONParentPoller,threading.Thread):
 
     def shutdown(self):
         self.running=False
-        self.connection.send_update({"cmd":"rm"})
+        self.update_rm()
         self.close()
         self.join()
 
