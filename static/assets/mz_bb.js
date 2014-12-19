@@ -105,18 +105,9 @@ var TEMPLATES = _.objectMap({
     "nothing": '(Nothing)',
 }, Handlebars.compile);
 
-_.each(["youtube", "text", "netvid", "btc", "vba"], function(n){
+_.each(["youtube", "text", "netvid", "btc", "vba", "image", "logo"], function(n){
     TEMPLATES[n] = Handlebars.compile($("script." + n + "-template").html());
-    TEMPLATES[n + "_active"] = Handlebars.compile($("script." + n + "-active-template").html());
-    TEMPLATE_NAMES[n] = {queue: n, active: n + "_active"};
 });
-
-_.each(["image", "logo"], function(n){
-    //TEMPLATES[n] = Handlebars.compile($("script." + n + "-template").html());
-    TEMPLATES[n] = Handlebars.compile($("script." + n + "-template").html());
-    TEMPLATE_NAMES[n] = {queue: n, active: n };
-});
-
 
 // NLP Constants
 
@@ -510,6 +501,7 @@ $(document).ready(function(){
 });
 
 var authCallback = _.once(function(available){
+    console.log(available);
     var modules = _({
         "youtube": {
             commands: ["seek_abs", "seek_rel", "pause", "resume"],
@@ -519,6 +511,19 @@ var authCallback = _.once(function(available){
             ],
             background: false
         },
+        "text": {
+            commands: [],
+            parameters: [
+                "text", "duration", 
+                "text2speech", "text2screen", "speech_preprocessor", "screen_preprocessor", "text2screen_args", "text2speech_args"
+            ],
+            background: false,
+        },
+        "problem": {
+            commands: [],
+            parameters: [],
+            background: false,
+        }
     }).pick(available.modules);
     var backgrounds = _({
 
@@ -565,19 +570,15 @@ var authCallback = _.once(function(available){
             var type = this.get('type')
             if(this.get('exists')){
                 if(TEMPLATES[type]){
-                    this.template_queue = TEMPLATE_NAMES[type].queue;
-                    this.template_active = TEMPLATE_NAMES[type].active;
+                    this.template = type;
                 }else{
-                    this.template_queue = "unknown";
-                    this.template_active = "unknown";
+                    this.template = "unknown";
                 }
             }else{
                 if(this.background){
-                    this.template_queue = "empty";
-                    this.template_active = "empty";
+                    this.template = "empty";
                 }else{
-                    this.template_queue = "empty";
-                    this.template_active = "nothing";
+                    this.template = "nothing";
                 }
             }
 
@@ -689,8 +690,7 @@ var authCallback = _.once(function(available){
         idAttribute: "uid",
         hasParameter: function(p){ return _.contains(this.parameters, p); },
         hasCommand: function(p){ return _.contains(this.commands, p); },
-        template_queue: "unknown",
-        template_active: "unknown",
+        template: "unknown",
         //active: false,
         background: false
     });
@@ -819,9 +819,8 @@ var authCallback = _.once(function(available){
             return this;
         },
         render: function(ev){
-            var tmpl = this.model.active ? "template_active" : "template_queue";
             this.$el.html(this.act_template({
-                html: TEMPLATES[this.model[tmpl]](this.model.attributes),
+                html: TEMPLATES[this.model.template](this.model.attributes),
                 model: this.model
             }));
             return this;

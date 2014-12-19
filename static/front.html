@@ -13,7 +13,7 @@
         window.no_autorefresh = false;
         window.DE = false;
     </script>
-    <script class="youtube-active-template" type="text/x-handlebars-template">
+    <script class="youtube-template" type="text/x-handlebars-template">
         {{#if_eq status neq='stopped' }}
             {{#if_eq status neq='added'}}
                 <!-- <div id="youtube-video"> </div> -->
@@ -56,7 +56,7 @@
         {{/if_eq}}
         <!-- ({{ status }}:{{ site }}) -->
     </script>
-    <script class="youtube-template" type="text/x-handlebars-template">
+    <script class="youtube-template-old" type="text/x-handlebars-template">
         {{#if_eq status neq='added'}}
             <a href="{{ url }}"> {{ title }} </a>
             - [{{ minutes duration }}]
@@ -68,7 +68,7 @@
         {{/if_eq}}
         <!-- ({{ status }}:{{ site }}) -->
     </script>
-    <script class="netvid-active-template" type="text/x-handlebars-template">
+    <script class="netvid-template" type="text/x-handlebars-template">
         {{#if_eq status neq='stopped' }}
             <a href="{{ url }}"> {{ long_description }} </a>
             {{#if duration }}
@@ -90,24 +90,12 @@
         </div>
         <!-- ({{ status }}) -->
     </script>
-    <script class="netvid-template" type="text/x-handlebars-template">
-        <a href="{{ url }}"> {{ short_description }} </a>
-        {{#if duration }}
-            - [{{ minutes duration }}]
-        {{/if}}
-        <!-- ({{ status }}) -->
-    </script>
-    <script class="text-active-template" type="text/x-handlebars-template">
-        {{#if_eq status neq='stopped' }}
-            {{ long_description }}
-            {{#if_eq status neq='added' }}
-                <!-- <a href="#" class="btn action-set" data-property="status" data-value="stopped">stop</a> -->
-            {{/if_eq}}
-        {{/if_eq}}
+    <script class="text-template" type="text/x-handlebars-template">
+        {{ text }}
+        <!-- {{ duration }} -->
         <a href='#' class='btn rm bb-only'>rm</a>
-        <!-- {{ status }} -->
     </script>
-    <script class="btc-active-template" type="text/x-handlebars-template">
+    <script class="btc-template" type="text/x-handlebars-template">
         {{#if_eq status neq='stopped' }}
             BTC Price
             {{#if_eq status neq='added' }}
@@ -117,7 +105,7 @@
         <a href='#' class='btn rm bb-only'>rm</a>
         <!-- {{ status }} -->
     </script>
-    <script class="vba-active-template" type="text/x-handlebars-template">
+    <script class="vba-template" type="text/x-handlebars-template">
         {{#if_eq status neq='stopped' }}
             Game Boy Advance
             <div class="kbdrow">
@@ -142,10 +130,6 @@
         <a href='#' class='btn rm bb-only'>rm</a>
         <!-- {{ status }} -->
     </script>
-    <script class="text-template" type="text/x-handlebars-template">
-        {{ short_description }}
-        <!-- {{ status }} -->
-    </script>
     <script class="image-template" type="text/x-handlebars-template">
         Image:
         {{ url }}
@@ -154,12 +138,6 @@
     <script class="logo-template" type="text/x-handlebars-template">
         Logo
         {{ status }}
-    </script>
-    <script class="btc-template" type="text/x-handlebars-template">
-        BTC Price
-    </script>
-    <script class="vba-template" type="text/x-handlebars-template">
-        Game Boy Advance Game
     </script>
     <script type="text/javascript" src="./assets/mz_bb.js"></script>
     <!--
