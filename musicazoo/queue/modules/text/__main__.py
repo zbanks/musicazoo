@@ -46,7 +46,7 @@ class TextModule(pymodule.JSONParentPoller,threading.Thread):
         self.join()
 
     def compute_tts(self):
-        self.speech = text2speech_engines[self.text2speech](self.speech_text,**self.text2speech_args)
+        self.speech = self.speech_engine(self.speech_text,**self.text2speech_args)
         self.vlc_i = musicazoo.lib.vlc.Instance()
         self.vlc_mp = self.vlc_i.media_player_new()
         self.vlc_media = self.vlc_i.media_new_path(self.speech.name)
@@ -82,6 +82,8 @@ class TextModule(pymodule.JSONParentPoller,threading.Thread):
         self.speech = None
 
         if text2speech:
+            self.speech_engine = text2speech_engines[self.text2speech]
+
             if speech_preprocessor:
                 self.speech_text = speech_preprocessors[speech_preprocessor](text)
             else:
