@@ -21,7 +21,7 @@ setup(
     download_url="https://github.com/zbanks/musicazoo/tarball/5.0.6",
     install_requires=required,
     scripts=[
-        "bin/musicazoo", "bin/mz"
+        "bin/musicazoo", "bin/mz", "bin/mz_push_email"
     ],
     package_dir = {
         'musicazoo.wsgi': 'musicazoo/wsgi',

@@ -9,7 +9,7 @@ import sys
 import talon
 import urllib2
 
-#talon.init()
+talon.init()
 
 def send_mz_commands(endpoint, commands):
     req = urllib2.Request(endpoint)
@@ -42,9 +42,9 @@ class EmailParser(object):
 
     def strip_reply(self,msgtxt):
         main_message = talon.quotations.extract_from_plain(msgtxt)
-        #text, signature = talon.signature.extract(main_message, self.sender)
-        #return text
-        return main_message
+        text, signature = talon.signature.extract(main_message, self.sender)
+        return text
+        #return main_message
 
     def find_extra(self,msg):
         ytm=re.findall("youtube\.com\/watch\?v=([^&\s]+)",msg)
