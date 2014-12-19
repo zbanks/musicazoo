@@ -6,10 +6,14 @@ import os
 import quopri
 import re
 import sys
-import talon
 import urllib2
 
-talon.init()
+try:
+    import talon
+    talon.init()
+except:
+    # Talon is optional, but makes email parsing a bit nicer
+    talon = None
 
 def send_mz_commands(endpoint, commands):
     req = urllib2.Request(endpoint)
@@ -41,10 +45,11 @@ class EmailParser(object):
                 break
 
     def strip_reply(self,msgtxt):
+        if talon is None:
+            return msgtxt
         main_message = talon.quotations.extract_from_plain(msgtxt)
         text, signature = talon.signature.extract(main_message, self.sender)
         return text
-        #return main_message
 
     def find_extra(self,msg):
         ytm=re.findall("youtube\.com\/watch\?v=([^&\s]+)",msg)
