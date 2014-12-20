@@ -160,6 +160,11 @@ class NLP(service.JSONCommandProcessor, service.Service):
 
         raise service.Return(u'Queued "{0}"'.format(title))
 
+    @service.coroutine
+    def cmd_say(self,q,text):
+        yield self.queue_cmd("add",{"type":"text","args":{"text":text}})
+        raise service.Return(u'Queued text.')
+
     def pretty(self,mod):
         print mod
         t=mod['type']
@@ -169,7 +174,7 @@ class NLP(service.JSONCommandProcessor, service.Service):
         #    return u'{0}'.format(mod['parameters']['short_description'])
         #if t=='text':
         #    return u'{0}'.format(mod['parameters']['short_description'])
-        return t
+        return u'({0})'.format(t)
 
     @service.coroutine
     def cmd_help(self,q):
@@ -205,6 +210,7 @@ Anything else - Queue Youtube video""")
         (r'^bump$',cmd_bump),
         (r'^q$',cmd_queue),
         (r'^queue$',cmd_queue),
+        (r'^say (.+)$',cmd_say),
         (r'^(.+)$',cmd_yt),
     ]
 
