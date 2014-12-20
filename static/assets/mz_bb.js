@@ -96,9 +96,6 @@ Handlebars.registerHelper('pressed', function(x, options){
 
 // Handlebars templates
 
-var TEMPLATE_NAMES = {
-};
-
 var TEMPLATES = _.objectMap({
     "unknown": '(Unknown)',
     "empty": '',
@@ -1001,3 +998,10 @@ var authCallback = _.once(function(available){
 });
 
 authenticate(authCallback);
+
+$.getJSON("/settings.json").done(function(data){
+    console.log("data", data);
+    $("h1.title").text(data.name);
+    $("html").animate({"backgroundColor": data.bg_color});
+    $("html").animate({"color": data.fg_color});
+});
