@@ -14,12 +14,13 @@
         window.DE = false;
     </script>
     <script class="youtube-template" type="text/x-handlebars-template">
-        {{#if_eq status neq='stopped' }}
-            {{#if_eq status neq='added'}}
+<!-- initialized/ready/playing/paused/suspended/stopping -->
+        {{#if_eq status neq='stopping' }}
+            {{#if_eq status neq='initialized'}}
                 <!-- <div id="youtube-video"> </div> -->
                 <a href="{{ url }}"> {{ title }} </a>
                 - [{{ minutes time }}/{{ minutes duration }}]
-                {{#if_eq status eq='loading' }}
+                {{#if_eq status eq='ready' }}
                     - (Loading...)
                 {{/if_eq}}
                 {{#if_eq status eq='playing' }}
@@ -27,22 +28,18 @@
                         <a href="#" class="btn youtube-add-related">++</a>
                     {{/if_eq}}
                     <a href="#" class="btn action-set" data-property="status" data-value="paused">pause</a>
-                    <!--
-                    <a href="#" class="btn action-set" data-property="time" data-value="0">restart</a>
-                    <a href="#" class="btn action-set" data-property="time" data-value="{{ add time v=30 }}">+0:30</a>
-                    <a href="#" class="btn action-set" data-property="time" data-value="{{ add time v=-30 }}">-0:30</a>
-                    -->
                 {{/if_eq}}
                 {{#if_eq status eq='paused' }}
                     {{#if_eq site eq='youtube'}}
                         <a href="#" class="btn youtube-add-related">++</a>
                     {{/if_eq}}
                     <a href="#" class="btn action-set" data-property="status" data-value="playing">resume</a>
-                    <!--
-                    <a href="#" class="btn action-set" data-property="time" data-value="0">restart</a>
-                    <a href="#" class="btn action-set" data-property="time" data-value="{{ add time v=30 }}">+0:30</a>
-                    <a href="#" class="btn action-set" data-property="time" data-value="{{ add time v=-30 }}">-0:30</a>
-                    -->
+                {{/if_eq}}
+                {{#if_eq status eq='suspended' }}
+                    {{#if_eq site eq='youtube'}}
+                        <a href="#" class="btn youtube-add-related">++</a>
+                    {{/if_eq}}
+                    <!-- <a href="#" class="btn action-set" data-property="status" data-value="playing">resume</a> -->
                 {{/if_eq}}
                 <!-- <a href="http://musicazoo.mit.edu/add?addtxt={{ url }}" class="btn action-set">fwd</a> -->
             {{else}}

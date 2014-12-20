@@ -118,46 +118,10 @@ var COMMANDS = [
         args: function(match, cb, kw){
             cb({
                 text: match,
-                text_preprocessor: "none",
-                speech_preprocessor: "pronunciation",
+                speech_preprocessor: "pronounce",
                 text2speech: "google",
-                renderer: "splash",
+                text2screen: "splash",
                 duration: 1,
-                short_description: "(Text)",
-                long_description: "Text: " + match,
-            });
-        }
-    },
-    { // Tell me a joke
-        module: "text",
-        regex: /tell me a joke/,
-        args: function(match, cb, kw){
-            cb({
-                text: "no",
-                text_preprocessor: "none",
-                speech_preprocessor: "none",
-                text2speech: "google",
-                renderer: "splash",
-                duration: 1,
-                short_description: "(Tell me a joke)",
-                long_description: "Joke",
-            });
-        }
-    },
-    { // Luke I am your father
-        module: "text",
-        regex: /luke I am your father/i,
-        args: function(match, cb, kw){
-            cb({
-                text: "no",
-                text_preprocessor: "none",
-                speech_preprocessor: "none",
-                text2speech: "google",
-                renderer: "splash",
-                duration: 1,
-                speed: 0.3,
-                short_description: "(Awkward)",
-                long_description: "Luke,",
             });
         }
     },
@@ -168,14 +132,10 @@ var COMMANDS = [
             var words = "ahole,aholes,asshole,assholes,asswipe,biatch,bitch,bitches,blo_job,blow_job,blowjob,cocksucker,cunt,cunts,dickhead,fuck,fucked,fucking,fuckoff,fucks,handjob,handjobs,motherfucker,mother-fucker,motherfuckers,muthafucker,muthafuckers,nigga,niggs,nigger,niggers,pedofile,pedophile,phag,phuc,phuck,phucked,phucker,shat,shit,shits,shithead,shitter,shitting".split(",");
             cb({
                 text: _.chain(words).shuffle().last(10).value().join(" "),
-                text_preprocessor: "none",
-                speech_preprocessor: "none",
+                speech_preprocessor: "pronounce",
                 text2speech: "google",
-                renderer: "splash",
+                text2screen: "paragraph",
                 duration: 2,
-                speed: 1,
-                short_description: "Fuck!",
-                long_description: "(Please hold while Musicazoo expresses itself)",
             });
         }
     },
