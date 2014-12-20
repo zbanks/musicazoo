@@ -1,7 +1,6 @@
 import json
 import socket
 import sys
-import threading
 import traceback
 
 import musicazoo.lib.packet as packet
@@ -67,7 +66,6 @@ class ParentConnection(object):
 class JSONParentPoller(object):
     def __init__(self):
         self.connection = ParentConnection()
-        self.update_lock = threading.Lock() # TODO this shouldn't live here, nothing here has to do with threads
         # if modules need this then it's a personal problem
         super(JSONParentPoller,self).__init__()
 
@@ -96,12 +94,15 @@ class JSONParentPoller(object):
             traceback.print_exc()
             self.connection.send_resp(packet.error(str(e)))
 
-    def update(self, params):
-        with self.update_lock:
-            data = {"cmd": "set_parameters", "args": {"parameters": params}}
-            return self.connection.send_update(data)
+    def set_parameters(self, params):
+        data = {"cmd": "set_parameters", "args": {"parameters": params}}
+        return self.connection.send_update(data)
 
-    def update_rm(self):
-        with self.update_lock:
-            data = {"cmd": "rm"}
-            return self.connection.send_update(data)
+    def unset_parameters(self, params):
+        data = {"cmd": "unset_parameters", "args": {"parameters": params}}
+        return self.connection.send_update(data)
+
+    def rm(self):
+        data = {"cmd": "rm"}
+        return self.connection.send_update(data)
+

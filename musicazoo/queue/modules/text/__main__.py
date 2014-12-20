@@ -41,7 +41,7 @@ class TextModule(pymodule.JSONParentPoller,threading.Thread):
 
     def shutdown(self):
         self.running=False
-        self.update_rm()
+        self.rm()
         self.close()
         self.join()
 
@@ -61,7 +61,7 @@ class TextModule(pymodule.JSONParentPoller,threading.Thread):
         self.speech_preprocessor = speech_preprocessor
         self.screen_preprocessor = screen_preprocessor
 
-        self.connection.send_update({"cmd":"set_parameters","args":{"parameters":{
+        self.set_parameters({"cmd":"set_parameters","args":{"parameters":{
             "text":text,
             "duration":duration,
             "text2screen":text2screen,
