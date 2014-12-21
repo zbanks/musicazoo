@@ -78,9 +78,6 @@ And test your installation by running `musicazoo` and navigating to [http://loca
 
 ### Running Musicazoo on startup
 
-Running the supervisord daemon on startup depends on your system. There are a collection of scripts for many systems available [https://github.com/Supervisor/initscripts](here). There is general advice for configuring supervisord for Linux available [http://serverfault.com/questions/96499/how-to-automatically-start-supervisord-on-linux-ubuntu](here).
+Running the supervisord daemon on startup depends on your system. There are a collection of scripts for many systems available [here](https://github.com/Supervisor/initscripts). There is general advice for configuring supervisord for Linux available [here](http://serverfault.com/questions/96499/how-to-automatically-start-supervisord-on-linux-ubuntu).
 
 You will likely need to symlink or copy your `supervisord.conf` to `/etc/supervisor/supervisord.conf` and make sure that the `pidfile` in `supervisord.conf` corresponds to `PIDFILE` in your init script.
-
-## Setting up as a service
-Coming soon!
