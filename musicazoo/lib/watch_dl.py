@@ -3,34 +3,37 @@ import urllib
 import re
 import urllib2
 import sys
+import HTMLParser
 
 from youtube_dl.extractor.common import InfoExtractor
 
+html_parser = HTMLParser.HTMLParser()
+
 class WatchCartoonOnlineIE(InfoExtractor):
-    IE_NAME = u'watchcartoononline.com'
+    #IE_NAME = u'WatchCartoonOnline'
     _VALID_URL = r'(?:http://)?(?:www\.)?watchcartoononline\.com/([^/]+)'
 
     def _real_extract(self,url):
-	o=urllib2.build_opener(urllib2.HTTPHandler).open
+        o=urllib2.build_opener(urllib2.HTTPHandler).open
 
         mobj = re.match(self._VALID_URL, url)
         video_id = mobj.group(1)
         webpage = o('http://www.watchcartoononline.com/{0}'.format(video_id)).read()
 
-	title=re.search(r'<h1.*?>(.+?)</h1>',webpage).group(1)
+        title_escaped = re.search(r'<h1.*?>(.+?)</h1>',webpage).group(1)
+        title = html_parser.unescape(title_escaped)
 
-        video_url = re.search(r'<iframe id="(.+?)0" (.+?)>',
-                                webpage).group()
-        video_url = re.search('src="(.+?)"',
-                                video_url).group(1).replace(' ','%20')
+        video_url = re.search(r'<iframe id="(.+?)0" (.+?)>', webpage).group()
+        video_url = re.search('src="(.+?)"', video_url).group(1).replace(' ','%20')
+
         params = urllib.urlencode({'fuck_you':'','confirm':'Click Here to Watch Free!!'})
         request = urllib2.Request(video_url,params)
         video_webpage = o(request).read()
-        final_url =  re.findall(r'file=(.+?)&',
-                                video_webpage)
+        final_url =  re.findall(r'file: "(.+?)"', video_webpage)
         redirect_url=urllib.unquote(final_url[-1]).replace(' ','%20')
-	flv_url = o(redirect_url).geturl()
-        return {'url':flv_url,'title':title}
+        flv_url = o(redirect_url).geturl()
+
+        return {'url':flv_url, 'title':title, 'id': video_id}
 
 def downloader(fileurl,file_name):
     u = urllib2.urlopen(fileurl)
