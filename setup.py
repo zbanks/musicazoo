@@ -27,7 +27,7 @@ setup(
         'musicazoo.wsgi': 'musicazoo/wsgi',
     },
     package_data={
-        'musicazoo': ["../supervisord.conf"],
+        'musicazoo': ["../supervisord.conf", "../settings.json"],
         'musicazoo.wsgi': ['../../static/*.html', '../../static/assets/*.js', '../../static/assets/*.otf', '../../static/assets/*.css', '../../static/assets/images/*'],
     },
 )
