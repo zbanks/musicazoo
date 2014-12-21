@@ -122,6 +122,16 @@ var COMMANDS = [
             });
         }
     },
+    { // Text
+        keywords: ["remind", "splash"],
+        module: "text_bg",
+        background: true,
+        args: function(match, cb, kw){
+            cb({
+                text: match,
+            });
+        }
+    },
     { // Fuck
         module: "text",
         keywords: ["fuck"],
@@ -163,7 +173,7 @@ var COMMANDS = [
         module: "image",
         background: true,
         args: function(match, cb){
-            cb({image: match});
+            cb({url: match});
         }
     },
     { // "Youtube"
@@ -458,7 +468,7 @@ $(document).ready(function(){
 });
 
 var authCallback = _.once(function(available){
-    console.log(available);
+    console.log("available:", available);
     var modules = _({
         "youtube": {
             commands: ["seek_abs", "seek_rel", "pause", "resume"],
@@ -480,9 +490,23 @@ var authCallback = _.once(function(available){
             commands: [],
             parameters: [],
             background: false,
-        }
+        },
+        
     }).pick(available.modules);
     var backgrounds = _({
+        "text_bg": {
+            commands: [],
+            parameters: [
+                "text", "duration", 
+                "text2speech", "text2screen", "speech_preprocessor", "screen_preprocessor", "text2screen_args", "text2speech_args"
+            ],
+            background: true,
+        },
+        "image": {
+            commands: [],
+            parameters: ["url"],
+            background: true,
+        },
 
     }).pick(available.backgrounds);
     /* GT - Modules available instead of capabilities
@@ -506,6 +530,7 @@ var authCallback = _.once(function(available){
     var commands = _.filter(COMMANDS, function(x){ return  _.contains(_.keys(modules), x.module); });
     _.extend(modules, backgrounds);
     console.log("Modules:", modules);
+    console.log("Backgrounds:", backgrounds);
     //console.log("Statics:", statics);
     //console.log("Commands:", commands);
     //console.log("Module capabilities: ", module_capabilities);

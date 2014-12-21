@@ -25,6 +25,7 @@ class ImageModule(pymodule.JSONParentPoller,threading.Thread):
         self.join()
 
     def load(self):
+        self.set_parameters({"url": self.url})
         f = cStringIO.StringIO(urllib.urlopen(self.url).read())
         i=Image.open(f)
         self.pi_seq=[]

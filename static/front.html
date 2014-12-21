@@ -92,6 +92,11 @@
         <!-- {{ duration }} -->
         <a href='#' class='btn rm bb-only'>rm</a>
     </script>
+    <script class="text_bg-template" type="text/x-handlebars-template">
+        {{ text }} (background)
+        <!-- {{ duration }} -->
+        <a href='#' class='btn rm bb-only'>rm</a>
+    </script>
     <script class="btc-template" type="text/x-handlebars-template">
         {{#if_eq status neq='stopped' }}
             BTC Price
@@ -129,7 +134,7 @@
     </script>
     <script class="image-template" type="text/x-handlebars-template">
         Image:
-        {{ url }}
+        <a href="{{ url }}">{{ url }}</a>
         {{ status }}
     </script>
     <script class="logo-template" type="text/x-handlebars-template">
