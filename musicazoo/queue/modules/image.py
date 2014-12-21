@@ -27,9 +27,33 @@ class ImageModule(pymodule.JSONParentPoller,threading.Thread):
     def load(self):
         f = cStringIO.StringIO(urllib.urlopen(self.url).read())
         i=Image.open(f)
-        i.thumbnail((self.fsg.width,self.fsg.height),Image.ANTIALIAS)
-        self.image=ImageTk.PhotoImage(i, master=self.fsg)
-        self.c.itemconfig(self.tkimg,image=self.image)
+        self.pi_seq=[]
+        self.image_seq=[]
+        try:
+            while True:
+                i.thumbnail((self.fsg.width,self.fsg.height),Image.ANTIALIAS)
+                if 'duration' in i.info:
+                    duration=i.info['duration']
+                else:
+                    duration=100
+                self.image_seq.append(i.copy())
+                self.pi_seq.append((ImageTk.PhotoImage(i, master=self.fsg),duration))
+                i.seek(len(self.image_seq))
+        except EOFError:
+            pass
+
+        if len(self.pi_seq) == 0:
+            raise Exception("Bad image file.")
+
+        if len(self.pi_seq) > 1:
+            def flip(i):
+                img,dur=self.pi_seq[i]
+                self.c.itemconfig(self.tkimg,image=img)
+                self.fsg.after(dur,lambda:flip((i+1)%len(self.pi_seq)))
+            flip(0)
+        else:
+            img,dur=self.pi_seq[0]
+            self.c.itemconfig(self.tkimg,image=img)
 
     def cmd_init(self,url,bg=sets.bg_color):
         self.set_parameters({
