@@ -24,7 +24,7 @@ class Image(Module):
     TYPE_STRING='image'
     process = ['python','-m','musicazoo.queue.modules.image']
 
-modules = [Youtube, Problem, Text]
+modules = [Youtube, Text]
 backgrounds = [TextBG, Image]
 
 q=musicazoo.queue.Queue(modules, backgrounds)

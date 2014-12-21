@@ -29,7 +29,8 @@ def get_mime_type(url):
         raise Exception("URL Error")
 
 class YoutubeModule(pymodule.JSONParentPoller):
-    def __init__(self):
+    def __init__(self,headless=False):
+        self.headless=headless
         self.update_lock = threading.Lock() # TODO I don't think this needs to exist
         self.thread_stopped = False 
         super(YoutubeModule, self).__init__()
@@ -153,8 +154,11 @@ class YoutubeModule(pymodule.JSONParentPoller):
             self.duration = ev.u.new_length / 1000.
             self.safe_update()
 
-        os.environ["DISPLAY"] = ":0"
-        self.vlc_i = vlc.Instance(['-f','--no-video-title-show','--no-xlib'])
+        if not self.headless:
+            os.environ["DISPLAY"] = ":0"
+            self.vlc_i = vlc.Instance(['-f','--no-video-title-show','--no-xlib'])
+        else:
+            self.vlc_i = vlc.Instance(['--novideo'])
         self.vlc_mp = self.vlc_i.media_player_new()
         self.vlc_ev = self.vlc_mp.event_manager()
 
@@ -164,8 +168,9 @@ class YoutubeModule(pymodule.JSONParentPoller):
 
         vlc_media=self.vlc_i.media_new_location(self.media)
         self.vlc_mp.set_media(vlc_media)
-        self.vlc_mp.set_xwindow(0)
-        self.vlc_mp.set_fullscreen(True)
+        if not self.headless:
+            self.vlc_mp.set_xwindow(0)
+            self.vlc_mp.set_fullscreen(True)
         self.vlc_mp.play()
 
         self.state_has_started = True
@@ -249,9 +254,11 @@ class YoutubeModule(pymodule.JSONParentPoller):
         'do_seek_abs': cmd_seek_abs,
     }
 
-mod = YoutubeModule()
-
 import sys
+
+headless = '--headless' in sys.argv
+
+mod = YoutubeModule(headless=headless)
 
 def serve_forever():
     while not mod.thread_stopped:
