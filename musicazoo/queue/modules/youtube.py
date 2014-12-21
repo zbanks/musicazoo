@@ -14,8 +14,19 @@ from youtube_dl.compat import compat_cookiejar, compat_urllib_request
 from youtube_dl.utils import make_HTTPS_handler, YoutubeDLHandler
 
 import threading
+import urllib2
 
 messages = Queue.Queue()
+
+def get_mime_type(url):
+    class HeadRequest(urllib2.Request):
+        def get_method(self):
+            return "HEAD"
+    try:
+        response = urllib2.urlopen(HeadRequest(url))
+        return response.info().dict['content-type']
+    except Exception as e:
+        raise Exception("URL Error")
 
 class YoutubeModule(pymodule.JSONParentPoller):
     def __init__(self):
@@ -50,8 +61,6 @@ class YoutubeModule(pymodule.JSONParentPoller):
         return self.state_has_started and not (self.state_is_suspended or self.state_is_paused)
 
     def cmd_init(self, url):
-        print "URL:", url
-
         # Has the youtube url/data been fetched?
         self.state_is_ready = False 
         # Has the video started playing at all?
@@ -78,7 +87,6 @@ class YoutubeModule(pymodule.JSONParentPoller):
         self.safe_update()
 
     def cmd_play(self):
-        print "Play"
         if self.state_has_started:
             if not self.state_is_paused:
                 self.vlc_mp.play()
@@ -89,7 +97,6 @@ class YoutubeModule(pymodule.JSONParentPoller):
         self.safe_update()
 
     def cmd_suspend(self):
-        print "Suspend"
         if self.state_has_started:
             if self.vlc_mp.is_playing():
                 self.vlc_mp.pause()
@@ -98,14 +105,12 @@ class YoutubeModule(pymodule.JSONParentPoller):
         self.safe_update()
 
     def cmd_resume(self):
-        print "Resume"
         if self.state_has_started:
             self.vlc_mp.play()
             self.state_is_paused = False
             self.safe_update()
 
     def cmd_pause(self):
-        print "Pause"
         if self.state_has_started:
             if self.vlc_mp.is_playing():
                 self.vlc_mp.pause()
@@ -113,7 +118,6 @@ class YoutubeModule(pymodule.JSONParentPoller):
             self.safe_update()
 
     def cmd_rm(self):
-        print "Remove"
         self.state_is_stopping = True
         messages.put("rm")
         #messages.join()
@@ -169,52 +173,60 @@ class YoutubeModule(pymodule.JSONParentPoller):
 
     def get_video_info(self):
         url = self.url
-        # General configuration
-        tf=tempfile.NamedTemporaryFile(delete=False)
-        tf.close()
-        self.cookies=tf.name
-        jar = compat_cookiejar.MozillaCookieJar(self.cookies)
-        cookie_processor = compat_urllib_request.HTTPCookieProcessor(jar)
-        proxies = compat_urllib_request.getproxies()
-        proxy_handler = compat_urllib_request.ProxyHandler(proxies)
-        https_handler = make_HTTPS_handler(None)
-        opener = compat_urllib_request.build_opener(https_handler, proxy_handler, cookie_processor, YoutubeDLHandler)
-        compat_urllib_request.install_opener(opener)
 
-        y=youtube_dl.YoutubeDL({'outtmpl':u'','skip_download':True}) # empty outtmpl needed due to weird issue in youtube-dl
-        y.add_info_extractor(WatchCartoonOnlineIE())
-        y.add_default_info_extractors()
+        mimetype=get_mime_type(url)
 
-        try:
-            info=y.extract_info(url,download=False)
-        except Exception:
-            raise
-            self.status='invalid'
-            self.queue.removeMeAsync(self.uid) # Remove if possible
-            self.ready.release()
-            return False
+        if mimetype.startswith("text/html"):
+            # General configuration
+            tf=tempfile.NamedTemporaryFile(delete=False)
+            tf.close()
+            self.cookies=tf.name
+            jar = compat_cookiejar.MozillaCookieJar(self.cookies)
+            cookie_processor = compat_urllib_request.HTTPCookieProcessor(jar)
+            proxies = compat_urllib_request.getproxies()
+            proxy_handler = compat_urllib_request.ProxyHandler(proxies)
+            https_handler = make_HTTPS_handler(None)
+            opener = compat_urllib_request.build_opener(https_handler, proxy_handler, cookie_processor, YoutubeDLHandler)
+            compat_urllib_request.install_opener(opener)
 
-        jar.save()
+            y=youtube_dl.YoutubeDL({'outtmpl':u'','skip_download':True}) # empty outtmpl needed due to weird issue in youtube-dl
+            y.add_info_extractor(WatchCartoonOnlineIE())
+            y.add_default_info_extractors()
 
-        if 'entries' in info:
-            vinfo=info['entries'][0]
+            try:
+                info=y.extract_info(url,download=False)
+            except Exception:
+                raise
+                self.status='invalid'
+                self.queue.removeMeAsync(self.uid) # Remove if possible # TODO error here
+                self.ready.release()
+                return False
+
+            jar.save()
+
+            if 'entries' in info:
+                vinfo=info['entries'][0]
+            else:
+                vinfo=info
+
+            if 'title' in vinfo:
+                self.title=vinfo['title']
+            if 'duration' in vinfo:
+                self.duration=vinfo['duration']
+            if 'extractor' in vinfo:
+                self.site=vinfo['extractor']
+            if 'url' in vinfo:
+                self.media=vinfo['url']
+            if 'thumbnail' in vinfo:
+                self.thumbnail=vinfo['thumbnail']
+            if 'description' in vinfo:
+                self.description=vinfo['description']
+            if 'id' in vinfo:
+                self.vid=vinfo['id']
+
         else:
-            vinfo=info
-
-        if 'title' in vinfo:
-            self.title=vinfo['title']
-        if 'duration' in vinfo:
-            self.duration=vinfo['duration']
-        if 'extractor' in vinfo:
-            self.site=vinfo['extractor']
-        if 'url' in vinfo:
-            self.media=vinfo['url']
-        if 'thumbnail' in vinfo:
-            self.thumbnail=vinfo['thumbnail']
-        if 'description' in vinfo:
-            self.description=vinfo['description']
-        if 'id' in vinfo:
-            self.vid=vinfo['id']
+            self.media=url
+            self.title=url
 
         self.state_is_ready = True
         self.safe_update()
