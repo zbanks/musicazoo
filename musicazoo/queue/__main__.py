@@ -16,8 +16,16 @@ class Text(Module):
     TYPE_STRING='text'
     process = ['python','-m','musicazoo.queue.modules.text']
 
+class TextBG(Module):
+    TYPE_STRING='text_bg'
+    process = ['python','-m','musicazoo.queue.modules.text_bg']
+
+class Image(Module):
+    TYPE_STRING='image'
+    process = ['python','-m','musicazoo.queue.modules.image']
+
 modules = [Youtube, Problem, Text]
-backgrounds = [Youtube, Problem, Text]
+backgrounds = [TextBG, Image]
 
 q=musicazoo.queue.Queue(modules, backgrounds)
 

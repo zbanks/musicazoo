@@ -61,7 +61,7 @@ class TextModule(pymodule.JSONParentPoller,threading.Thread):
         self.speech_preprocessor = speech_preprocessor
         self.screen_preprocessor = screen_preprocessor
 
-        self.set_parameters({"cmd":"set_parameters","args":{"parameters":{
+        self.set_parameters({
             "text":text,
             "duration":duration,
             "text2screen":text2screen,
@@ -70,7 +70,7 @@ class TextModule(pymodule.JSONParentPoller,threading.Thread):
             "speech_preprocessor":speech_preprocessor,
             "text2screen_args":text2screen_args,
             "text2speech_args":text2speech_args,
-        }}})
+        })
 
         self.fsg.vlc_duration=None
         self.fsg.vlc_time_started=None
