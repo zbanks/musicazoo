@@ -8,4 +8,7 @@ settings_file=open(json_path)
 
 settings = json.load(settings_file)
 
+if 'log_database' in settings:
+    settings['log_database'] = os.expandvars(settings['log_database'])
+
 globals().update(settings)
