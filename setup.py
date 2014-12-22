@@ -17,17 +17,37 @@ setup(
     author='Zach Banks',
     author_email='zbanks@mit.edu',
     url='https://github.com/zbanks/musicazoo',
-    packages=['musicazoo', 'musicazoo.wsgi', 'musicazoo.queue', 'musicazoo.queue.modules', 'musicazoo.volume', 'musicazoo.lib', 'musicazoo.nlp'],
+    packages=[
+        'musicazoo', 
+        'musicazoo.wsgi', 
+        'musicazoo.queue', 
+        'musicazoo.queue.modules', 
+        'musicazoo.volume', 
+        'musicazoo.lib', 
+        'musicazoo.nlp', 
+        'musicazoo.top'
+    ],
     download_url="https://github.com/zbanks/musicazoo/tarball/5.0.7",
     install_requires=required,
     scripts=[
-        "bin/musicazoo", "bin/mz", "bin/mz_push_email"
+        "bin/musicazoo", 
+        "bin/mz", 
+        "bin/mz_push_email",
     ],
     package_dir = {
         'musicazoo.wsgi': 'musicazoo/wsgi',
     },
     package_data={
-        'musicazoo': ["../supervisord.conf", "../settings.json"],
-        'musicazoo.wsgi': ['../../static/*.html', '../../static/assets/*.js', '../../static/assets/*.otf', '../../static/assets/*.css', '../../static/assets/images/*'],
+        'musicazoo': [
+            "../supervisord.conf", 
+            "../settings.json"
+        ],
+        'musicazoo.wsgi': [
+            '../../static/*.html', 
+            '../../static/assets/*.js', 
+            '../../static/assets/*.otf', 
+            '../../static/assets/*.css', 
+            '../../static/assets/images/*'
+        ],
     },
 )

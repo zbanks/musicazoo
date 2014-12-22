@@ -1,112 +1,42 @@
-// Youtube iframe
+var MODULES = {
+    "youtube": {
+        commands: ["seek_abs", "seek_rel", "pause", "resume"],
+        parameters: [
+            "url", "title", "duration", "site", "media", "thumbnail", "description",
+            "time", "status"
+        ],
+        background: false
+    },
+    "text": {
+        commands: [],
+        parameters: [
+            "text", "duration", 
+            "text2speech", "text2screen", "speech_preprocessor", "screen_preprocessor", "text2screen_args", "text2speech_args"
+        ],
+        background: false,
+    },
+    "problem": {
+        commands: [],
+        parameters: [],
+        background: false,
+    },
+};
 
-/*
-var player;
-function playYoutubeVideo(id, time) {
-    player = new YT.Player('video', {
-        height: '390',
-        width: '640',
-        //videoId: id,
-        events: {
-            'onReady': function(ev){
-                //ev.target.playVideo(); 
-                player.loadVideoById(id, time);
-                //ev.target.seekTo(time*1, true);
-            },
-            'onStateChange': function(ev){
-                console.log(ev);
-            }
-        }
-    });
-    console.log(player);
-}
-*/
-
-// Underscore mixins
-_.mixin(_.str.exports());
-_.mixin({
-    obj : function(op){
-        return function(obj, fn){
-            return _.chain(obj)[op](function(v, k){ return [k, fn(v)] }).object().value();
-        };
-    }
-});
-
-_.mixin({
-    objectMap : _.obj("map"),
-    objectFilter : _.obj("filter")
-});
-
-
-// Handlebars extras
-Handlebars.registerHelper('minutes', function(seconds){
-    var hours = Math.floor(seconds / 3600);
-    seconds %= 3600;
-    var minutes = Math.floor(seconds / 60);
-    seconds %= 60;
-    seconds = Math.floor(seconds);
-    if(hours){
-        return hours + ":" + _.lpad(minutes, 2, '0') + ":" + _.lpad(seconds, 2, '0');
-    }else{
-        return minutes + ":" + _.lpad(seconds, 2, '0');
-    }
-});
-
-Handlebars.registerHelper('add', function(x, options){
-    var v = x + parseInt(options.hash.v);
-    if(!v || v < 0){
-        return 0;
-    }
-    return v;
-});
-
-Handlebars.registerHelper('percent', function(x, options){
-    var of = parseInt(options.hash.of);
-    x = parseInt(x);
-    if(of && x){
-        return Math.floor(x / of * 100);
-    }else{
-        return 0;
-    }
-});
-
-Handlebars.registerHelper('if_eq', function(x, options){
-    if(options.hash.eq){
-        if(x == options.hash.eq){
-            return options.fn(this);
-        }
-        return options.inverse(this);
-    }else{
-        if(x == options.hash.neq){
-            return options.inverse(this);
-        }
-        return options.fn(this);
-    }
-});
-
-Handlebars.registerHelper('pressed', function(x, options){
-    var list = options.hash.list;
-    if(_.contains(list, x)){
-        return "pressed";
-    }else{
-        return "";
-    }
-});
-
-
-// Handlebars templates
-
-var TEMPLATES = _.objectMap({
-    "unknown": '(Unknown)',
-    "empty": '',
-    "nothing": '(Nothing)',
-}, Handlebars.compile);
-
-_.each(["youtube", "text", "netvid", "btc", "vba", "image", "logo"], function(n){
-    TEMPLATES[n] = Handlebars.compile($("script." + n + "-template").html());
-});
-
-// NLP Constants
+var BACKGROUNDS = {
+    "text_bg": {
+        commands: [],
+        parameters: [
+            "text", "duration", 
+            "text2speech", "text2screen", "speech_preprocessor", "screen_preprocessor", "text2screen_args", "text2speech_args"
+        ],
+        background: true,
+    },
+    "image": {
+        commands: [],
+        parameters: ["url"],
+        background: true,
+    },
+};
 
 var COMMANDS = [
     { // Text
@@ -209,127 +139,21 @@ var COMMANDS = [
     }
 ];
 
+// Handlebars templates
 
-var volume_lockout = false;
-setInterval(function(){ volume_lockout = false; }, 500);
+var TEMPLATES = _.objectMap({
+    "unknown": '(Unknown)',
+    "empty": '',
+    "nothing": '(Nothing)',
+}, Handlebars.compile);
 
+var TEMPLATES_TO_COMPILE = ["youtube", "text", "netvid", "btc", "vba", "image", "logo"];
 
-//var BASE_URL = "http://localhost:9000/";
-var BASE_URL = "/queue";
+_.each(TEMPLATES_TO_COMPILE, function(n){
+    TEMPLATES[n] = Handlebars.compile($("script." + n + "-template").html());
+});
 
-var Endpoint = function(url){
-    this.url = url;
-    this.reqs = [];
-    this.alive = false;
-    this.onAlive = null;
-    this.onDead = null;
-    this.timeout = window.setTimeout(_.bind(this.runQueries, this), 0);
-}
-
-Endpoint.prototype.deferQuery = function(data, cb, err){
-    this.reqs.push({"data": data, "cb": cb, "err": err});
-}
-
-Endpoint.prototype.forceQuery = function(data, cb, err){
-    this.deferQuery(data, cb, err);
-    this.runQueries();
-}
-
-Endpoint.prototype.runQueries = function(cb, err){
-    var self = this;
-    if(this.timeout !== null){
-        window.clearTimeout(this.timeout);
-    }
-    if(this.reqs.length){
-        var cbs = _.pluck(this.reqs, "cb");
-        var errs = _.pluck(this.reqs, "cb");
-        var datas = _.pluck(this.reqs, "data");
-        $.ajax(this.url, {
-            data: JSON.stringify(datas),
-            dataType: 'json',
-            type: 'POST',
-            contentType: 'text/json',
-            success: function(resp){
-                //regainConnection();
-                self.onAlive && self.onAlive();
-                if(resp.length != datas.length){ 
-                    console.error("Did not recieve correct number of responses from server!");
-                    return;
-                }
-                for(var i = 0; i < resp.length; i++){
-                    var r = resp[i];
-                    if(!r.success){
-                        console.error("Server Error:", r.error);
-                        if(errs[i]){
-                            errs[i]();
-                        }
-                    }else if(cbs[i]){
-                        cbs[i](r.result);
-                    }
-                }
-                if(cb){
-                    cb();
-                }
-                self.timeout = window.setTimeout(function(){ self.runQueries(); }, 0); // Defer
-            },
-            error: function(){
-                //lostConnection();
-                self.onDead && self.onDead();
-                _.each(errs, function(x){ if(x){ x(); } });
-                self.timeout = window.setTimeout(function(){ self.runQueries(); }, 500); // Connection dropped?
-                if(err){
-                    err();
-                }
-            }
-        });
-    }else{
-        this.timeout = window.setTimeout(function(){ self.runQueries(); }, 50);
-    }
-    this.reqs = [];
-}
-
-function regainConnection(){
-    $(".disconnect-hide").show();
-    $(".disconnect-show").hide();
-}
-
-function lostConnection(){
-    console.log("Lost connection");
-    $(".disconnect-show").show();
-    $(".disconnect-hide").hide();
-}
-
-var queue_endpoint = new Endpoint("/queue");
-var volume_endpoint = new Endpoint("/vol");
-
-queue_endpoint.onAlive = regainConnection;
-queue_endpoint.onDead = lostConnection;
-
-function authenticate(cb){
-    var doAuth = function(){
-        // Auth & get capabilities
-        console.log("trying to auth");
-        var caps = {};
-        queue_endpoint.deferQuery({cmd: "modules_available"}, function(mcap){
-            caps.modules = mcap;
-        });
-        /* GT - Statics no longer part of queue
-        queue_endpoint.deferQuery({cmd: "static_capabilities"}, function(scap){
-            caps.statics = scap;
-        });
-        */
-        queue_endpoint.deferQuery({cmd: "backgrounds_available"}, function(bcap){
-            caps.backgrounds = bcap;
-        });
-        queue_endpoint.runQueries(function(){
-            cb(caps);
-        }, function(){
-            console.log("unable to auth");
-            window.setTimeout(doAuth, 2000);
-        });
-    };
-    doAuth();
-}
+// NLP processing
 
 var command_match = function(commands, text, cb){
     text = _.trim(text);
@@ -358,6 +182,28 @@ var command_match = function(commands, text, cb){
         }
     }
     return false;
+}
+
+
+function authenticate(cb){
+    var doAuth = function(){
+        // Auth & get capabilities
+        console.log("trying to auth");
+        var caps = {};
+        queue_endpoint.deferQuery({cmd: "modules_available"}, function(mcap){
+            caps.modules = mcap;
+        });
+        queue_endpoint.deferQuery({cmd: "backgrounds_available"}, function(bcap){
+            caps.backgrounds = bcap;
+        });
+        queue_endpoint.runQueries(function(){
+            cb(caps);
+        }, function(){
+            console.log("unable to auth");
+            window.setTimeout(doAuth, 2000);
+        });
+    };
+    doAuth();
 }
 
 var refreshPlaylist = function(){}; // Don't do anything, until we connect to the backend
@@ -464,89 +310,36 @@ $(document).ready(function(){
         });
         return true;
     });
-
 });
+
+// Backbone 
+Backbone.sync = function(method, model, options){
+    // Replace default sync function to raise error unless overridden
+    console.error("unsupported sync");
+    console.log(method, model, options);
+}
 
 var authCallback = _.once(function(available){
     console.log("available:", available);
-    var modules = _({
-        "youtube": {
-            commands: ["seek_abs", "seek_rel", "pause", "resume"],
-            parameters: [
-                "url", "title", "duration", "site", "media", "thumbnail", "description",
-                "time", "status"
-            ],
-            background: false
-        },
-        "text": {
-            commands: [],
-            parameters: [
-                "text", "duration", 
-                "text2speech", "text2screen", "speech_preprocessor", "screen_preprocessor", "text2screen_args", "text2speech_args"
-            ],
-            background: false,
-        },
-        "problem": {
-            commands: [],
-            parameters: [],
-            background: false,
-        },
-        
-    }).pick(available.modules);
-    var backgrounds = _({
-        "text_bg": {
-            commands: [],
-            parameters: [
-                "text", "duration", 
-                "text2speech", "text2screen", "speech_preprocessor", "screen_preprocessor", "text2screen_args", "text2speech_args"
-            ],
-            background: true,
-        },
-        "image": {
-            commands: [],
-            parameters: ["url"],
-            background: true,
-        },
+    var modules = _(MODULES).pick(available.modules);
+    var backgrounds = _(BACKGROUNDS).pick(available.backgrounds);
 
-    }).pick(available.backgrounds);
-    /* GT - Modules available instead of capabilities
-    var modules = _.objectMap(capabilities.modules.specifics, function(x){ 
-        x.commands = x.commands.concat(capabilities.modules.commands); 
-        x.parameters = x.parameters.concat(capabilities.modules.parameters); 
-        x.background = false;
-        return x;
-    });
-    var backgrounds = _.objectMap(capabilities.backgrounds.specifics, function(x){ 
-        x.commands = x.commands.concat(capabilities.backgrounds.commands); 
-        x.parameters = x.parameters.concat(capabilities.backgrounds.parameters); 
-        x.background = true;
-        return x;
-    });
-    */
-    //var statics = capabilities.statics;
     var module_capabilities = _.objectMap(modules, function(x){ return x.parameters });
     var background_capabilities = _.objectMap(backgrounds, function(x){ return x.parameters });
-    //var static_capabilities = _.objectMap(statics, function(x){ return x.parameters });
-    var commands = _.filter(COMMANDS, function(x){ return  _.contains(_.keys(modules), x.module); });
-    _.extend(modules, backgrounds);
-    console.log("Modules:", modules);
-    console.log("Backgrounds:", backgrounds);
-    //console.log("Statics:", statics);
-    //console.log("Commands:", commands);
-    //console.log("Module capabilities: ", module_capabilities);
-    //console.log("Static capabilities: ", static_capabilities);
-    Backbone.sync = function(method, model, options){
-        console.error("unsupported sync");
-        console.log(method, model, options);
-    }
 
+    var commands = _.filter(COMMANDS, function(x){ return  _.contains(_.keys(modules), x.module); });
+
+    _.extend(modules, backgrounds);
+
+    console.log("Modules:", modules);
+    //console.log("Backgrounds:", backgrounds);
+
+    // Action - module/item on queue. May or may not be running.
     var Action = Backbone.Model.extend({
-        active: true, // everything is active! GT
-        defaults: function(){
-            return {
-                type: null,
-                exists: true,
-            };
+        active: true, // everything is active! MZ5
+        defaults: {
+            type: null,
+            exists: true,
         },
         updateType: function(){
             var type = this.get('type')
@@ -633,7 +426,7 @@ var authCallback = _.once(function(available){
             if(method == "read"){
                 if(this.background){
                     queue_endpoint.deferQuery({cmd: "bg", args: {parameters: background_capabilities}}, options.success, options.error);
-                /* GT - No more "current" vs. queue -- still need to check queue
+                /* MZ6 - No more "current" vs. queue -- still need to check queue
                 }else if(this.active){
                     queue_endpoint.deferQuery({cmd: "cur", args: {parameters: module_capabilities}}, options.success, options.error);
                 */
@@ -646,12 +439,8 @@ var authCallback = _.once(function(available){
                 if(this.background){
                     //TODO - You can't actually delete backgrounds
                     console.error("How do I delete a background!?");
-                    queue_endpoint.deferQuery({cmd: "rm", args: {uids: [model.id]}}, options.success, options.error);
-                }else if(this.active){
-                    //queue_endpoint.deferQuery
                     // Eh, try anyways
                     queue_endpoint.deferQuery({cmd: "rm", args: {uids: [model.id]}}, options.success, options.error);
-                    //queue_endpoint.deferQuery({cmd: "tell_module", args: {uid: model.id, cmd: "stop"}});
                 }else{
                     queue_endpoint.deferQuery({cmd: "rm", args: {uids: [model.id]}}, options.success, options.error);
                 }
@@ -673,15 +462,10 @@ var authCallback = _.once(function(available){
         hasParameter: function(p){ return _.contains(this.parameters, p); },
         hasCommand: function(p){ return _.contains(this.commands, p); },
         template: "unknown",
-        //active: false,
         background: false
     });
 
-    var CurrentAction = Action.extend({
-        active: true
-    });
-
-    var Background = CurrentAction.extend({
+    var Background = Action.extend({
         background: true
     });
 
@@ -700,23 +484,6 @@ var authCallback = _.once(function(available){
         }
     });
 
-    var Static = Backbone.Model.extend({
-        initialize: function(prop, options){
-            this.parameters = statics[prop.uid].parameters;
-            this.commands = statics[prop.uid].commands;
-            if(this.hasParameter('vol') && this.hasCommand('set_vol')){
-                this.on('change:vol', function(model, vol, options){
-                    if(!options.parse){
-                        queue_endpoint.deferQuery({cmd: "tell_static", args: {"uid": this.id, "cmd": "set_vol", "args": {"vol": vol}}});
-                    }
-                });
-            }
-        },
-        idAttribute: "uid",
-        hasParameter: function(p){ return _.contains(this.parameters, p); },
-        hasCommand: function(p){ return _.contains(this.commands, p); }
-    });
-
     var Volume = Backbone.Model.extend({
         defaults: {
             vol: 0,
@@ -724,56 +491,29 @@ var authCallback = _.once(function(available){
         initialize: function(prop, options){
             this.on('change:vol', function(model, vol, options){
                 if(!options.parse){
-                    volume_endpoint.deferQuery({cmd: "set_vol", args: { vol: vol }});
+                    volume_endpoint.deferQuery({cmd: "set_vol", args: { vol: vol }}); // FIXME: should sync on change
                 }
             });
         },
         sync: function(method, model, options){
             if(method == "read"){
                 volume_endpoint.deferQuery({cmd: "get_vol"}, options.success, options.error);
-            }
-            if(method != "read"){
-                console.error("Can only read from Queue");
-                return;
+            }else{
+                console.error("Can only read from volume"); // FIXME, should sync on change
             }
         },
-    });
-
-    var StaticSet = Backbone.Collection.extend({
-        model: Static,
-        parse: function(resp, options){
-            // Flatten dict to list
-            return _.map(resp, function(v, k){ 
-                v.uid = k;
-                v.class = statics[k].class;
-                return v;
-             });
-        },
-        sync: function(method, model, options){
-            if(method != "read"){
-                console.error("Can only read from StaticSet");
-                return;
-            }
-            queue_endpoint.deferQuery({cmd: "statics", args: {parameters: static_capabilities}}, options.success, options.error);
-        }
-
     });
 
     var Musicazoo = Backbone.Model.extend({
         defaults: function(){
             return {
                 queue: new Queue(),
-                // statics: new StaticSet(),
-                //active: new CurrentAction(),
                 background: new Background(),
                 volume: new Volume(),
             };
         },
         fetch: function(){
             this.get('queue').fetch();
-            //this.get('statics').fetch();
-            //
-            //this.get('active').fetch();
             this.get('background').fetch();
             this.get('volume').fetch();
         }
@@ -888,6 +628,7 @@ var authCallback = _.once(function(available){
                 update: function(ev, ui){
                     var ordering = self.$("li").map(function(i, e){return $(e).attr('data-view-id')}).toArray();
                     // idk where this could go
+                    // FIXME: this should go on Queue.sync
                     queue_endpoint.deferQuery({cmd: "mv", args:{uids: ordering}});
                     this.model.fetch();
                 },
@@ -992,17 +733,6 @@ var authCallback = _.once(function(available){
         },
     });
 
-    var StaticIdentityView = Backbone.View.extend({
-        initialize: function(){
-            this.render();
-        },
-        render: function(v){
-            $("h1.title").text(this.model.get("name"));
-            $("html").css("background", this.model.get("colors")['bg']);
-        }
-    });
-
-
     mz = mz = new Musicazoo();
     var qv = new QueueView({collection: mz.get('queue'), el: $("ol.playlist")});
     var bv = new BackgroundView({model: mz.get('background'), el: $("ol.background")});
@@ -1023,10 +753,3 @@ var authCallback = _.once(function(available){
 });
 
 authenticate(authCallback);
-
-$.getJSON("/settings.json").done(function(data){
-    console.log("data", data);
-    $("h1.title").text(data.name);
-    $("html").animate({"backgroundColor": data.bg_color});
-    $("html").animate({"color": data.fg_color});
-});

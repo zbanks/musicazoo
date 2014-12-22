@@ -7,6 +7,7 @@
     <script type="text/javascript" src="./assets/jquery-ui.js"></script>
     <script type="text/javascript" src="./assets/backbone.js"></script>
     <script type="text/javascript" src="./assets/handlebars.js"></script>
+    <script type="text/javascript" src="./assets/mz_common.js"></script>
     <script class="toplink-template" type="text/x-handlebars-template">
         <li>
         {{ n }}. ({{ count }}) <a href="{{ url }}">{{ title }}</a> <a class="btn btn-queue" data-url="{{ url }}" href="#link-{{ cid }}" id="link-{{ cid }}">++</a>
@@ -27,17 +28,18 @@
         var Toplinks = Backbone.Collection.extend({
             model: Toplink,
             comparator: "n",
-            url: "/top/",
+            url: "/top",
             offset: 0,
             limit: 15,
             sync: function(method, model, options){
-                options.attrs = {limit: this.limit, offset:this.offset}
+                top_endpoint.forceQuery({
+                        cmd: "list",
+                        args: {
+                            count: this.count,
+                            offset: this.offset
+                        }
+                    }, options.success, options.error);
                 this.offset += this.limit; // TODO: What happens when the call fails?
-                //options.emulateJSON = true;
-                options.contentType = "text/json"
-                options.remove = false;
-                method = "create"
-                return Backbone.sync(method, model, options);
             }
         });
 

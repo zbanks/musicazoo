@@ -7,7 +7,7 @@ not_found_app = werkzeug.exceptions.NotFound()
 static_path = endpoints.static_endpoints["/"]
 
 url_map = werkzeug.routing.Map([
-    werkzeug.routing.Rule('/', endpoint='index.html')
+    werkzeug.routing.Rule('/', endpoint='index.html'),
 ])
 
 def application(environ, start_response):
