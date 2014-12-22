@@ -3,6 +3,7 @@ import pkg_resources
 
 static_endpoints = {
     '/': pkg_resources.resource_filename("musicazoo.wsgi", '../../static')
+    #'/': ("musicazoo.wsgi", "../../static")
 }
 
 wsgi_endpoints = {
