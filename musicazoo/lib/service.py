@@ -165,13 +165,17 @@ class JSONCommandProcessor(object):
 
         try:
             result=yield f(self,**args)
+            result=packet.good(result)
         except Exception as e:
             traceback.print_exc()
-            raise Return(packet.error(str(e)))
+            result=packet.error(str(e))
 
-        raise Return(packet.good(result))
+        if cmd in self.log_cmds and self.logger:
+            self.logger.log({'timestamp':str(datetime.datetime.utcnow()),'id':self.log_prefix,'sent':line,'received':result})
 
-    commands={
-    }
+        raise Return(result)
 
-
+    commands = {}
+    log_cmds = []
+    log_prefix = None
+    logger = None
