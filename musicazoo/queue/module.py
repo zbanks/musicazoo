@@ -6,6 +6,7 @@ import subprocess
 import json
 import datetime
 import traceback
+import uuid
 
 # A module is an object on the queue.
 # The actual code for a module runs in a sub-process.
@@ -32,6 +33,8 @@ class Module(service.JSONCommandProcessor):
         self.parameters={}
         self.remove_function=remove_function
         self.cmd_lock = service.Lock()
+        self.instance = str(uuid.uuid4())
+        self.log_prefix = {"node":"module-queue","instance":self.instance}
 
     # Helper function for new()
     # Set up listening sockets for subprocess
@@ -148,6 +151,7 @@ class Module(service.JSONCommandProcessor):
                 response_str = yield service.with_timeout(self.cmd_read_timeout,self.cmd_stream.read_until('\n'))
         except (service.TimeoutError,tornado.iostream.StreamClosedError) as e:
             self.terminate()
+            self.logger.log({'timestamp':str(datetime.datetime.utcnow()),'id':{'node':'queue-module','instance':self.instance},'sent':cmd_dict,'received':None})
             if isinstance(e,service.TimeoutError):
                 raise Exception("Timeout sending message to module")
             if isinstance(e,tornado.iostream.StreamClosedError):
@@ -155,6 +159,7 @@ class Module(service.JSONCommandProcessor):
             raise
 
         response_dict=json.loads(response_str)
+        self.logger.log({'timestamp':str(datetime.datetime.utcnow()),'id':{'node':'queue-module','instance':self.instance},'sent':cmd_dict,'received':response_dict})
         raise service.Return(packet.assert_success(response_dict))
 
     # Callback for if either pipe gets terminated
@@ -225,4 +230,6 @@ class Module(service.JSONCommandProcessor):
         'unset_parameters':unset_parameters,
         'rm':service.coroutine(terminate),
     }
+
+    log_cmds = ['set_parameters','unset_parameters','rm']
 

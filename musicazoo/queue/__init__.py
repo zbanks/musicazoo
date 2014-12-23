@@ -1,12 +1,17 @@
 import musicazoo.lib.service as service
+import musicazoo.lib.cmdlog
+import uuid
 
 # A queue manages the life and death of modules, through tornado's IOLoop.
 
 class Queue(service.JSONCommandProcessor, service.Service):
     port=5580
 
-    def __init__(self,modules,backgrounds):
+    def __init__(self,modules,backgrounds,logfilename=None):
         print "Queue started."
+        # Create a UUID for this instance
+        self.instance = str(uuid.uuid4())
+
         # Create lookup table of possible modules & backgrounds
         self.modules_available_dict = dict([(m.TYPE_STRING,m) for m in modules])
         self.backgrounds_available_dict = dict([(b.TYPE_STRING,b) for b in backgrounds])
@@ -27,6 +32,12 @@ class Queue(service.JSONCommandProcessor, service.Service):
 
         # Each module on the queue gets a unique ID, this variable allocates those
         self.last_uid=-1
+
+        # Log important commands
+        # (used in JSONCommandProcessor)
+        if logfilename:
+            self.logger = musicazoo.lib.cmdlog.FileLogger(logfilename)
+        self.log_prefix={"node":"client-queue","instance":self.instance}
 
         # JSONCommandService handles all of the low-level TCP connection stuff.
         super(Queue,self).__init__()
@@ -130,6 +141,7 @@ class Queue(service.JSONCommandProcessor, service.Service):
         if type not in self.modules_available_dict:
             raise Exception("Unrecognized module name")
         mod_inst=self.modules_available_dict[type](self.get_remover(uid))
+        mod_inst.logger=self.logger
         yield mod_inst.new(args)
         with (yield self.queue_lock.acquire()):
             self.queue.append((uid,mod_inst))
@@ -274,3 +286,4 @@ class Queue(service.JSONCommandProcessor, service.Service):
         'ask_background':ask_background,
     }
 
+    log_cmds = ['rm','mv','add','set_bg','tell_module','tell_background']
