@@ -27,7 +27,8 @@ class Image(Module):
 modules = [Youtube, Text]
 backgrounds = [TextBG, Image]
 
-q=musicazoo.queue.Queue(modules, backgrounds, 'logfile.json')
+#q=musicazoo.queue.Queue(modules, backgrounds, 'logfile.json')
+q=musicazoo.queue.Queue(modules, backgrounds)
 
 def shutdown_handler(signum,frame):
     print

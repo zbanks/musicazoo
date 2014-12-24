@@ -1,5 +1,5 @@
 import musicazoo.lib.service as service
-import musicazoo.lib.cmdlog
+#import musicazoo.lib.cmdlog
 import uuid
 
 # A queue manages the life and death of modules, through tornado's IOLoop.

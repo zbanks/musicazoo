@@ -151,7 +151,8 @@ class Module(service.JSONCommandProcessor):
                 response_str = yield service.with_timeout(self.cmd_read_timeout,self.cmd_stream.read_until('\n'))
         except (service.TimeoutError,tornado.iostream.StreamClosedError) as e:
             self.terminate()
-            self.logger.log({'timestamp':str(datetime.datetime.utcnow()),'id':{'node':'queue-module','instance':self.instance},'sent':cmd_dict,'received':None})
+            if self.logger is not None:
+                self.logger.log({'timestamp':str(datetime.datetime.utcnow()),'id':{'node':'queue-module','instance':self.instance},'sent':cmd_dict,'received':None})
             if isinstance(e,service.TimeoutError):
                 raise Exception("Timeout sending message to module")
             if isinstance(e,tornado.iostream.StreamClosedError):
@@ -159,7 +160,8 @@ class Module(service.JSONCommandProcessor):
             raise
 
         response_dict=json.loads(response_str)
-        self.logger.log({'timestamp':str(datetime.datetime.utcnow()),'id':{'node':'queue-module','instance':self.instance},'sent':cmd_dict,'received':response_dict})
+        if self.logger is not None:
+            self.logger.log({'timestamp':str(datetime.datetime.utcnow()),'id':{'node':'queue-module','instance':self.instance},'sent':cmd_dict,'received':response_dict})
         raise service.Return(packet.assert_success(response_dict))
 
     # Callback for if either pipe gets terminated

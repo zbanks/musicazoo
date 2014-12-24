@@ -18,6 +18,8 @@
         objectFilter : _.obj("filter")
     });
 
+    exports._ = _;
+
     // Handlebars extras
 
     Handlebars.registerHelper('minutes', function(seconds){
