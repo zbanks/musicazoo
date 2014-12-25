@@ -12,7 +12,7 @@ with open("requirements.txt") as f:
 
 setup(
     name='musicazoo',
-    version='5.0.7',
+    version='5.1.0',
     description='Modular media player',
     author='Zach Banks',
     author_email='zbanks@mit.edu',
@@ -27,7 +27,7 @@ setup(
         'musicazoo.nlp', 
         'musicazoo.top'
     ],
-    download_url="https://github.com/zbanks/musicazoo/tarball/5.0.7",
+    download_url="https://github.com/zbanks/musicazoo/tarball/5.1.0",
     install_requires=required,
     scripts=[
         "bin/musicazoo", 
