@@ -1,4 +1,4 @@
-recursive-include static *.html *.js *.css *.png
+recursive-include static *.html *.js *.css *.png *.json
 include bin/*
 include run_musicazoo.sh
 include requirements.txt

@@ -44,6 +44,7 @@ setup(
         ],
         'musicazoo.wsgi': [
             '../../static/*.html', 
+            '../../static/settings.json', 
             '../../static/assets/*.js', 
             '../../static/assets/*.otf', 
             '../../static/assets/*.css', 
