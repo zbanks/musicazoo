@@ -151,6 +151,7 @@
     exports.nlp_endpoint = new Endpoint(BASE_URL + "/vol");
     exports.volume_endpoint = new Endpoint(BASE_URL + "/vol");
     exports.top_endpoint = new Endpoint(BASE_URL + "/top");
+    exports.lux_endpoint = new Endpoint(BASE_URL + "/lux");
 
     exports.regainConnection = queue_endpoint.onAlive = function(){
         $(".disconnect-hide").show();

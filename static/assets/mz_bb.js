@@ -753,3 +753,40 @@ var authCallback = _.once(function(available){
 });
 
 authenticate(authCallback);
+
+/*
+* With great power comes great responsibility
+
+* ...but seriously don't fuck it up:
+*
+* - Don't toggle a light more than once every 2 seconds
+* - Make sure all the lights are back on during the day
+* - Something something fire code
+* - Don't annoy your neighbors (unless it's really funny)
+* - Don't get caught
+*
+*/
+
+Lights = {
+    groups: ["G", "B", "W"],
+    set: function(name, relay, state){
+        return lux_endpoint.forceQuery({cmd: "set_state", args: {name: name, relay: relay, new_state: !!state}});
+    },
+    groupSet: function(name, state){
+        for(var i = 0; i < 12; i++){
+            this.set(name, i, state);
+        }
+    },
+    on: function(name, relay){
+        this.set(name, relay, true);
+    },
+    off: function(name, relay){
+        this.set(name, relay, false);
+    },
+    groupOn: function(name, relay){
+        this.groupSet(name, true);
+    },
+    groupOff: function(name, relay){
+        this.groupSet(name, false);
+    },
+}

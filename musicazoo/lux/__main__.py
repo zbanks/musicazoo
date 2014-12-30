@@ -2,6 +2,7 @@ import json
 import math
 import musicazoo.lib.packet as packet
 import musicazoo.lib.service as service
+import signal
 
 import lux_hal
 
@@ -53,7 +54,7 @@ class Lux(service.JSONCommandProcessor, service.Service):
 
     commands={
         'set_state':set_state,
-        'get_state':set_state,
+        'get_state':get_state,
     }
 
 lux = Lux()
