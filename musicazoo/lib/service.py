@@ -171,7 +171,8 @@ class JSONCommandProcessor(object):
             result=packet.error(str(e))
 
         if cmd in self.log_cmds and self.logger:
-            self.logger.log({'timestamp':str(datetime.datetime.utcnow()),'id':self.log_prefix,'sent':line,'received':result})
+            #self.logger.log({'timestamp':str(datetime.datetime.utcnow()),'id':self.log_prefix,'sent':line,'received':result})
+            self.logger.log(None, line, result)
 
         raise Return(result)
 

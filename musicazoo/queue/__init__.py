@@ -1,5 +1,6 @@
-import musicazoo.lib.service as service
 import musicazoo.lib.cmdlog
+import musicazoo.lib.database as database
+import musicazoo.lib.service as service
 import uuid
 
 # A queue manages the life and death of modules, through tornado's IOLoop.
@@ -30,28 +31,33 @@ class Queue(service.JSONCommandProcessor, service.Service):
         # Same with old_bg
         self.old_bg=None
 
+        # When debugging, uids are assigned sequentially
+        self.debug = False
+
         # Each module on the queue gets a unique ID, this variable allocates those
         self.last_uid=-1
 
         # Log important commands
         # (used in JSONCommandProcessor)
         if logfilename:
-            self.logger = musicazoo.lib.cmdlog.FileLogger(logfilename)
-        self.log_prefix={"node":"client-queue","instance":self.instance}
+            self.logger = database.Database(log_table="queue_log")
+            #self.logger = musicazoo.lib.cmdlog.FileLogger(logfilename)
+        #self.log_prefix={"node":"client-queue","instance":self.instance}
 
         # JSONCommandService handles all of the low-level TCP connection stuff.
         super(Queue,self).__init__()
 
     # Get a new UID for a module.
     def get_uid(self):
-        self.last_uid += 1
-        return self.last_uid
+        if self.debug:
+            self.last_uid += 1
+            return self.last_uid
+        return str(uuid.uuid4())
 
     # Called from client
     # Retrieves given parameters from the module
     @service.coroutine
     def ask_module(self,uid,parameters):
-        uid=int(uid)
         d=dict(self.queue)
         if uid not in d:
             raise Exception("Module identifier not in queue")
@@ -61,7 +67,6 @@ class Queue(service.JSONCommandProcessor, service.Service):
     # Retrieves given parameters from the background
     @service.coroutine
     def ask_background(self,uid,parameters):
-        uid=int(uid)
         if self.bg is None:
             raise Exception("No background")
         (bg_uid,bg_obj)=self.bg
@@ -112,7 +117,6 @@ class Queue(service.JSONCommandProcessor, service.Service):
     # This is in contrast to ask_module which only retrieves cached information and does not create additional transactions.
     @service.coroutine
     def tell_module(self,uid,cmd,args={}):
-        uid=int(uid)
         d=dict(self.queue)
         if uid not in d:
             raise Exception("Module identifier not in queue")
@@ -123,7 +127,6 @@ class Queue(service.JSONCommandProcessor, service.Service):
     # Issues a command to the background (see tell_module)
     @service.coroutine
     def tell_background(self,uid,cmd,args={}):
-        uid=int(uid)
         if self.bg is None:
             raise Exception("No background")
         (bg_uid,bg_obj)=self.bg
@@ -141,7 +144,8 @@ class Queue(service.JSONCommandProcessor, service.Service):
         if type not in self.modules_available_dict:
             raise Exception("Unrecognized module name")
         mod_inst=self.modules_available_dict[type](self.get_remover(uid))
-        mod_inst.logger=self.logger
+        mod_inst.logger = self.logger
+        mod_inst.uid = uid 
         yield mod_inst.new(args)
         with (yield self.queue_lock.acquire()):
             self.queue.append((uid,mod_inst))
@@ -169,7 +173,7 @@ class Queue(service.JSONCommandProcessor, service.Service):
     @service.coroutine
     def rm(self,uids):
         with (yield self.queue_lock.acquire()):
-            self.queue=[(uid,obj) for (uid,obj) in self.queue if uid not in [int(u) for u in uids]]
+            self.queue=[(uid,obj) for (uid,obj) in self.queue if uid not in uids]
             if self.bg is not None and self.bg[0] in uids:
                 self.bg=None
             yield self.queue_updated()
@@ -184,7 +188,6 @@ class Queue(service.JSONCommandProcessor, service.Service):
             oldqueue=[uid for (uid,obj) in self.queue]
             d=dict(self.queue)
             for uid in uids:
-                uid=int(uid)
                 if uid in oldqueue:
                     oldqueue.remove(uid)
                     newqueue.append(uid)

@@ -10,6 +10,7 @@ import urllib
 import musicazoo.lib.database as database
 import musicazoo.lib.packet as packet
 import musicazoo.lib.service as service
+import musicazoo.lib.database as database
 
 class Top(service.JSONCommandProcessor, service.Service):
     port=5583
@@ -20,8 +21,31 @@ class Top(service.JSONCommandProcessor, service.Service):
 
     def __init__(self):
         print "Top started."
+        self.queue_db = database.Database()
         self.db = database.Database()
         super(Top, self).__init__()
+
+    def import_queue_log(self):
+        row = self.db.execute_select("SELECT pk FROM top_log_entry ORDER BY pk DESC LIMIT 1").fetchone()
+        if row is None:
+            last_pk = -1
+        else:
+            last_pk = row["pk"]
+
+        rows = self.queue_db.execute_select("SELECT pk, timestamp, uid, input_json, output_json FROM queue_log WHERE pk > :last_pk ORDER BY pk ASC", last_pk=last_pk)
+        for row in rows:
+            input_json = json.parse(row["input_json"])
+            output_json = json.parse(row["output_json"])
+            uid = row["uid"]
+            if not uid:
+                # Queue command
+                related_uuids = []
+                if json_data["cmd"] == "add":
+                    pass
+            else:
+                # Instance command
+                pass
+
 
     @service.coroutine
     def cmd_list(self, offset=0, count=100):
@@ -34,8 +58,6 @@ class Top(service.JSONCommandProcessor, service.Service):
         last_rank = offset + 1
         last_plays = None
         results = []
-
-        print "ROWS", rows, rows.fetchone()
 
         for i, row in enumerate(rows):
             print row
