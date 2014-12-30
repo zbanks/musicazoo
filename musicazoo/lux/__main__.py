@@ -57,3 +57,13 @@ class Lux(service.JSONCommandProcessor, service.Service):
     }
 
 lux = Lux()
+
+def shutdown_handler(signum,frame):
+    print
+    print "Received signal, attempting graceful shutdown..."
+    service.ioloop.add_callback_from_signal(vol.shutdown)
+
+signal.signal(signal.SIGTERM, shutdown_handler)
+signal.signal(signal.SIGINT, shutdown_handler)
+
+service.ioloop.start()

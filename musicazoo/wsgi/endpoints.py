@@ -11,5 +11,6 @@ wsgi_endpoints = {
     '/vol':util.wsgi_control('localhost',5581),
     '/nlp':util.wsgi_control('localhost',5582),
     '/top':util.wsgi_control('localhost',5583),
+    '/lux':util.wsgi_control('localhost',5584),
     #'/supervisor':util.wsgi_control('localhost', 9001),
 }
