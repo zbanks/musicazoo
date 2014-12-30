@@ -25,11 +25,27 @@ class Database(object):
         self.execute("INSERT INTO queue (action, target, command) VALUES (:action, :target, :command);",
                      action=action, target=target, command=json.dumps(raw_command))
 
-    def create_schema(self):
-        self.execute("""CREATE TABLE IF NOT EXISTS queue (
+    def create_queue_schema(self):
+        self.execute("""CREATE TABLE IF NOT EXISTS queue_log (
             pk INTEGER PRIMARY KEY,
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-            command TEXT,
-            target TEXT,
-            action TEXT
+            json TEXT
+        );""")
+
+    def create_top_schema(self):
+        self.execute("""CREATE TABLE IF NOT EXISTS top_module (
+            pk INTEGER PRIMARY KEY,
+            uuid TEXT,
+            canonical_id TEXT,
+            add_timestamp DATETIME
+        );""")
+        self.execute("""CREATE TABLE IF NOT EXISTS top_log_entry (
+            pk INTEGER,
+            timestamp DATETIME,
+            json TEXT
+        );""")
+        self.execute("""CREATE TABLE IF NOT EXISTS top_module_log_entry (
+            log_pk INTEGER,
+            module_pk INTEGER,
+            log_type TEXT
         );""")
