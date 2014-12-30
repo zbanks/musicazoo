@@ -3,7 +3,7 @@ var MODULES = {
         commands: ["seek_abs", "seek_rel", "pause", "resume"],
         parameters: [
             "url", "title", "duration", "site", "media", "thumbnail", "description",
-            "time", "status"
+            "time", "status", "vid"
         ],
         background: false
     },

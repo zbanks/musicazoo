@@ -38,7 +38,7 @@ class YoutubeModule(pymodule.JSONParentPoller):
 
     def serialize(self):
         result = { t: getattr(self, t) for t in [
-            "url", "title", "duration", "site", "media", "thumbnail", "description", "time"
+            "url", "title", "duration", "site", "media", "thumbnail", "description", "time", "vid"
             ]
         }
         

@@ -1,5 +1,5 @@
 var player;
-function playYoutubeVideo(id, time, updateState) {
+function playYoutubeVideo(id, time, isPaused, updateState) {
     var last_state = -1;
     player = new YT.Player('video', {
         height: '390',
@@ -7,7 +7,11 @@ function playYoutubeVideo(id, time, updateState) {
         events: {
             'onReady': function(ev){
                 //ev.target.playVideo(); 
-                player.loadVideoById(id, time);
+                if(isPaused){
+                    player.cueVideoById(id, time);
+                }else{
+                    player.loadVideoById(id, time);
+                }
                 //ev.target.seekTo(time*1, true);
             },
             'onStateChange': function(ev){
@@ -49,7 +53,6 @@ function playYoutubeVideo(id, time, updateState) {
 function musicazooLoaded(mz){
     console.log("Musicazoo: ", mz);
     var MirrorView = Backbone.View.extend({
-        act_template: Handlebars.compile("{{{ html }}}"),
         update_time: function(remote){
             if(this.player && this.player.getCurrentTime){
                 var remote_time = this.model.get('time');
@@ -63,13 +66,23 @@ function musicazooLoaded(mz){
                 }
             }
         },
-        initialize: function(){
-            var self = this;
+        bindEvents: function(){
             this.listenTo(this.model, "change", function(model){
                 /* XXX: Can't get change:time to work :( */
                 console.log(model.attributes);
                 if(this.model.get('type') == 'youtube'){
                     this.update_time(false);
+                }
+            });
+            this.listenTo(this.model, "change:status", function(model, value, options){
+                if((this.model.get('type') == 'youtube') && this.player){
+                    if(value == 'paused'){
+                        console.log("pausing");
+                        this.player.pauseVideo();
+                    }else if(value == 'playing'){
+                        console.log("playing");
+                        this.player.playVideo();
+                    }
                 }
             });
             this.listenTo(this.model, "change:exists", function(model, value, options){
@@ -81,32 +94,72 @@ function musicazooLoaded(mz){
                     }
                 }
             });
-            this.listenTo(this.model, "change:uid", function(model){
+        },
+        initialize: function(params){
+            var self = this;
+            this.watcher = params.watcher;
+            this.listenTo(this.watcher, "new-active", function(new_active, old_active){
+                if(this.model)
+                    this.stopListening(this.model);
+                this.model = new_active;
+
+                if(this.model)
+                    this.bindEvents();
+
                 if(this.player){
                     this.player.destroy();
                 }
+
                 $('.video').html('');
                 console.log('hello', this.model.get('time'));
                 if(this.model.get('type') == 'youtube'){
                     console.log(this.model.attributes);
+                    var isPaused = this.model.get('status') == 'paused';
                     
-                    this.player = playYoutubeVideo(this.model.get('vid'), this.model.get('time'), function(state){
+                    this.player = playYoutubeVideo(this.model.get('vid'), this.model.get('time'), isPaused, function(state){
                         if(state == 1){
-                            model.set('status', 'playing');
+                            self.model.set('status', 'playing');
                             self.update_time(true);
                         }else if(state == 2){
-                            model.set('status', 'paused');
+                            self.model.set('status', 'paused');
                         }
                     });
                 }else{
                     this.player = null;
                 }
             });
-            this.render();
             return this;
         }
     });
 
-    var cv = new MirrorView({model: mz.get('active'), el: $(".display-area")});
+    var QueueWatcherView = Backbone.View.extend({
+        initialize: function(){
+            this.active = null;
+
+            this.listenTo(this.collection, "add", this.update_active);
+            this.listenTo(this.collection, "reset", this.update_active);
+            this.listenTo(this.collection, "sort", this.update_active);
+            this.listenTo(this.collection, "remove", this.update_active);
+
+            this.update_active();
+        },
+        update_active: function(){
+            var queue_top = this.collection.at(0);
+            var prev_active = this.active;
+
+            if(queue_top && this.active){
+                if(queue_top.id != this.active){
+                    this.active = queue_top;
+                    this.trigger("new-active", this.active, prev_active);
+                }
+            }else if(queue_top || this.active){
+                this.active = queue_top;
+                this.trigger("new-active", this.active, prev_active);
+            }
+        }
+    });
+
+    var qw = new QueueWatcherView({collection: mz.get('queue')});
+    var cv = new MirrorView({model: qw.active, watcher: qw, el: $(".display-area")});
 }
 
