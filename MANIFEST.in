@@ -4,4 +4,3 @@ include run_musicazoo.sh
 include requirements.txt
 include supervisord.conf
 include settings.json
-prune musicazoo-old
