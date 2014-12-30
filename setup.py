@@ -33,6 +33,7 @@ setup(
         "bin/musicazoo", 
         "bin/mz", 
         "bin/mz_push_email",
+        "bin/mz_push_fortune",
     ],
     package_dir = {
         'musicazoo.wsgi': 'musicazoo/wsgi',
