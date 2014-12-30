@@ -88,10 +88,17 @@ class YoutubeModule(pymodule.JSONParentPoller):
         messages.put("init")
         self.safe_update()
 
+    def hide(self):
+        self.vlc_mp.video_set_track(-1)
+
+    def show(self):
+        self.vlc_mp.video_set_track(0)
+
     def cmd_play(self):
         if self.state_has_started:
             if not self.state_is_paused:
                 self.vlc_mp.play()
+                self.show()
                 self.state_is_paused = False
         else:
             messages.put("play")
@@ -102,6 +109,7 @@ class YoutubeModule(pymodule.JSONParentPoller):
         if self.state_has_started:
             if self.vlc_mp.is_playing():
                 self.vlc_mp.pause()
+                self.hide()
             #self.state_is_paused = True
         self.state_is_suspended = True
         self.safe_update()
