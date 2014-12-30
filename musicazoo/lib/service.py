@@ -4,7 +4,7 @@ from tornado.concurrent import *
 import tornado.iostream
 import tornado.ioloop
 import itertools
-import json
+#import json
 import traceback
 import time
 import musicazoo.lib.packet as packet
@@ -61,13 +61,15 @@ def connection_ready(sock, fd, events):
         handle_connection(connection, address)
 
 @coroutine
-def listen_for_commands(stream,handle_cr,over_fn=None):
+def listen_for_commands(stream,handle_cr,over_fn=None, key=None):
     try:
         while True:
             data = yield stream.read_until('\n')
-            parsed = json.loads(data)
+            #parsed = json.loads(data)
+            parsed = packet.parse(data, key)
             response = yield handle_cr(parsed)
-            encoded = json.dumps(response)+'\n'
+            #encoded = json.dumps(response)+'\n'
+            encoded = packet.serialize(data, key) + "\n"
             yield stream.write(encoded)
     except tornado.iostream.StreamClosedError:
         pass
@@ -81,14 +83,16 @@ def listen_for_commands(stream,handle_cr,over_fn=None):
         over_fn()
 
 @coroutine
-def json_query(addr,port,inp,timeout=2):
+def json_query(addr,port,inp,timeout=2, key=None):
     @coroutine
     def talk(stream):
         yield stream.connect((addr,port))
-        encoded = json.dumps(inp)+'\n'
+        #encoded = json.dumps(inp)+'\n'
+        encoded = packet.serialze(inp, key) + "\n"
         yield stream.write(encoded)
         data = yield stream.read_until('\n')
-        decoded = json.loads(data)
+        #decoded = json.loads(data)
+        decoded = packet.parse(data, key)
         raise Return(decoded)
 
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

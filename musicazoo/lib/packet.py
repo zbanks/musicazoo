@@ -1,3 +1,5 @@
+import hashlib
+import hmac
 import json
 
 def error(err):
@@ -21,5 +23,34 @@ def assert_success(response):
     if 'error' not in response:
         raise Exception("Malformed response")
     raise Exception(response['error'])
+
+
+# Signed commands
+# How do we prevent replay attacks? 
+def parse(msg, key=None):
+    if msg[0] == "$":
+        remote_signature = msg[1:65]
+        msg = msg[65:]
+    else:
+        remote_signature = None
+
+    if key is not None:
+        h = hmac.new(key, msg, hashlib.sha256)
+        local_signature = h.hexdigest()
+        if local_signature != remote_signature:
+            # Signature mismatch
+            raise Exception("Invalid signature")
+
+    data = json.parse(msg)
+
+    return data
+
+def serialize(msg, key=None):
+    text_msg = json.dumps(msg)
+    if key is not None:
+        signature = hmac.new(key, text_msg, hashlib.sha256).hexdigest()
+        text_msg = "${}{}".format(signature, text_msg)
+    return text_msg
+
 
 
