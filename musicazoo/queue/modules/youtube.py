@@ -156,7 +156,7 @@ class YoutubeModule(pymodule.JSONParentPoller):
             self.safe_update()
 
         if not self.headless:
-            os.environ["DISPLAY"] = ":0"
+            #os.environ["DISPLAY"] = ":0"
             self.vlc_i = vlc.Instance(['-f','--no-video-title-show','--no-xlib'])
         else:
             self.vlc_i = vlc.Instance(['--novideo'])
