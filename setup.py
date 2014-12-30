@@ -25,7 +25,8 @@ setup(
         'musicazoo.volume', 
         'musicazoo.lib', 
         'musicazoo.nlp', 
-        'musicazoo.top'
+        'musicazoo.top',
+        'musicazoo.lux',
     ],
     download_url="https://github.com/zbanks/musicazoo/tarball/5.1.2",
     zip_safe=False,
