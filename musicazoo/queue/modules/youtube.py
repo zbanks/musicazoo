@@ -128,6 +128,7 @@ class YoutubeModule(pymodule.JSONParentPoller):
         #TODO: if the video hasn't started, then cache the position and set it as soon as the video starts
         if self.state_has_started:
             self.vlc_mp.set_time(int(position*1000))
+            self.safe_update()
 
     def cmd_seek_rel(self, delta):
         if self.state_has_started:
@@ -135,6 +136,7 @@ class YoutubeModule(pymodule.JSONParentPoller):
             if cur_time < 0:
                 return
             self.vlc_mp.set_time(cur_time+int(delta*1000))
+            self.safe_update()
 
     def stop(self):
         self.vlc_mp.stop()
