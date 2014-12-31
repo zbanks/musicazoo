@@ -169,7 +169,7 @@ class YoutubeModule(pymodule.JSONParentPoller):
 
         if not self.headless:
             #os.environ["DISPLAY"] = ":0"
-            self.vlc_i = vlc.Instance(['-f','--no-video-title-show','--no-xlib'])
+            self.vlc_i = vlc.Instance(['--no-video-title-show']) # -f
         else:
             self.vlc_i = vlc.Instance(['--novideo'])
         self.vlc_mp = self.vlc_i.media_player_new()
@@ -181,9 +181,6 @@ class YoutubeModule(pymodule.JSONParentPoller):
 
         vlc_media=self.vlc_i.media_new_location(self.media)
         self.vlc_mp.set_media(vlc_media)
-        if not self.headless:
-            self.vlc_mp.set_xwindow(0)
-            self.vlc_mp.set_fullscreen(True)
         self.vlc_mp.play()
 
         self.state_has_started = True
