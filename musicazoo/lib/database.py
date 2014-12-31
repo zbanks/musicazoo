@@ -2,6 +2,10 @@ import json
 import sqlite3
 import musicazoo.settings as settings
 
+def row_dict(r):
+    # Convert a sqlite3.Row object to a dictionary
+    return {k: r[k] for k in r.keys()}
+        
 class Database(object):
     def __init__(self, filename=None, log_table=None):
         if filename is None:
@@ -11,28 +15,32 @@ class Database(object):
                 filename = ":memory:"
 
         self.conn = sqlite3.connect(filename)
+        self.conn.row_factory = sqlite3.Row
         #XXX check to make sure that log_table is 'safe'
         self.log_table = log_table
         if self.log_table is not None:
             self.create_log_schema()
 
     def execute(self, _sql_command, **kwargs):
-        result = self.conn.execute(_sql_command, kwargs)
-        self.conn.commit()
-        return result
-
-    def execute_select(self, _sql_command, **kwargs):
         return self.conn.execute(_sql_command, kwargs)
 
-    def log(self, uid, command, response, raw=False):
+    def execute_select(self, _sql_command, **kwargs):
+        return self.execute(_sql_command, **kwargs)
+
+    def commit(self):
+        return self.conn.commit()
+
+    def log(self, uid, namespace, command, response, raw=False):
         if raw:
             input_json = command
             output_json = response
         else:
             input_json = json.dumps(command)
             output_json = json.dumps(response)
-        self.execute("INSERT INTO {} (uid, input_json, output_json) VALUES (:uid, :input_json, :output_json);".format(self.log_table),
-                     uid=uid, input_json=input_json, output_json=output_json)
+        self.execute("INSERT INTO {} (uid, namespace, input_json, output_json) VALUES (:uid, :nspace, :input_json, :output_json);".format(self.log_table),
+                     uid=uid, nspace=namespace, input_json=input_json, output_json=output_json)
+
+        self.commit()
 
     #def queue_log(self, action, target, raw_command=''):
     #    self.execute("INSERT INTO queue (action, target, command) VALUES (:action, :target, :command);",
@@ -42,6 +50,7 @@ class Database(object):
         self.execute("""CREATE TABLE IF NOT EXISTS {} (
             pk INTEGER PRIMARY KEY,
             uid TEXT,
+            namespace TEXT,
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
             input_json TEXT,
             output_json TEXT
@@ -60,9 +69,7 @@ class Database(object):
          - LogEntry: an act performed on the queue and logged
         """
         self.execute("""CREATE TABLE IF NOT EXISTS top_module (
-            pk INTEGER PRIMARY KEY,
             uuid TEXT,
-            canonical_id TEXT,
             add_timestamp DATETIME
         );""")
         self.execute("""CREATE TABLE IF NOT EXISTS top_category (
@@ -72,6 +79,7 @@ class Database(object):
         );""")
         self.execute("""CREATE TABLE IF NOT EXISTS top_item (
             pk INTEGER PRIMARY KEY,
+            canonical_id TEXT,
             category_pk INTEGER,
             requeue_command TEXT,
             url TEXT,
@@ -80,10 +88,12 @@ class Database(object):
         self.execute("""CREATE TABLE IF NOT EXISTS top_item_module (
             pk INTEGER PRIMARY KEY,
             item_pk INTEGER,
-            module_pk INTEGER
+            module_uuid TEXT
         );""")
         self.execute("""CREATE TABLE IF NOT EXISTS top_log_entry (
             pk INTEGER,
+            uid TEXT,
+            namespace TEXT,
             timestamp DATETIME,
             input_json TEXT,
             output_json TEXT
@@ -91,6 +101,6 @@ class Database(object):
         self.execute("""CREATE TABLE IF NOT EXISTS top_module_log_entry (
             pk INTEGER PRIMARY KEY,
             log_pk INTEGER,
-            module_pk INTEGER,
+            module_uuid TEXT,
             log_type TEXT
         );""")
