@@ -14,13 +14,15 @@ Most of the intelligence for the queue is stored in `musicazoo/queue/__init__.py
 
 The *Queue* class has two parents: one is *Service*, which sets up an incoming command pipe using tornado. The second is *JSONCommandProcessor* which provides standard behavior for incoming JSON messages. Specifically, it looks for incoming JSON with this format:
 
-`{"cmd": "...","args": {...}}`
+`{"cmd": "...", "args": {...}}`
 
 and calls handler functions based on the command string. This mapping is specified in a dict named `commands` (overridden in *Queue*.) The result is returned as follows:
 
 `{"success": true, "result": ...}` if the function returned without error, or
 
 `{"success": false, "error": ...}` if the function raised an error.
+
+A lot of services, including Queue, are single-threaded and manage concurrency using [tornado](http://tornado.readthedocs.org/en/latest/coroutine.html). It would be wise if you are working with the Queue itself to learn and understand how tornado works, and how coroutines work. Any blocking call in Queue will stall the queue for all clients and modules, and any crash in Queue will take down all modules. Because Queue is so fragile, its code has been written very carefully, and most of the functionality has been moved into short-lived child processes called *modules* (see below).
 
 ## Commands
 
@@ -157,3 +159,46 @@ See *queue* for more information.
 The *ask_module* command does not cause a transaction between the queue process and its child process. Rather, it retrieves cached information straight out of the queue process. It is the module's responsibility to push relevant information to the queue over the *update pipe*. This way, *ask_module* commands (and *queue* commands) can be fast and return immediately, since there will inevitably be a lot of them as clients poll for state changes.
 
 *ask_background* behaves identically except that it queries the background module rather than a queue module. Again, the UID field is required as explained in *tell_background*.
+
+## Modules
+
+The Queue instance stores the current modules in a Python list. Each element of this list is an instance of the *Module* class, defined in `musicazoo/queue/module.py`. This object implements very little functionality. Its purpose is to serve as an interface to the child process which constitutes the actual module.
+
+The child process can be any executable which adheres to the following standard:
+
+* The last three command-line arguments to the executable are the queue hostname, the command pipe port number, and the update pipe port number. The program should open the given socket connections upon startup.
+* The program sends and handles appropriate messages on these pipes (as described in this section.)
+
+Any module which does not do these things is considered "badly-behaved" and is subject to termination when the queue detects abnormal behavior. Termination happens in three stages:
+
+1. The module is issued a *rm* command over its command pipe (if the pipe still exists.) The queue waits for a graceful shutdown of the process.
+2. If the process is still running, a SIGTERM is issued to the process, and the queue waits for it to terminate.
+3. If the process is still running, a SIGKILL is issued to the process.
+
+Any time the queue or background changes, a coroutine called *queue_updated* is called. This computes the difference between what the queue was and what it is now, and sends appropriate signals to modules. For example, some modules may have been removed and therefore need to be terminated. As a result of this, a new module may be at the top of the queue and need to be *played*. Or, a module may have been bumped off the top, and need to be *suspended*.
+
+Every module must implement, at a minimum, the following four core commands:
+
+* *init*, for when the module is first created
+* *play*, for when the module is at the top of the queue
+* *suspend*, for if the module was at the top of the queue but got moved down
+* *rm*, for when the module is removed from the queue.
+
+each module may implement additional commands, which can be called using *tell_module*. To differentiate them from the core commands, they are prefixed with `do_`. For example:
+
+`{"cmd": "tell_module", "args": {"uid": 0, "cmd": "pause"}}`
+
+is translated to the following before being sent over the module's command pipe:
+
+`{"cmd": "do_pause"}`
+
+## Command pipe commands (queue to module)
+
+### init
+
+### play
+
+### suspend
+
+### rm
+
