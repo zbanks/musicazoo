@@ -127,15 +127,27 @@ class Top(service.JSONCommandProcessor, service.Service):
 
         rows = self.db.execute_select(
             """SELECT
-                    COUNT(top_item_module.module_uuid) AS playcount,
+                    COUNT(mle_qa.pk) AS addcount,
+                    COUNT(mle_mp.pk) AS playcount,
+                    top_item_module.item_pk,
                     top_item.requeue_command AS requeue_command,
                     top_item.url AS url,
                     top_item.description AS description
                 FROM top_item_module
-                INNER JOIN top_item
+                INNER JOIN top_item 
                     ON top_item.pk = top_item_module.item_pk
+                LEFT JOIN top_module AS mod_qa 
+                    ON top_item_module.module_uuid = mod_qa.uuid
+                LEFT JOIN top_module AS mod_mp 
+                    ON top_item_module.module_uuid = mod_mp.uuid
+                LEFT JOIN top_module_log_entry AS mle_qa
+                    ON mod_qa.uuid = mle_qa.module_uuid
+                LEFT JOIN top_module_log_entry AS mle_mp
+                    ON mod_mp.uuid = mle_mp.module_uuid
+                WHERE (mle_qa.log_type = "queue_add" OR mle_qa.log_type IS NULL)
+                  AND (mle_mp.log_type = "module_play" OR mle_mp.log_type IS NULL)
                 GROUP BY top_item_module.item_pk
-                ORDER BY playcount DESC
+                ORDER BY addcount DESC
                 LIMIT :offset, :count
             """, offset=offset, count=count)
 
@@ -145,18 +157,18 @@ class Top(service.JSONCommandProcessor, service.Service):
 
         for i, row in enumerate(rows):
             print row
-            if row["playcount"] == last_plays:
+            if row["addcount"] == last_plays:
                 rank = last_rank
             else:
                 rank = offset + 1 + i
                 last_rank = rank
-                last_plays = row["playcount"]
+                last_plays = row["addcount"]
             results.append({
                 'url': row['url'],
                 'description': row['description'],
                 'command': row['requeue_command'],
-                'queue_count': row['playcount'],
-                'play_count': row['playcount'], #TODO
+                'queue_count': row['addcount'],
+                'play_count': row['playcount'],
                 'rank': rank,
             })
 
