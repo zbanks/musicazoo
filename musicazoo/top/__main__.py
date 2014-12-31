@@ -41,7 +41,7 @@ class Top(service.JSONCommandProcessor, service.Service):
                 "INSERT INTO top_log_entry (pk, timestamp, uid, input_json, output_json) VALUES (:pk, :timestamp, :uid, :input_json, :output_json)",
                 **rd)
 
-        rowcount = rows.rowcount
+        rowcount = len(rows)
 
         for row in rows:
             input_data = json.loads(row["input_json"])
