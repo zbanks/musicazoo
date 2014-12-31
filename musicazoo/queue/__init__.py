@@ -43,6 +43,7 @@ class Queue(service.JSONCommandProcessor, service.Service):
             self.logger = database.Database(log_table="queue_log")
             #self.logger = musicazoo.lib.cmdlog.FileLogger(logfilename)
         #self.log_prefix={"node":"client-queue","instance":self.instance}
+        self.log_namespace = "client-queue"
 
         # JSONCommandService handles all of the low-level TCP connection stuff.
         super(Queue,self).__init__()
@@ -146,6 +147,8 @@ class Queue(service.JSONCommandProcessor, service.Service):
         mod_inst=self.modules_available_dict[type](self.get_remover(uid))
         mod_inst.logger = self.logger
         mod_inst.uid = uid 
+        mod_inst.log_uid = uid 
+        mod_inst.log_namespace = "module-instance" 
         yield mod_inst.new(args)
         with (yield self.queue_lock.acquire()):
             self.queue.append((uid,mod_inst))

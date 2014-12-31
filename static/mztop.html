@@ -10,7 +10,7 @@
     <script type="text/javascript" src="./assets/mz_common.js"></script>
     <script class="toplink-template" type="text/x-handlebars-template">
         <li>
-        {{ n }}. ({{ count }}) <a href="{{ url }}">{{ title }}</a> <a class="btn btn-queue" data-url="{{ url }}" href="#link-{{ cid }}" id="link-{{ cid }}">++</a>
+        {{ rank }}. ({{ play_count }} / {{ queue_count }}) <a href="{{ url }}">{{ description }} {{ url }}</a> <a class="btn btn-queue" data-cmd="{{ command }}" href="#link-{{ cid }}" id="link-{{ cid }}">++</a>
         <li>
     </script>
     <!--
@@ -49,7 +49,7 @@
                 this.render();
                 this.listenTo(this.collection, "sync", this.render);
                 $(document).on("click", "a.more", function(){
-                    self.collection.fetch();
+                    self.collection.fetch({remove: false});
                 });
                 return this;
             },
@@ -67,8 +67,9 @@
         $.ready(tls.render);
         $(document).on("click", "a.btn-queue", function(){
             var $this = $(this);
-            var NLP_URL = "/nlp";
-            $.get(NLP_URL, {q: $this.data('url')});
+            var json_cmd = $this.data("cmd");
+            console.log(json_cmd);
+            queue_endpoint.forceQuery(json_cmd);
         });
 
     </script>

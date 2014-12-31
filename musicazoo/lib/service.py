@@ -172,11 +172,12 @@ class JSONCommandProcessor(object):
 
         if cmd in self.log_cmds and self.logger:
             #self.logger.log({'timestamp':str(datetime.datetime.utcnow()),'id':self.log_prefix,'sent':line,'received':result})
-            self.logger.log(None, line, result)
+            self.logger.log(self.log_uid, self.log_namespace, line, result)
 
         raise Return(result)
 
     commands = {}
     log_cmds = []
-    log_prefix = None
+    log_uid = None
+    log_namespace = None
     logger = None
