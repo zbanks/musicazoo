@@ -21,8 +21,9 @@ def wsgi_control(addr,port,timeout=10):
 
     @werkzeug.Request.application
     def wsgi(request):
-        if request.headers.get('content-type') == 'text/json':
-            inp=json.loads(request.data)
+        mimetype, options = werkzeug.http.parse_options_header(request.content_type)
+        if mimetype == 'text/json':
+            inp=json.loads(request.data.decode(options.get('charset', 'utf-8')))
             try:
                 outp=query(inp)
             except Exception as e:
