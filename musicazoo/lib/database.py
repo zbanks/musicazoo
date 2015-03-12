@@ -55,6 +55,16 @@ class Database(object):
             input_json TEXT,
             output_json TEXT
         );""".format(self.log_table))
+        self.commit()
+
+    def destroy_top_schema(self):
+        self.execute("DROP TABLE IF EXISTS top_module")
+        self.execute("DROP TABLE IF EXISTS top_module_item")
+        self.execute("DROP TABLE IF EXISTS top_category")
+        self.execute("DROP TABLE IF EXISTS top_item")
+        self.execute("DROP TABLE IF EXISTS top_log_entry")
+        self.execute("DROP TABLE IF EXISTS top_module_log_entry")
+        self.commit()
 
     def create_top_schema(self):
         """
@@ -104,3 +114,4 @@ class Database(object):
             module_uuid TEXT,
             log_type TEXT
         );""")
+        self.commit()

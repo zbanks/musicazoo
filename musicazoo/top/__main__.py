@@ -23,7 +23,11 @@ class Top(service.JSONCommandProcessor, service.Service):
         print "Top started."
         self.queue_db = database.Database()
         self.db = database.Database()
+
+        self.db.destroy_top_schema()
         self.db.create_top_schema()
+        self.import_queue_log()
+
         super(Top, self).__init__()
 
     def import_queue_log(self):
@@ -33,23 +37,22 @@ class Top(service.JSONCommandProcessor, service.Service):
         else:
             last_pk = row["pk"]
 
-        rows = self.queue_db.execute_select("SELECT pk, timestamp, uid, input_json, output_json FROM queue_log WHERE pk > :last_pk ORDER BY pk ASC", last_pk=last_pk)
+        rows = self.queue_db.execute_select("SELECT pk, timestamp, namespace, uid, input_json, output_json FROM queue_log WHERE pk > :last_pk ORDER BY pk ASC", last_pk=last_pk)
 
         def copylog(row):
             rd = database.row_dict(row)
             self.db.execute(
-                "INSERT INTO top_log_entry (pk, timestamp, uid, input_json, output_json) VALUES (:pk, :timestamp, :uid, :input_json, :output_json)",
+                    "INSERT INTO top_log_entry (pk, timestamp, namespace, uid, input_json, output_json) VALUES (:pk, :timestamp, :namespace, :uid, :input_json, :output_json)",
                 **rd)
-
-        rowcount = len(rows)
 
         for row in rows:
             input_data = json.loads(row["input_json"])
             output_data = json.loads(row["output_json"])
             uid = row["uid"]
             log_pk = row["pk"]
+            namespace = row["namespace"]
 
-            if not uid:
+            if namespace == "client-queue":
                 # Queue command
                 if not output_data.get("success"):
                     continue
@@ -71,21 +74,25 @@ class Top(service.JSONCommandProcessor, service.Service):
                         self.db.execute(
                                 "INSERT INTO top_module_log_entry (module_uuid, log_pk, log_type) VALUES (:uuid, :log_pk, :ltype)",
                                 uuid=ruid, log_pk=log_pk, ltype="queue_rm")
-            else:
+            elif namespace == "queue-module":
                 # Instance command
                 if not output_data.get("success"):
                     continue
 
+                copylog(row)
+
                 if input_data["cmd"] == "init":
-                    copylog(row)
                     self.db.execute(
                             "INSERT INTO top_module_log_entry (module_uuid, log_pk, log_type) VALUES (:uuid, :log_pk, :ltype)",
                             uuid=uid, log_pk=log_pk, ltype="module_init")
                 elif input_data["cmd"] == "play":
-                    copylog(row)
                     self.db.execute(
                             "INSERT INTO top_module_log_entry (module_uuid, log_pk, log_type) VALUES (:uuid, :log_pk, :ltype)",
                             uuid=uid, log_pk=log_pk, ltype="module_play")
+
+            elif namespace == "module-instance":
+                if not output_data.get("success"):
+                    continue
 
                 if input_data["cmd"] == "set_parameters":
                     pass
@@ -97,7 +104,6 @@ class Top(service.JSONCommandProcessor, service.Service):
                             "INSERT INTO top_module_log_entry (module_uuid, log_pk, log_type) VALUES (:uuid, :log_pk, :ltype)",
                             uuid=uid, log_pk=log_pk, ltype="module_rm")
         self.db.commit()
-        return rowcount
 
     def process_new_module(self, uuid, add_cmd):
         add_type = add_cmd["args"].get("type")
@@ -186,7 +192,7 @@ class Top(service.JSONCommandProcessor, service.Service):
     def cmd_update(self):
         #TODO: this is a temp fix until daemonized properly
         rc = self.import_queue_log()
-        raise service.Return("Updated {} records".format(rc))
+        raise service.Return("Updated records")
 
     def shutdown(self):
         service.ioloop.stop()
