@@ -152,7 +152,6 @@ class Module(service.JSONCommandProcessor):
         except (service.TimeoutError,tornado.iostream.StreamClosedError) as e:
             self.terminate()
             if self.logger is not None:
-                #self.logger.log({'timestamp':str(datetime.datetime.utcnow()),'id':{'node':'queue-module','instance':self.instance},'sent':cmd_dict,'received':None})
                 self.logger.log(self.uid, "queue-module", cmd_dict, None)
             if isinstance(e,service.TimeoutError):
                 raise Exception("Timeout sending message to module")
@@ -162,23 +161,8 @@ class Module(service.JSONCommandProcessor):
 
         response_dict=json.loads(response_str)
         if self.logger is not None:
-            #self.logger.log({'timestamp':str(datetime.datetime.utcnow()),'id':{'node':'queue-module','instance':self.instance},'sent':cmd_dict,'received':response_dict})
             self.logger.log(self.uid, "queue-module", cmd_dict, response_dict)
         raise service.Return(packet.assert_success(response_dict))
-
-    # Callback for if either pipe gets terminated
-    #def on_disconnect(self):
-    #    # Unused callback
-    #    def terminate_done(f):
-    #        if f.exception() is not None:
-    #            traceback.print_exception(*f.exc_info())
-    #        print "done killing child"
-
-    #    if self.alive:
-    #        # If the process was presumed alive, shut it down 
-    #        print "OH NO, child died!"
-    #        # This counts as an internal termination as it is still on the queue
-    #        service.ioloop.add_future(self.internal_terminate(),terminate_done)
 
     # This function schedules a module's death and returns immediately.
     # It also removes the module from the queue if it is on it.

@@ -191,6 +191,7 @@ class YoutubeModule(pymodule.JSONParentPoller):
         mimetype=get_mime_type(url)
 
         if mimetype.startswith("text/html"):
+            params={}
             # General configuration
             tf=tempfile.NamedTemporaryFile(delete=False)
             tf.close()
@@ -199,8 +200,9 @@ class YoutubeModule(pymodule.JSONParentPoller):
             cookie_processor = compat_urllib_request.HTTPCookieProcessor(jar)
             proxies = compat_urllib_request.getproxies()
             proxy_handler = compat_urllib_request.ProxyHandler(proxies)
-            https_handler = make_HTTPS_handler(None)
-            opener = compat_urllib_request.build_opener(https_handler, proxy_handler, cookie_processor, YoutubeDLHandler)
+            https_handler = make_HTTPS_handler(params)
+            ydlh = YoutubeDLHandler(params)
+            opener = compat_urllib_request.build_opener(https_handler, proxy_handler, cookie_processor, ydlh)
             compat_urllib_request.install_opener(opener)
 
             y=youtube_dl.YoutubeDL({'outtmpl':u'','skip_download':True}, auto_init=False) # empty outtmpl needed due to weird issue in youtube-dl
