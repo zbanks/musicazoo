@@ -1,12 +1,12 @@
-from musicazoo.queue import pymodule
-import musicazoo.settings as sets
+from shmooze.modules import JSONParentPoller
+import shmooze.settings as sets
 import musicazoo.lib.graphics
 import threading
 import socket
 import Tkinter
 import time
 
-class TextBGModule(pymodule.JSONParentPoller,threading.Thread):
+class TextBGModule(JSONParentPoller,threading.Thread):
     def __init__(self):
         super(TextBGModule, self).__init__()
         self.daemon=True

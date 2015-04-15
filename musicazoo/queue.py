@@ -1,7 +1,7 @@
-import musicazoo.queue
-import musicazoo.settings as settings
-import musicazoo.lib.service as service
-from musicazoo.queue.module import Module
+import shmooze.queue
+import shmooze.settings as settings
+import shmooze.lib.service as service
+from shmooze.modules import Module
 import os
 import signal
 
@@ -28,8 +28,7 @@ class Image(Module):
 modules = [Youtube, Text]
 backgrounds = [TextBG, Image]
 
-#q=musicazoo.queue.Queue(modules, backgrounds, 'logfile.json')
-q=musicazoo.queue.Queue(modules, backgrounds, settings.log_database)
+q= shmooze.queue.Queue(modules, backgrounds, settings.log_database)
 
 def shutdown_handler(signum,frame):
     print

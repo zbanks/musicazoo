@@ -1,5 +1,5 @@
 import Tkinter
-import musicazoo.settings as sets
+import shmooze.settings as sets
 
 def splash(fsg,text,bg=sets.bg_color,fg=sets.fg_color,font="Helvetica",size=72):
     c=Tkinter.Canvas(fsg,width=fsg.width,height=fsg.height,highlightthickness=0,bg=bg)

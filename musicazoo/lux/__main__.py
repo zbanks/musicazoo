@@ -1,8 +1,8 @@
 import json
 import math
-import musicazoo.lib.packet as packet
-import musicazoo.lib.service as service
-import musicazoo.settings as settings
+import shmooze.lib.packet as packet
+import shmooze.lib.service as service
+import shmooze.settings as settings
 import signal
 
 import lux_hal

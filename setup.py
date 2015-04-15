@@ -10,25 +10,25 @@ from setuptools import setup
 with open("requirements.txt") as f:
     required = f.read().splitlines()
 
+VERSION = "5.2.0"
+
 setup(
     name='musicazoo',
-    version='5.1.5',
+    version=VERSION,
     description='Modular media player',
     author='Zach Banks',
     author_email='zbanks@mit.edu',
     url='https://github.com/zbanks/musicazoo',
     packages=[
         'musicazoo', 
-        'musicazoo.wsgi', 
-        'musicazoo.queue', 
-        'musicazoo.queue.modules', 
+        'musicazoo.modules', 
         'musicazoo.volume', 
         'musicazoo.lib', 
         'musicazoo.nlp', 
         'musicazoo.top',
         'musicazoo.lux',
     ],
-    download_url="https://github.com/zbanks/musicazoo/tarball/5.1.4",
+    download_url="https://github.com/zbanks/musicazoo/tarball/{}".format(VERSION),
     zip_safe=False,
     install_requires=required,
     scripts=[
@@ -38,7 +38,6 @@ setup(
         "bin/mz_push_fortune",
     ],
     package_dir = {
-        'musicazoo.wsgi': 'musicazoo/wsgi',
     },
     package_data={
         'musicazoo': [

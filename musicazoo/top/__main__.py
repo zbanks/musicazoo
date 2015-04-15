@@ -7,11 +7,11 @@ import tornado.httpclient
 import traceback
 import urllib
 
-import musicazoo.lib.database as database
-import musicazoo.lib.packet as packet
-import musicazoo.lib.service as service
-import musicazoo.lib.database as database
-import musicazoo.settings as settings
+import shmooze.lib.database as database
+import shmooze.lib.packet as packet
+import shmooze.lib.service as service
+import shmooze.lib.database as database
+import shmooze.settings as settings
 
 class Top(service.JSONCommandProcessor, service.Service):
     port=settings.ports["top"]

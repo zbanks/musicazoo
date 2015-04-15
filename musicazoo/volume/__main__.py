@@ -1,5 +1,5 @@
-import musicazoo.lib.service as service
-import musicazoo.settings as settings
+import shmooze.lib.service as service
+import shmooze.settings as settings
 import os
 import signal
 import math
