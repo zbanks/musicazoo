@@ -11,4 +11,7 @@ settings = json.load(settings_file)
 if 'log_database' in settings:
     settings['log_database'] = os.path.expandvars(settings['log_database'])
 
+if 'static_path' not in settings:
+    settings['static_path'] = pkg_resources.resource_filename("musicazoo.wsgi", '../../static')
+
 globals().update(settings)

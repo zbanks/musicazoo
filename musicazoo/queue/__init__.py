@@ -1,12 +1,13 @@
 import musicazoo.lib.cmdlog
 import musicazoo.lib.database as database
 import musicazoo.lib.service as service
+import musicazoo.settings as settings
 import uuid
 
 # A queue manages the life and death of modules, through tornado's IOLoop.
 
 class Queue(service.JSONCommandProcessor, service.Service):
-    port=5580
+    port=settings.ports["queue"]
 
     def __init__(self,modules,backgrounds,logfilename=None):
         print "Queue started."

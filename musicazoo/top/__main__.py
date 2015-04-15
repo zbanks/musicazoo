@@ -11,11 +11,12 @@ import musicazoo.lib.database as database
 import musicazoo.lib.packet as packet
 import musicazoo.lib.service as service
 import musicazoo.lib.database as database
+import musicazoo.settings as settings
 
 class Top(service.JSONCommandProcessor, service.Service):
-    port=5583
+    port=settings.ports["top"]
     queue_host='localhost'
-    queue_port=5580
+    queue_port=settings.ports["queue"]
 
     MAX_COUNT = 100
 

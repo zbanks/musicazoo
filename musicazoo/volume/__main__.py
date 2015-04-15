@@ -1,4 +1,5 @@
 import musicazoo.lib.service as service
+import musicazoo.settings as settings
 import os
 import signal
 import math
@@ -22,7 +23,7 @@ def computer_to_human(val):
 	return int(100*(float(val)/100)**(1.0/exp))
 
 class Volume(service.JSONCommandProcessor, service.Service):
-    port=5581
+    port=settings.ports["vol"]
 
     def __init__(self):
         print "Volume started."

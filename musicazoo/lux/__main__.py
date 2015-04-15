@@ -2,13 +2,14 @@ import json
 import math
 import musicazoo.lib.packet as packet
 import musicazoo.lib.service as service
+import musicazoo.settings as settings
 import signal
 
 import lux_hal
 
 
 class Lux(service.JSONCommandProcessor, service.Service):
-    port=5584
+    port=settings.ports["lux"]
 
     DEVICES = {
         # Name : (Address, Size)

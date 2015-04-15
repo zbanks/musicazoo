@@ -8,14 +8,15 @@ import musicazoo.lib.packet as packet
 import tornado.httpclient
 import urllib
 import json
+import musicazoo.settings as settings
 
 class NLP(service.JSONCommandProcessor, service.Service):
-    port=5582
+    port=settings.ports["nlp"]
     queue_host='localhost'
-    queue_port=5580
+    queue_port=settings.ports["queue"]
 
     vol_host='localhost'
-    vol_port=5581
+    vol_port=settings.ports["vol"]
 
     pretty_params={'youtube':['title']}
 
