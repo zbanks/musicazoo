@@ -3,7 +3,7 @@
     "bg_color":"#675098",
     "name": "MZ5",
     "log_database": "$HOME/musicazoo.db",
-    "static_path": "/home/zbanks/musicazoo/static/",
+    "static_path": "$HOME/musicazoo/static/",
     "ports" : {
         "queue": 5580,
         "vol": 5581,
