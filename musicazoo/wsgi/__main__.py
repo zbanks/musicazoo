@@ -1,4 +1,5 @@
 import musicazoo.wsgi
+import musicazoo.settings
 import werkzeug.serving
 
-werkzeug.serving.run_simple('',8080,musicazoo.wsgi.application,extra_files='settings.py')
+werkzeug.serving.run_simple('',musicazoo.settings.ports["wsgi"],musicazoo.wsgi.application,extra_files='settings.py')

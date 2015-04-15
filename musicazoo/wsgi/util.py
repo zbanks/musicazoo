@@ -21,7 +21,8 @@ def wsgi_control(addr,port,timeout=10):
 
     @werkzeug.Request.application
     def wsgi(request):
-        if request.headers.get('content-type') in {'text/json', 'application/json'}:
+        mime_type = request.headers.get('content-type').partition(';')[0]
+        if mime_type in {'text/json', 'application/json'}:
             inp=json.loads(request.data)
             try:
                 outp=query(inp)

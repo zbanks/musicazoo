@@ -43,15 +43,13 @@ setup(
     package_data={
         'musicazoo': [
             "../supervisord.conf", 
-            "../settings.json"
-        ],
-        'musicazoo.wsgi': [
-            '../../static/*.html', 
-            '../../static/settings.json', 
-            '../../static/assets/*.js', 
-            '../../static/assets/*.otf', 
-            '../../static/assets/*.css', 
-            '../../static/assets/images/*'
+            "../settings.json",
+            '../static/*.html', 
+            '../static/settings.json', 
+            '../static/assets/*.js', 
+            '../static/assets/*.otf', 
+            '../static/assets/*.css', 
+            '../static/assets/images/*'
         ],
     },
 )
