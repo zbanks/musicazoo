@@ -12,7 +12,7 @@ with open("requirements.txt") as f:
 
 setup(
     name='musicazoo',
-    version='5.1.4',
+    version='5.1.5',
     description='Modular media player',
     author='Zach Banks',
     author_email='zbanks@mit.edu',
