@@ -299,7 +299,7 @@ var authCallback = _.once(function(available){
     var module_capabilities = _.objectMap(modules, function(x){ return x.parameters });
     var background_capabilities = _.objectMap(backgrounds, function(x){ return x.parameters });
 
-    var commands = _.filter(COMMANDS, function(x){ return  _.contains(_.keys(modules), x.module); });
+    //var commands = _.filter(COMMANDS, function(x){ return  _.contains(_.keys(modules), x.module); });
 
     _.extend(modules, backgrounds);
 
