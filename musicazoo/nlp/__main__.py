@@ -20,31 +20,130 @@ class NLP(service.JSONCommandProcessor, service.Service):
 
     pretty_params={'youtube':['title']}
 
+    youtube_api_key = settings.youtube_api_key
+
     def __init__(self):
         print "NLP started."
+        self.youtube_cache = {}
         super(NLP, self).__init__()
 
+    @staticmethod
+    def parse_duration(dstr):
+        # Parse ISO 8601 duration strings: PT#M#S
+        hms_str = dstr.strip()
+        try:
+            matches = re.match(r"PT(\d+H)?(\d{1,2}M)?(\d{1,2}S)", hms_str).groups()
+        except:
+            print hms_str
+            return 0, hms_str
+        h, m, s = [int(m.strip("HMS")) if m is not None else 0 for m in matches]
+
+        if h > 0:
+            human_str = "{0}:{1:02d}:{2:02d}".format(h, m, s)
+        else:
+            human_str = "{1}:{2:02d}".format(h, m, s)
+
+        return h * 360 + m * 60 + s, human_str
+
     @service.coroutine
-    def youtube_lucky_args(self,q):
+    def youtube_search(self,q):
+        if q in self.youtube_cache:
+            print "cache hit"
+            raise service.Return(self.youtube_cache[q])
+        print "cache miss"
+
         http_client = tornado.httpclient.AsyncHTTPClient()
         # Return the args dict for the first youtube result for 'match'
-        youtube_req_url = "http://gdata.youtube.com/feeds/api/videos"
-        youtube_data = {
-            "v": 2,
-            "orderby": "relevance",
-            "alt": "jsonc",
+        youtube_search_url = "https://www.googleapis.com/youtube/v3/search"
+        search_data = {
+            "part": "snippet",
+            "key": self.youtube_api_key,
+            "order": "relevance",
+            "safesearch": "none",
+            "type": "video",
+            "max-results": 5,
             "q": q,
-            "max-results": 5
         }
-        form_data=urllib.urlencode(youtube_data)
+        search_form_data=urllib.urlencode(search_data)
         
-        result = yield http_client.fetch(youtube_req_url+"?"+form_data)
-        youtube_data = json.loads(result.body)
+        search_results = yield http_client.fetch(youtube_search_url+"?"+search_form_data)
+        search_json = json.loads(search_results.body)
 
-        yi=youtube_data['data']['items']
+        video_ids = [v["id"]["videoId"] for v in search_json["items"]]
 
-        if len(yi)>0:
-            raise service.Return(youtube_data["data"]["items"][0])
+        youtube_video_url = "https://www.googleapis.com/youtube/v3/videos"
+        video_data = {
+            "part": "contentDetails,snippet,statistics",
+            "key": self.youtube_api_key,
+            "id": ",".join(video_ids),
+        }
+        video_form_data = urllib.urlencode(video_data)
+        video_results = yield http_client.fetch(youtube_video_url + "?" + video_form_data)
+        video_json = json.loads(video_results.body)
+
+        output = []
+        for yi in video_json['items']:
+            sr = {
+                "video_id": yi["id"], 
+                "url": "http://www.youtube.com/watch?v={0}".format(yi["id"]), 
+                "title": yi["snippet"]["title"], 
+                "thumbnail": yi["snippet"]["thumbnails"]["default"]["url"], 
+                "publish_time": yi["snippet"]["publishedAt"], 
+                "views": yi["statistics"]["viewCount"], 
+                "duration": self.parse_duration(yi["contentDetails"]["duration"]),
+            }
+            output.append(sr)
+
+        self.youtube_cache[q] = output
+        raise service.Return(output)
+
+    @service.coroutine
+    def youtube_suggest(self, q):
+        videos = yield self.youtube_search(q)
+        results = []
+        for v in videos:
+            results.append({
+                "title": u"{0[title]} - [{0[duration][1]}]".format(v),
+                "action": v["url"],
+                "match": 0,
+            })
+        raise service.Return(results)
+
+    @service.coroutine
+    def url_suggest(self, url):
+        #TODO
+        results = [{
+            "title": url,
+            "action": url,
+            "match": len(url)
+        }]
+        yield service.Return(results)
+
+    @service.coroutine
+    def wildcard_suggest(self, text):
+        text = text.strip()
+        results = []
+        if text.startswith("http:"):
+            rs = yield self.url_suggest(text)
+            results.extend(rs)
+        yr = yield self.youtube_suggest(text)
+        results.extend(yr)
+        raise service.Return(results)
+
+    @service.coroutine
+    def suggest(self,message):
+        stripped_message = message.strip()
+        suggestions = []
+        for sc in self.suggest_commands:
+            if sc.startswith(stripped_message):
+                suggestions.append({
+                    "title": sc,
+                    "action": sc,
+                    "match": len(stripped_message)
+                })
+        rs = yield self.wildcard_suggest(message)
+        suggestions.extend(rs)
+        raise service.Return({'suggestions':suggestions})
 
     @service.coroutine
     def queue_cmd(self,cmd,args={},assert_success=True):
@@ -78,11 +177,6 @@ class NLP(service.JSONCommandProcessor, service.Service):
 
     #result = yield self.queue_cmd("queue")
         raise service.Return({'message':'Did '+message})
-
-    @service.coroutine
-    def suggest(self,message):
-        sugs=[message+s for s in [' porn',' weird porn',' creepy porn']]
-        raise service.Return({'suggestions':sugs})
 
     def shutdown(self):
         service.ioloop.stop()
@@ -150,12 +244,12 @@ class NLP(service.JSONCommandProcessor, service.Service):
 
     @service.coroutine
     def cmd_yt(self,q,kw):
-        result=yield self.youtube_lucky_args(kw)
+        result=yield self.youtube_search(kw)
 
-        if not result:
+        if not result or not result[0]:
             raise Exception('No Youtube results found.')
-        title=result['title']
-        url='http://youtube.com/watch?v={0}'.format(result['id'])
+
+        url = result[0]["url"]
 
         yield self.queue_cmd("add",{"type":"youtube","args":{"url":url}})
 
@@ -167,7 +261,6 @@ class NLP(service.JSONCommandProcessor, service.Service):
         raise service.Return(u'Queued text.')
 
     def pretty(self,mod):
-        print mod
         t=mod['type']
         if t=='youtube' and 'title' in mod['parameters']:
             return u'"{0}"'.format(mod['parameters']['title'])
@@ -194,6 +287,15 @@ Anything else - Queue Youtube video""")
         'do': do,
         'suggest': suggest,
     }
+
+    suggest_commands = [
+        "vol up",
+        "vol down",
+        "skip",
+        "pop",
+        "bump",
+        "say",
+    ]
 
     nlp_commands=[
         (r'^help$',cmd_help),

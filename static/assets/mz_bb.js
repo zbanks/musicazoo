@@ -38,6 +38,7 @@ var BACKGROUNDS = {
     },
 };
 
+/* DEPRECATED 
 var COMMANDS = [
     { // Text
         keywords: ["text", "say"],
@@ -108,8 +109,7 @@ var COMMANDS = [
     },
     { // "Youtube"
         keywords: ["youtube", "video"],
-        //regex: /.*(youtube.com|vimeo.com).*/, 
-        regex: /http.*/, 
+        regex: /http.*.?/, 
         module: "youtube",
         args: function(match, cb){
             cb({url: match});
@@ -126,7 +126,7 @@ var COMMANDS = [
     // Playlist
     // https://gdata.youtube.com/feeds/api/playlists/4DAEFAF23BB3CDD0?alt=jsonc&v=2
     { // Youtube (Keyword search)
-        regex: /.*/, 
+        regex: /.*.?/, 
         module: "youtube",
         args: function(match, cb){
             var ytrequrl = "http://gdata.youtube.com/feeds/api/videos?v=2&orderby=relevance&alt=jsonc&q=" + encodeURIComponent(match) + "&max-results=5&callback=?"
@@ -138,6 +138,7 @@ var COMMANDS = [
         }
     }
 ];
+*/
 
 // Handlebars templates
 
@@ -152,38 +153,6 @@ var TEMPLATES_TO_COMPILE = ["youtube", "text", "netvid", "btc", "vba", "image", 
 _.each(TEMPLATES_TO_COMPILE, function(n){
     TEMPLATES[n] = Handlebars.compile($("script." + n + "-template").html());
 });
-
-// NLP processing
-
-var command_match = function(commands, text, cb){
-    text = _.trim(text);
-    var kw = _.strLeft(text, " ");
-    var rest = _.strRight(text, " ");
-    var match = null;
-    for(var i = 0; i < commands.length; i++){
-        var cmd = commands[i];
-        var add_cmd = cmd.background ? 'set_bg' : 'add';
-        if(cmd.keywords){
-            if(_.contains(cmd.keywords, kw)){
-                match = rest;
-            }
-        }
-        if(cmd.regex){
-            var regx = cmd.regex.exec(text);
-            if(regx){
-                match = regx[0];
-            }
-        }
-        if(match){
-            cmd.args(match, function(args){
-                cb({cmd: add_cmd, args: {type: cmd.module, args: args}});
-            }, kw);
-            return true;
-        }
-    }
-    return false;
-}
-
 
 function authenticate(cb){
     var doAuth = function(){
@@ -216,10 +185,7 @@ $(document).ready(function(){
         if(!query){
             return false;
         }
-        command_match(COMMANDS, query, function(args){
-            queue_endpoint.deferQuery(args, refreshPlaylist, lostConnection);
-            refreshPlaylist();
-        });
+        nlp_endpoint.deferQuery({"cmd": "do", "args": {"message": query}}, refreshPlaylist, lostConnection);
         return false; // Prevent form submitting
     });
 
@@ -280,6 +246,7 @@ $(document).ready(function(){
         $("#queueform").submit();
     });
 
+    var last_nlp_update = -1;
     $("input.addtxt").keyup(function(){
         var query = $(this).val();
         var $results = $(".results");
@@ -287,24 +254,29 @@ $(document).ready(function(){
             $results.html("");
             return;
         }
-        var ytrequrl = "http://gdata.youtube.com/feeds/api/videos?v=2&orderby=relevance&alt=jsonc&q=" + encodeURIComponent(query) + "&max-results=5&callback=?"
-        $.getJSON(ytrequrl, function(data){
+        var query_time = +(new Date());
+        nlp_endpoint.deferQuery({"cmd": "suggest", "args": {"message": query}}, function(response){
             if(!$(".addtxt").val()){
                 // If all the text from query box has been deleted, hide this box
                 $results.html("");
                 return;
             }
-            var list = $("<ol class='suggest suggestions'></ol>");
-            var tmpl = Handlebars.compile("<a class='push' href='#' content='http://youtube.com/watch?v={{{ id }}}'><li>{{ title }} - [{{ minutes duration }}] </li></a>");
 
-            if(!data.data.items){
+            // Handle results that are out of order
+            if(last_nlp_update > query_time) return;
+            last_update = query_time;
+
+            var list = $("<ol class='suggest suggestions'></ol>");
+            var tmpl = Handlebars.compile("<a class='push' href='#' content='{{ action }}'><li>{{ title }}</li></a>");
+
+            if(!response.suggestions){
                 $results.html("");
                 return;
             }
 
-            for(var j = 0; j < data.data.items.length && j < 5; j++){
-                var vid = data.data.items[j];
-                list.append($(tmpl(vid)));
+            for(var j = 0; j < response.suggestions.length && j < 5; j++){
+                var s = response.suggestions[j];
+                list.append($(tmpl(s)));
             }
             $results.html("").append(list);
         });

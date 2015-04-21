@@ -42,6 +42,7 @@ setup(
     package_data={
         'musicazoo': [
             "../supervisord.conf", 
+            "../requirements.txt", 
             "../settings.json",
             '../static/*.html', 
             '../static/settings.json', 

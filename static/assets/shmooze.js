@@ -103,7 +103,7 @@
         }
         if(this.reqs.length){
             var cbs = _.pluck(this.reqs, "cb");
-            var errs = _.pluck(this.reqs, "cb");
+            var errs = _.pluck(this.reqs, "err");
             var datas = _.pluck(this.reqs, "data");
             $.ajax(this.url, {
                 data: JSON.stringify(datas),
@@ -148,10 +148,12 @@
     }
 
     exports.queue_endpoint = new Endpoint(BASE_URL + "/queue");
-    exports.nlp_endpoint = new Endpoint(BASE_URL + "/vol");
+    exports.nlp_endpoint = new Endpoint(BASE_URL + "/nlp");
     exports.volume_endpoint = new Endpoint(BASE_URL + "/vol");
     exports.top_endpoint = new Endpoint(BASE_URL + "/top");
     exports.lux_endpoint = new Endpoint(BASE_URL + "/lux");
+
+    exports.endpoints = {};
 
     exports.regainConnection = queue_endpoint.onAlive = function(){
         $(".disconnect-hide").show();
@@ -171,5 +173,8 @@
         $("html").animate({"backgroundColor": data.bg_color});
         $("html").animate({"color": data.fg_color});
         $("h1.title").text(data.name);
+        for(var ep in data.ports){
+            exports.endpoints[ep] = new Endpoint(BASE_URL + "/" + ep);
+        }
     });
 })(window);
