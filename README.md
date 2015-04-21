@@ -22,7 +22,7 @@ pip install -r requirements.txt
 ## Run without installing
 ```
 . init.sh
-./run_musicazoo.sh
+./run_musicazoo.sh settings.json
 ```
 
 ## Debugging
@@ -37,7 +37,7 @@ It is probably helpful to debug these without supervisor, in which case you shou
 
 ```
 . init.sh
-python -m musicazoo.wsgi
+python -m shmooze.wsgi
 python -m musicazoo.queue
 python -m musicazoo.volume
 python -m musicazoo.nlp
