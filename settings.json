@@ -5,6 +5,7 @@
     "log_database_path": "$HOME/musicazoo.db",
     "static_path": "$HOME/musicazoo/static/",
     "youtube_api_key": "AIzaSyClDmA-Rrkz3JhQNDhPrszUimLtu0KOy5A",
+    "fortune_args": ["-s"],
     "ports" : {
         "queue": 5580,
         "vol": 5581,

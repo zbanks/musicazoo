@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import musicazoo.lib.bot as bot
+import shmooze.lib.bot as bot
 import subprocess
 
 ENDPOINT = "http://localhost:8080/queue"

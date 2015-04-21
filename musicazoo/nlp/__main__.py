@@ -1,15 +1,17 @@
-import shmooze.lib.service as service
-import os
-import signal
-import traceback
-import socket
-import re
-import shmooze.lib.packet as packet
-import tornado.httpclient
-import urllib
 import json
-import shmooze.settings as settings
+import os
 import random
+import re
+import signal
+import socket
+import subprocess
+import tornado.httpclient
+import traceback
+import urllib
+
+import shmooze.lib.packet as packet
+import shmooze.lib.service as service
+import shmooze.settings as settings
 
 class NLP(service.JSONCommandProcessor, service.Service):
     port=settings.ports["nlp"]
@@ -284,6 +286,25 @@ class NLP(service.JSONCommandProcessor, service.Service):
         yield self.queue_cmd("add",{"type":"text","args":{"text":text}})
         raise service.Return(u'Queued swearing.')
 
+    @service.coroutine
+    def cmd_fortune(self, q):
+        fortune_args = settings.get("fortune_args", ['-s'])
+        fortune_text = subprocess.check_output(['/usr/games/fortune'] + fortune_args)
+        data = {
+            'type': 'text',
+            'args': {
+                'text': fortune_text,
+                #'screen_preprocessor': 'none',
+                'speech_preprocessor': 'pronounce_fortune',
+                'text2speech': 'google',
+                'text2screen': 'paragraph',
+                #'renderer': 'mono_paragraph',
+                'duration': 5,
+            }
+        }
+        yield self.queue_cmd("add", data)
+        raise service.Return(u"Queued fortune.")
+
     def pretty(self,mod):
         t=mod['type']
         if t=='youtube' and 'title' in mod['parameters']:
@@ -320,6 +341,7 @@ Anything else - Queue Youtube video""")
         ("bump", "Move the last item on the queue to top of the queue and play it"),
         ("say", "`say <quote>`: Say a quote and display it on the screen"),
         ("fuck", "Swear a bunch"),
+        ("quote", "Display a quote from the fortune database"),
         ("image", "`image <url>`: Display an image on the screen as a background"),
         ("video", "`video <url>`: Play a video"),
     ]
@@ -340,6 +362,8 @@ Anything else - Queue Youtube video""")
         (r'^oops$',cmd_rm_bot),
         (r'^bump$',cmd_bump),
         (r'^fuck$',cmd_swear),
+        (r'^fortune$',cmd_fortune),
+        (r'^quote$',cmd_fortune),
         (r'^q$',cmd_queue),
         (r'^queue$',cmd_queue),
         (r'^say (.+)$',cmd_say),
