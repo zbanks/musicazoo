@@ -1,6 +1,6 @@
 tornado>=4.0.2
 toro>=0.7
-youtube-dl>=2014.11.27
+youtube-dl>=2015.04.17
 supervisor>=3.0.0
 Werkzeug>=0.9.6
-shmooze>=1.0.0
+shmooze>=1.0.3  

@@ -9,6 +9,7 @@ import tornado.httpclient
 import urllib
 import json
 import shmooze.settings as settings
+import random
 
 class NLP(service.JSONCommandProcessor, service.Service):
     port=settings.ports["nlp"]
@@ -105,6 +106,7 @@ class NLP(service.JSONCommandProcessor, service.Service):
             results.append({
                 "title": u"{0[title]} - [{0[duration][1]}]".format(v),
                 "action": v["url"],
+                "help": "Play video from YouTube",
                 "match": 0,
             })
         raise service.Return(results)
@@ -115,6 +117,7 @@ class NLP(service.JSONCommandProcessor, service.Service):
         results = [{
             "title": url,
             "action": url,
+            "help": "",
             "match": len(url)
         }]
         yield service.Return(results)
@@ -134,11 +137,12 @@ class NLP(service.JSONCommandProcessor, service.Service):
     def suggest(self,message):
         stripped_message = message.strip()
         suggestions = []
-        for sc in self.suggest_commands:
+        for sc, sc_help in self.suggest_commands:
             if sc.startswith(stripped_message):
                 suggestions.append({
                     "title": sc,
                     "action": sc,
+                    "help": sc_help,
                     "match": len(stripped_message)
                 })
         rs = yield self.wildcard_suggest(message)
@@ -256,9 +260,29 @@ class NLP(service.JSONCommandProcessor, service.Service):
         raise service.Return(u'Queued "{0}"'.format(title))
 
     @service.coroutine
+    def cmd_youtube_raw(self,q,url):
+        yield self.queue_cmd("add",{"type":"youtube","args":{"url": url}})
+        raise service.Return(u'Queued text.')
+
+    @service.coroutine
+    def cmd_image(self,q,url):
+        yield self.queue_cmd("set_bg",{"type":"image","args":{"url": url}})
+        raise service.Return(u'Queued text.')
+
+    @service.coroutine
     def cmd_say(self,q,text):
         yield self.queue_cmd("add",{"type":"text","args":{"text":text}})
         raise service.Return(u'Queued text.')
+
+    @service.coroutine
+    def cmd_swear(self,q):
+        # Swear words according to yahoo chat.
+        # See: http://ridiculousfish.com/blog/posts/YahooChatRooms.html
+        words = "ahole,aholes,asshole,assholes,asswipe,biatch,bitch,bitches,blo_job,blow_job,blowjob,cocksucker,cunt,cunts,dickhead,fuck,fucked,fucking,fuckoff,fucks,handjob,handjobs,motherfucker,mother-fucker,motherfuckers,muthafucker,muthafuckers,nigga,niggs,nigger,niggers,pedofile,pedophile,phag,phuc,phuck,phucked,phucker,shat,shit,shits,shithead,shitter,shitting".split(",") 
+        selection = random.sample(words, 5)
+        text = " ".join(selection)
+        yield self.queue_cmd("add",{"type":"text","args":{"text":text}})
+        raise service.Return(u'Queued swearing.')
 
     def pretty(self,mod):
         t=mod['type']
@@ -289,14 +313,18 @@ Anything else - Queue Youtube video""")
     }
 
     suggest_commands = [
-        "vol up",
-        "vol down",
-        "skip",
-        "pop",
-        "bump",
-        "say",
+        ("vol up", "Raise the volume"),
+        ("vol down", "Lower the volume"),
+        ("skip", "Remove the current item on the queue that is currently playing"),
+        ("pop", "Remove the last item on the queue"),
+        ("bump", "Move the last item on the queue to top of the queue and play it"),
+        ("say", "`say <quote>`: Say a quote and display it on the screen"),
+        ("fuck", "Swear a bunch"),
+        ("image", "`image <url>`: Display an image on the screen as a background"),
+        ("video", "`video <url>`: Play a video"),
     ]
 
+    #TODO: splash
     nlp_commands=[
         (r'^help$',cmd_help),
         (r'^$',cmd_help),
@@ -311,9 +339,14 @@ Anything else - Queue Youtube video""")
         (r'^undo$',cmd_rm_bot),
         (r'^oops$',cmd_rm_bot),
         (r'^bump$',cmd_bump),
+        (r'^fuck$',cmd_swear),
         (r'^q$',cmd_queue),
         (r'^queue$',cmd_queue),
         (r'^say (.+)$',cmd_say),
+        (r'^image (.+)$',cmd_image),
+        (r'^youtube (.+)$',cmd_youtube_raw),
+        (r'^video (.+)$',cmd_youtube_raw),
+        (r'(http.*(?:gif|jpe?g|png|bmp))',cmd_image),
         (r'^(.+)$',cmd_yt),
     ]
 

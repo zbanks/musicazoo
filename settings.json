@@ -2,7 +2,7 @@
     "fg_color":"#EBEBEB",
     "bg_color":"#675098",
     "name": "MZ5",
-    "log_database": "$HOME/musicazoo.db",
+    "log_database_path": "$HOME/musicazoo.db",
     "static_path": "$HOME/musicazoo/static/",
     "youtube_api_key": "AIzaSyClDmA-Rrkz3JhQNDhPrszUimLtu0KOy5A",
     "ports" : {

@@ -28,7 +28,7 @@ class Image(Module):
 modules = [Youtube, Text]
 backgrounds = [TextBG, Image]
 
-q= shmooze.queue.Queue(modules, backgrounds, settings.log_database)
+q= shmooze.queue.Queue(modules, backgrounds, settings.log_database_path)
 
 def shutdown_handler(signum,frame):
     print
