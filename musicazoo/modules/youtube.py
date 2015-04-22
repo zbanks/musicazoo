@@ -5,9 +5,9 @@ import time
 import youtube_dl 
 import Queue
 
-import musicazoo.lib.packet as packet
+import shmooze.lib.packet as packet
 import musicazoo.lib.vlc as vlc
-import musicazoo.queue.pymodule as pymodule
+from shmooze.modules import JSONParentPoller
 
 from musicazoo.lib.watch_dl import WatchCartoonOnlineIE
 
@@ -29,7 +29,7 @@ def get_mime_type(url):
     except Exception as e:
         raise Exception("URL Error")
 
-class YoutubeModule(pymodule.JSONParentPoller):
+class YoutubeModule(JSONParentPoller):
     def __init__(self, headless=False):
         self.headless=headless
         self.update_lock = threading.Lock() # TODO I don't think this needs to exist

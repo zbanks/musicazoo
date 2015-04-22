@@ -1,14 +1,14 @@
-import musicazoo.lib.service as service
+import shmooze.lib.service as service
 import os
 import signal
 import traceback
 import socket
 import re
-import musicazoo.lib.packet as packet
+import shmooze.lib.packet as packet
 import tornado.httpclient
 import urllib
 import json
-import musicazoo.settings as settings
+import shmooze.settings as settings
 
 class NLP(service.JSONCommandProcessor, service.Service):
     port=settings.ports["nlp"]

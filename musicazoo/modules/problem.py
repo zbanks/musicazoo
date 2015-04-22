@@ -1,11 +1,11 @@
-from musicazoo.queue import pymodule
+from shmooze.modules import JSONParentPoller
 import time
 import signal
 
 def handler(signum,frame):
     print "Ignoring SIGTERM..."
 
-class ProblematicModule(pymodule.JSONParentPoller):
+class ProblematicModule(JSONParentPoller):
     def __init__(self):
         self.run=True
         super(ProblematicModule, self).__init__()

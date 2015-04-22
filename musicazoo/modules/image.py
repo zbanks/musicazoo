@@ -1,6 +1,6 @@
-from musicazoo.queue import pymodule
+from shmooze.modules import JSONParentPoller
 import musicazoo.lib.graphics
-import musicazoo.settings as sets
+import shmooze.settings as sets
 import threading
 import socket
 import Tkinter
@@ -9,7 +9,7 @@ import cStringIO
 import urllib
 from PIL import Image, ImageTk
 
-class ImageModule(pymodule.JSONParentPoller,threading.Thread):
+class ImageModule(JSONParentPoller,threading.Thread):
     def __init__(self):
         super(ImageModule, self).__init__()
         self.daemon=True

@@ -1,4 +1,4 @@
-from musicazoo.queue import pymodule
+from shmooze.modules import JSONParentPoller
 import musicazoo.lib.graphics
 import musicazoo.lib.vlc
 import threading
@@ -30,7 +30,7 @@ speech_preprocessors = {
 }
 
 
-class TextModule(pymodule.JSONParentPoller,threading.Thread):
+class TextModule(JSONParentPoller,threading.Thread):
     def __init__(self):
         super(TextModule, self).__init__()
         self.daemon=True
