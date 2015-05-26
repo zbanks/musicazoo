@@ -1,11 +1,12 @@
 #!/usr/bin/env python2
 
+import json
+import os
+import sys
 import urllib
 import urllib2
-import json
-import sys
 
-endpoint="http://localhost:8080/nlp"
+endpoint = os.environ.get("MZ_ENDPOINT", "http://musicazoo.mit.edu/nlp")
 
 m=' '.join(sys.argv[1:])
 
@@ -20,4 +21,4 @@ result=json.loads(handler.read())
 if result['success']:
     print result['result']
 else:
-    print result['error']
+    print "error:", result['error']

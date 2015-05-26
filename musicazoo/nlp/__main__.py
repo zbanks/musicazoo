@@ -207,13 +207,13 @@ class NLP(service.JSONCommandProcessor, service.Service):
     @service.coroutine
     def cmd_get_vol(self,q):
         result=yield self.vol_cmd("get_vol")
-        raise service.Return("Volume is {0}".format(result))
+        raise service.Return("Volume is {0}".format(result.get("vol", "unknown")))
 
     @service.coroutine
     def cmd_queue(self,q):
         queue=yield self.queue_cmd("queue",{"parameters":self.pretty_params})
         if len(queue)==0:
-            raise Exception("Queue is empty!")
+            raise service.Return("Queue is empty!")
         result = '\n'.join([u"{0}. {1}".format(n+1,self.pretty(mod)) for (n,mod) in zip(range(len(queue)),queue)])
         raise service.Return(result)
 
@@ -256,6 +256,7 @@ class NLP(service.JSONCommandProcessor, service.Service):
             raise Exception('No Youtube results found.')
 
         url = result[0]["url"]
+        title = result[0]["title"]
 
         yield self.queue_cmd("add",{"type":"youtube","args":{"url":url}})
 
