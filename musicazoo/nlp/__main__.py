@@ -8,6 +8,7 @@ import subprocess
 import tornado.httpclient
 import traceback
 import urllib
+import urllib2
 
 import shmooze.lib.packet as packet
 import shmooze.lib.service as service
@@ -317,6 +318,21 @@ class NLP(service.JSONCommandProcessor, service.Service):
         return u'({0})'.format(t)
 
     @service.coroutine
+    def cmd_bug(self,q,text):
+        bug_url = "https://api.github.com/repos/zbanks/musicazoo/issues"
+        suffix = "\n\nSubmitted via NLP service."
+        bug_data = json.dumps({'title': text, 'body' : text + suffix})
+        password_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
+        try:
+            password_mgr.add_password(None, bug_url, settings.github_login[0], settings.github_login[1])
+        except AttributeError:
+            raise service.Return(u"No github account configured in settings.json")
+
+        handler = urllib2.HTTPBasicAuthHandler(password_mgr)
+        #TODO request(bug_url, bug_data, auth=(musicazoo-bugs, musicaz00)
+        raise service.Return(u'Submitted bug: %s - thanks!')
+
+    @service.coroutine
     def cmd_help(self,q):
         raise service.Return("""Commands I understand:
 help|? - This
@@ -327,6 +343,7 @@ stop|stfu|skip|next - Remove the top video
 pop|undo|oops - Remove the bottom video
 bump - Move the bottom video to the top
 q|queue - List the queue
+bug - Submit a bug report
 Anything else - Queue Youtube video""")
 
     commands={
@@ -372,6 +389,7 @@ Anything else - Queue Youtube video""")
         (r'^youtube (.+)$',cmd_youtube_raw),
         (r'^video (.+)$',cmd_youtube_raw),
         (r'(http.*(?:gif|jpe?g|png|bmp))',cmd_image),
+        (r'^bug (.+)$',cmd_bug),
         (r'^(.+)$',cmd_yt),
     ]
 
