@@ -22,7 +22,7 @@ class NLP(service.JSONCommandProcessor, service.Service):
     vol_host='localhost'
     vol_port=settings.ports["vol"]
 
-    pretty_params={'youtube':['title']}
+    pretty_params={'youtube':['title'],  'text': ['text']}
 
     youtube_api_key = settings.youtube_api_key
 
@@ -214,8 +214,16 @@ class NLP(service.JSONCommandProcessor, service.Service):
     def cmd_queue(self,q):
         queue=yield self.queue_cmd("queue",{"parameters":self.pretty_params})
         if len(queue)==0:
-            raise service.Return("Queue is empty!")
-        result = '\n'.join([u"{0}. {1}".format(n+1,self.pretty(mod)) for (n,mod) in zip(range(len(queue)),queue)])
+            raise service.Return("Queue is empty.")
+        result = '\n'.join([u"{0}. {1}".format(n+1,self.pretty(mod)) for (n,mod) in enumerate(queue)])
+        raise service.Return(result)
+
+    @service.coroutine
+    def cmd_current(self,q):
+        queue=yield self.queue_cmd("queue",{"parameters":self.pretty_params})
+        if len(queue)==0:
+            raise service.Return("(Nothing)")
+        result = self.pretty(queue[0])
         raise service.Return(result)
 
     @service.coroutine
@@ -313,8 +321,8 @@ class NLP(service.JSONCommandProcessor, service.Service):
             return u'"{0}"'.format(mod['parameters']['title'])
         #if t=='netvid':
         #    return u'{0}'.format(mod['parameters']['short_description'])
-        #if t=='text':
-        #    return u'{0}'.format(mod['parameters']['short_description'])
+        if t=='text' and 'text' in mod['parameters']:
+            return u'"{0}"'.format(mod['parameters']['text'])
         return u'({0})'.format(t)
 
     @service.coroutine
@@ -343,6 +351,7 @@ stop|stfu|skip|next - Remove the top video
 pop|undo|oops - Remove the bottom video
 bump - Move the bottom video to the top
 q|queue - List the queue
+cur|current - Give the current item playing
 bug - Submit a bug report
 Anything else - Queue Youtube video""")
 
@@ -384,12 +393,14 @@ Anything else - Queue Youtube video""")
         (r'^quote$',cmd_fortune),
         (r'^q$',cmd_queue),
         (r'^queue$',cmd_queue),
+        (r'^cur(?:rent)?$',cmd_current),
         (r'^say (.+)$',cmd_say),
         (r'^image (.+)$',cmd_image),
         (r'^youtube (.+)$',cmd_youtube_raw),
         (r'^video (.+)$',cmd_youtube_raw),
-        (r'(http.*(?:gif|jpe?g|png|bmp))',cmd_image),
         (r'^bug (.+)$',cmd_bug),
+        (r'(https?://.+(?:gif|jpe?g|png|bmp))',cmd_image),
+        (r'(https?://.+)',cmd_youtube_raw),
         (r'^(.+)$',cmd_yt),
     ]
 
