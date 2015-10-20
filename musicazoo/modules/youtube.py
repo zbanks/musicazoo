@@ -179,7 +179,6 @@ class YoutubeModule(JSONParentPoller):
         self.vlc_ev.event_attach(vlc.EventType.MediaPlayerTimeChanged, ev_time)
         self.vlc_ev.event_attach(vlc.EventType.MediaPlayerLengthChanged, ev_length)
 
-        print "Playing",self.media
         vlc_media=self.vlc_i.media_new_location(self.media)
         self.vlc_mp.set_media(vlc_media)
         self.vlc_mp.play()
@@ -225,7 +224,6 @@ class YoutubeModule(JSONParentPoller):
                 vinfo=info['entries'][0]
             else:
                 vinfo=info
-
 
             #import json
             #print json.dumps(vinfo, sort_keys=True,
