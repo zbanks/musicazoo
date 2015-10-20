@@ -179,6 +179,7 @@ class YoutubeModule(JSONParentPoller):
         self.vlc_ev.event_attach(vlc.EventType.MediaPlayerTimeChanged, ev_time)
         self.vlc_ev.event_attach(vlc.EventType.MediaPlayerLengthChanged, ev_length)
 
+        print "Playing",self.media
         vlc_media=self.vlc_i.media_new_location(self.media)
         self.vlc_mp.set_media(vlc_media)
         self.vlc_mp.play()
@@ -225,6 +226,11 @@ class YoutubeModule(JSONParentPoller):
             else:
                 vinfo=info
 
+
+            #import json
+            #print json.dumps(vinfo, sort_keys=True,
+            #                 indent=4, separators=(',', ': '))
+
             if 'title' in vinfo:
                 self.title=vinfo['title']
             if 'duration' in vinfo:
@@ -233,6 +239,11 @@ class YoutubeModule(JSONParentPoller):
                 self.site=vinfo['extractor']
             if 'url' in vinfo:
                 self.media=vinfo['url']
+            else:
+                if 'formats' in vinfo and len(vinfo['formats']) > 0:
+                    best = vinfo['formats'][-1]
+                    if 'url' in best:
+                        self.media = best['url']
             if 'thumbnail' in vinfo:
                 self.thumbnail=vinfo['thumbnail']
             if 'description' in vinfo:
