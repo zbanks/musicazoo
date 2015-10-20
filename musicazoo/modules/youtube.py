@@ -1,23 +1,21 @@
 import os
-import socket
 import tempfile
 import time
-import youtube_dl 
-import Queue
+import youtube_dl
+import traceback
 
-import shmooze.lib.packet as packet
-import musicazoo.lib.vlc as vlc
-from shmooze.modules import JSONParentPoller
+from shmooze.lib import service
+from shmooze.modules import AsyncPyModule
 
 from musicazoo.lib.watch_dl import WatchCartoonOnlineIE
 
 from youtube_dl.compat import compat_cookiejar, compat_urllib_request
 from youtube_dl.utils import make_HTTPS_handler, YoutubeDLHandler
 
-import threading
 import urllib2
 
-messages = Queue.Queue()
+import subprocess
+import threading
 
 def get_mime_type(url):
     class HeadRequest(urllib2.Request):
@@ -29,11 +27,9 @@ def get_mime_type(url):
     except Exception as e:
         raise Exception("URL Error")
 
-class YoutubeModule(JSONParentPoller):
+class YoutubeModule(AsyncPyModule):
     def __init__(self, headless=False):
         self.headless=headless
-        self.update_lock = threading.Lock() # TODO I don't think this needs to exist
-        self.thread_stopped = False 
         super(YoutubeModule, self).__init__()
 
     def serialize(self):
@@ -62,6 +58,12 @@ class YoutubeModule(JSONParentPoller):
     def state_is_playing(self):
         return self.state_has_started and not (self.state_is_suspended or self.state_is_paused)
 
+    def check_result(self, f):
+        if f.exception() is not None:
+            traceback.print_exception(*f.exc_info())
+            self.rm()
+
+    @service.coroutine
     def cmd_init(self, url):
         # Has the youtube url/data been fetched?
         self.state_is_ready = False 
@@ -70,7 +72,7 @@ class YoutubeModule(JSONParentPoller):
         # Is the video currently paused (by the UI)
         self.state_is_paused = False
         # Is the video currently suspended? (not at the top of the queue)
-        self.state_is_suspended = False
+        self.state_is_suspended = True
         # Is the video stopped and currently terminating?
         self.state_is_stopping = False
 
@@ -85,106 +87,141 @@ class YoutubeModule(JSONParentPoller):
         self.vid=None
         self.cookies=None
         self.rate=None
-        messages.put("init")
-        self.safe_update()
+        yield self.update()
+
+        service.ioloop.add_future(self.async_get_video_info(), self.check_result)
 
     def hide(self):
-        self.vlc_mp.video_set_track(-1)
+        self.vlc_command("vtrack -1")
 
     def show(self):
-        self.vlc_mp.video_set_track(0)
+        self.vlc_command("vtrack 0")
 
+    @service.coroutine
     def cmd_play(self):
         if self.state_has_started:
             if not self.state_is_paused:
-                self.vlc_mp.play()
+                self.vlc_command("play")
                 self.show()
                 self.state_is_paused = False
         else:
-            messages.put("play")
+            yield self.play()
         self.state_is_suspended = False
-        self.safe_update()
+        yield self.update()
 
+    @service.coroutine
     def cmd_suspend(self):
         if self.state_has_started:
-            if self.vlc_mp.is_playing():
-                self.vlc_mp.pause()
+            if not self.state_is_paused:
+                self.vlc_command("pause")
                 self.hide()
-            #self.state_is_paused = True
         self.state_is_suspended = True
-        self.safe_update()
+        yield self.update()
 
+    @service.coroutine
     def cmd_resume(self):
         if self.state_has_started:
-            self.vlc_mp.play()
+            self.vlc_command("play")
             self.state_is_paused = False
-            self.safe_update()
+            yield self.update()
 
+    @service.coroutine
     def cmd_pause(self):
         if self.state_has_started:
-            if self.vlc_mp.is_playing():
-                self.vlc_mp.pause()
+            if not self.state_is_paused:
+                self.vlc_command("pause")
             self.state_is_paused = True
-            self.safe_update()
+            yield self.update()
 
+    @service.coroutine
     def cmd_rm(self):
-        self.state_is_stopping = True
-        messages.put("rm")
-        #messages.join()
+        self.vlc_command("pause")
 
+    @service.coroutine
     def cmd_seek_abs(self, position):
         #TODO: if the video hasn't started, then cache the position and set it as soon as the video starts
         if self.state_has_started:
-            self.vlc_mp.set_time(int(position*1000))
+            self.vlc_command("seek {0}".format(int(position)))
             self.time = position
-            self.safe_update()
+            yield self.update()
 
+    @service.coroutine
     def cmd_seek_rel(self, delta):
         if self.state_has_started:
-            cur_time = self.vlc_mp.get_time()
+            cur_time = self.vlc_command_response("get_time")
             if cur_time < 0:
                 return
-            self.vlc_mp.set_time(cur_time+int(delta*1000))
-            self.time = (cur_time / 1000) + delta
-            self.safe_update()
+            self.vlc_command("seek {0}".format(cur_time + int(delta)))
+            self.time = cur_time + delta
+            yield self.update()
 
     def stop(self):
-        self.vlc_mp.stop()
-        self.thread_stopped = True
+        self.is_stopping = True
+        self.vlc_command("quit")
+        self.vlc_process.wait()
+        self.rm()
 
-        with self.update_lock:
-            self.rm()
-
+    # TODO hella refactor this
+    @service.coroutine
     def play(self):
-        def ev_end(ev):
-            messages.put("rm")
+        #def ev_end(ev):
+        #    messages.put("rm")
 
-        def ev_time(ev):
-            self.time = ev.u.new_time / 1000.
-            self.safe_update()
+        #def ev_time(ev):
+        #    self.time = ev.u.new_time / 1000.
+        #    self.safe_update()
 
-        def ev_length(ev):
-            self.duration = ev.u.new_length / 1000.
-            self.safe_update()
+        #def ev_length(ev):
+        #    self.duration = ev.u.new_length / 1000.
+        #    self.safe_update()
 
         if not self.headless:
             #os.environ["DISPLAY"] = ":0"
-            self.vlc_i = vlc.Instance(['--no-video-title-show']) # -f
+            extra_args = ['--no-video-title-show']
         else:
-            self.vlc_i = vlc.Instance(['--novideo'])
-        self.vlc_mp = self.vlc_i.media_player_new()
-        self.vlc_ev = self.vlc_mp.event_manager()
+            extra_args = ['--novideo']
 
-        self.vlc_ev.event_attach(vlc.EventType.MediaPlayerEndReached, ev_end)
-        self.vlc_ev.event_attach(vlc.EventType.MediaPlayerTimeChanged, ev_time)
-        self.vlc_ev.event_attach(vlc.EventType.MediaPlayerLengthChanged, ev_length)
+        print "Popening...",self.media
 
-        vlc_media=self.vlc_i.media_new_location(self.media)
-        self.vlc_mp.set_media(vlc_media)
-        self.vlc_mp.play()
+        self.vlc_process = subprocess.Popen(['vlc', '-I', 'rc'] + extra_args + [self.media], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+
+        print "Popen!"
+
+        #self.vlc_ev.event_attach(vlc.EventType.MediaPlayerEndReached, ev_end)
+        #self.vlc_ev.event_attach(vlc.EventType.MediaPlayerTimeChanged, ev_time)
+        #self.vlc_ev.event_attach(vlc.EventType.MediaPlayerLengthChanged, ev_length)
+
+        #vlc_media=self.vlc_i.media_new_location(self.media)
+        #self.vlc_mp.set_media(vlc_media)
+        #self.vlc_mp.play()
 
         self.state_has_started = True
-        self.safe_update()
+        yield self.update()
+
+    def vlc_command(self, cmd):
+        self.vlc_process.stdin.write(cmd + '\n')
+        print 'VLC CMD RESP:', self.vlc_process.stdout.read()
+
+    def vlc_command_response(self, cmd):
+        self.vlc_process.stdin.write(cmd + '\n')
+        result = self.vlc_process.stdout.read()
+        print 'VLC CMD RESP result:', result
+        return result
+
+    @service.coroutine
+    def async_get_video_info(self):
+        t = threading.Thread(target = self.get_video_info)
+        t.daemon = True
+        t.start()
+        while t.is_alive():
+            yield service.sleep(0.3)
+        if not self.vid:
+            raise Exception("Could not load video")
+
+        if not self.state_is_suspended:
+            yield self.cmd_play()
+        else:
+            yield self.update()
 
     def get_video_info(self):
         url = self.url
@@ -209,14 +246,7 @@ class YoutubeModule(JSONParentPoller):
             y.add_info_extractor(WatchCartoonOnlineIE())
             y.add_default_info_extractors()
 
-            try:
-                info=y.extract_info(url,download=False)
-            except Exception:
-                raise
-                self.status='invalid'
-                self.queue.removeMeAsync(self.uid) # Remove if possible # TODO error here
-                self.ready.release()
-                return False
+            info=y.extract_info(url,download=False)
 
             jar.save()
 
@@ -225,6 +255,9 @@ class YoutubeModule(JSONParentPoller):
             else:
                 vinfo=info
 
+            print "URL",vinfo[u'url']
+
+            # Locks? What are those?
             if 'title' in vinfo:
                 self.title=vinfo['title']
             if 'duration' in vinfo:
@@ -244,20 +277,24 @@ class YoutubeModule(JSONParentPoller):
             self.media=url
             self.title=url
 
-        self.state_is_ready = True
-        self.safe_update()
-        return True
+        print "All ready. Media = ",self.media
 
-    # TODO This shouldn't exist.
-    def safe_update(self):
-        with self.update_lock:
-            self.set_parameters(self.serialize())
+        self.state_is_ready = True
+
+    # coroutine
+    def update(self):
+        print "sending update..."
+        return self.set_parameters(self.serialize())
+
+    # coroutine
+    def shutdown(self):
+        return self.rm()
 
     commands={
-        'init':cmd_init,
-        'play':cmd_play,
-        'suspend':cmd_suspend,
-        'rm':cmd_rm,
+        'init': cmd_init,
+        'play': cmd_play,
+        'suspend': cmd_suspend,
+        'rm': cmd_rm,
         'do_pause': cmd_pause,
         'do_resume': cmd_resume,
         #'set_rate': cmd_set_rate,
@@ -265,32 +302,20 @@ class YoutubeModule(JSONParentPoller):
         'do_seek_abs': cmd_seek_abs,
     }
 
-import sys
+if __name__=='__main__':
+    import sys
+    import signal
 
-headless = '--headless' in sys.argv
+    headless = '--headless' in sys.argv
 
-mod = YoutubeModule(headless=headless)
+    mod = YoutubeModule(headless = headless)
 
-def serve_forever():
-    while not mod.thread_stopped:
-        try:
-            mod.handle_one_command()
-        except socket.error:
-            break
+    def shutdown_handler(signum, frame):
+        print
+        print "Received signal, attempting graceful shutdown..."
+        service.ioloop.add_callback_from_signal(mod.shutdown)
 
-t=threading.Thread(target=serve_forever)
-t.daemon=True
-t.start()
+    signal.signal(signal.SIGTERM, shutdown_handler)
+    signal.signal(signal.SIGINT, shutdown_handler)
 
-while True:
-    msg = messages.get(block=True)
-    messages.task_done()
-    if msg == "init":
-        mod.get_video_info()
-    elif msg == "play":
-        mod.play()
-    elif msg == "rm":
-        mod.stop()
-        break
-    
-mod.close()
+    service.ioloop.start()
