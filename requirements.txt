@@ -3,4 +3,4 @@ toro>=0.7
 youtube-dl>=2015.04.17
 supervisor>=3.0.0
 Werkzeug>=0.9.6
-shmooze>=1.0.4
+shmooze>=1.2.3
