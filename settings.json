@@ -4,6 +4,8 @@
     "name": "MZ5",
     "log_database_path": "$HOME/musicazoo.db",
     "static_path": "$HOME/musicazoo/static/",
+    "static_prefix": "/",
+    "wsgi_prefix": "/",
     "youtube_api_key": "AIzaSyClDmA-Rrkz3JhQNDhPrszUimLtu0KOy5A",
     "fortune_args": ["-s"],
     "ports" : {
