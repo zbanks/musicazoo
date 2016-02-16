@@ -1,6 +1,0 @@
-recursive-include static *.html *.js *.css *.png *.json
-include bin/*
-include run_musicazoo.sh
-include requirements.txt
-include supervisord.conf
-include settings.json
