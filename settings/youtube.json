@@ -1,4 +1,5 @@
 {
     "youtube-dl": ["youtube-dl", "-o-", "-q"],
-    "vlc": ["vlc", "-"]
+    "vlc": ["vlc", "--play-and-exit", "-", "--no-playlist-autostart", "-Irc"],
+    "vlc_rc_host": "localhost"
 }
