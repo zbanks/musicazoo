@@ -1,0 +1,4 @@
+{
+    "youtube-dl": ["youtube-dl", "-o-", "-q"],
+    "vlc": ["vlc", "-"]
+}
