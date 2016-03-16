@@ -18,8 +18,18 @@ int mz_module_remove(struct mz_module * mod) {
     return -1;
 }
 
-struct mz_module * mz_module_match(const char * input, mz_cmd command) {
+struct mz_module * mz_module_lookup(const char * name) {
     for(struct mz_module * m = modules; m != NULL; m = m->next) {
+        if (strcmp(name, m->name) == 0)
+            return m;
+    }
+    return NULL;
+}
+
+struct mz_module * mz_module_match(const char * input, struct mz_buf * command) {
+    for(struct mz_module * m = modules; m != NULL; m = m->next) {
+        if (m->match_fn == NULL)
+            continue;
         if (m->match_fn(input, command) == true)
             return m;
     }

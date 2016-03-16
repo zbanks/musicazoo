@@ -1,3 +1,9 @@
 [submodule "libdill"]
 	path = libdill
 	url = https://github.com/sustrik/libdill
+[submodule "nanomsg"]
+	path = nanomsg
+	url = https://github.com/nanomsg/nanomsg
+[submodule "jansson"]
+	path = jansson
+	url = https://github.com/akheron/jansson

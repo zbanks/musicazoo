@@ -1,8 +1,8 @@
 CC=gcc
-CFLAGS=-I. -Ilibdill -g -O2 -std=gnu99 -Wall -Wextra -Werror
-LDFLAGS=-ldill
+CFLAGS=-I. -Inanomsg/src/ -Ilibdill -g -O2 -std=gnu99 -Wall -Wextra -Werror
+LDFLAGS=-ldill -lnanomsg -ljansson
 
-OBJECTS=fake_youtube.o modules.o queue.o main.o
+OBJECTS=fake_youtube.o volume.o web.o modules.o queue.o util.o main.o
 TARGET=musicazoo
 
 %.o : %.c
