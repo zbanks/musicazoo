@@ -2,5 +2,5 @@ tornado==4.3
 toro==1.0
 youtube-dl>=2015.11.19
 supervisor==3.1
-Werkzeug==0.11
+Werkzeug==0.15.3
 shmooze==1.2.4
